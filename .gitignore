@@ -1,0 +1,21 @@
+# Java / Gradle
+.gradle/
+build/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Fabric / Loom
+run/
+remappedSrc/

@@ -1,0 +1,23 @@
+{
+    "schemaVersion": 1,
+    "id": "pocketuicore",
+    "version": "${version}",
+    "name": "PocketUI Core",
+    "description": "Core UI library powering Pocket mod GUIs and notification systems. Procedural dark-mode rendering, component tree, animations, and notifications.",
+    "authors": ["Uipg9"],
+    "contact": {
+        "sources": "https://github.com/Uipg9"
+    },
+    "license": "MIT",
+    "environment": "*",
+    "entrypoints": {
+        "main": ["com.pocketuicore.PocketUICore"],
+        "client": ["com.pocketuicore.PocketUICoreClient"]
+    },
+    "depends": {
+        "fabricloader": ">=0.18.0",
+        "minecraft": ">=1.21.11",
+        "java": ">=21",
+        "fabric-api": "*"
+    }
+}
