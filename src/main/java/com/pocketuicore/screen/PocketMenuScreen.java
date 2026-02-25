@@ -2,6 +2,7 @@ package com.pocketuicore.screen;
 
 import com.pocketuicore.component.*;
 import com.pocketuicore.data.ObservableState;
+import com.pocketuicore.economy.ClientNetworkHandler;
 import com.pocketuicore.render.ProceduralRenderer;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -17,7 +18,8 @@ import org.lwjgl.glfw.GLFW;
  * <p>
  * Opens via {@code /p} or {@code /pocket}.  Uses PocketUICore's
  * {@link VerticalListPanel} for zero-manual-math layout, reactive
- * {@link ObservableState} for the wallet display, and
+ * {@link ObservableState} bound to the server-synced
+ * {@link ClientNetworkHandler#CLIENT_BALANCE} for the wallet display, and
  * {@link FocusManager} for controller/keyboard navigation.
  */
 public class PocketMenuScreen extends Screen {
@@ -43,8 +45,8 @@ public class PocketMenuScreen extends Screen {
         FocusManager fm = FocusManager.getInstance();
         fm.clear();
 
-        // ── Reactive wallet state ────────────────────────────────────────
-        walletState = new ObservableState<>(500);
+        // ── Reactive wallet state (bound to server-synced balance) ────
+        walletState = ClientNetworkHandler.CLIENT_BALANCE;
 
         // ── Main panel — centred on screen ───────────────────────────────
         int px = (this.width - PANEL_W) / 2;

@@ -3,6 +3,7 @@ package com.pocketuicore;
 import com.pocketuicore.animation.AnimationTicker;
 import com.pocketuicore.command.PocketCommandRegister;
 import com.pocketuicore.component.HudOverlayComponent;
+import com.pocketuicore.economy.ClientNetworkHandler;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -32,6 +33,9 @@ public class PocketUICoreClient implements ClientModInitializer {
         // Register /pocket and /p client commands
         PocketCommandRegister.register();
 
-        PocketUICore.LOGGER.info("[PocketUICore] Client systems initialized — animation ticker + HUD overlay + commands running.");
+        // Register client-side economy payload receiver
+        ClientNetworkHandler.register();
+
+        PocketUICore.LOGGER.info("[PocketUICore] Client systems initialized — animation ticker + HUD overlay + commands + economy sync running.");
     }
 }
