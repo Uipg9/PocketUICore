@@ -2,6 +2,7 @@ package com.pocketuicore.sound;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 
@@ -44,6 +45,21 @@ public final class UISoundManager {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
         client.getSoundManager().play(PositionedSoundInstance.ui(event, pitch, volume));
+    }
+
+    /**
+     * Play a {@link RegistryEntry}{@code <SoundEvent>} at the given pitch
+     * and volume.  Unwraps the entry via {@code .value()} automatically,
+     * so callers can pass vanilla sounds like
+     * {@code SoundEvents.UI_BUTTON_CLICK} directly.
+     *
+     * @param entry  the registry entry wrapping the sound event
+     * @param pitch  pitch multiplier (1.0 = normal)
+     * @param volume volume multiplier (1.0 = full)
+     */
+    public static void playCustom(RegistryEntry<SoundEvent> entry,
+                                   float pitch, float volume) {
+        playCustom(entry.value(), pitch, volume);
     }
 
     // =====================================================================

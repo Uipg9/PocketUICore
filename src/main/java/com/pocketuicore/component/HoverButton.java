@@ -91,9 +91,9 @@ public class HoverButton extends UIComponent {
         // ── Colour blending ──────────────────────────────────────────────
         int bgColor;
         if (!enabled) {
-            // Disabled state: desaturated, dimmed background
-            int gray = ((normalColor >> 16 & 0xFF) + (normalColor >> 8 & 0xFF) + (normalColor & 0xFF)) / 3;
-            bgColor = 0xFF000000 | (gray / 2) << 16 | (gray / 2) << 8 | (gray / 2);
+            // Disabled state: fully desaturated then darkened via ProceduralRenderer
+            int gray = ProceduralRenderer.saturate(normalColor, 0f);
+            bgColor = ProceduralRenderer.darken(gray, 0.5f);
         } else if (pressed && hovered) {
             bgColor = pressedColor;
         } else {

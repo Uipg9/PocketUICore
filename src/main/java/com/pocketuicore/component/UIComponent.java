@@ -27,6 +27,11 @@ public abstract class UIComponent {
     protected int width;
     protected int height;
 
+    // ── Relative positioning ─────────────────────────────────────────────
+    private int offsetX;
+    private int offsetY;
+    private boolean useRelativePosition = false;
+
     // ── State ────────────────────────────────────────────────────────────
     protected boolean visible = true;
     protected boolean enabled = true;
@@ -42,7 +47,9 @@ public abstract class UIComponent {
     private long tooltipHoverStartNanos;
     private boolean tooltipWasHovered;
     /** Tooltip hover delay in nanoseconds (default 0.5 s). */
-    private static final long TOOLTIP_DELAY_NS = 500_000_000L;
+    private static final long DEFAULT_TOOLTIP_DELAY_NS = 500_000_000L;
+    /** Per-instance tooltip delay — defaults to the static default. */
+    private long tooltipDelayNs = DEFAULT_TOOLTIP_DELAY_NS;
 
     // ── Click handler ────────────────────────────────────────────────────
     private Runnable onClick;
@@ -208,6 +215,7 @@ public abstract class UIComponent {
     public void addChild(UIComponent child) {
         child.parent = this;
         children.add(child);
+        child.resolveRelativePosition();
     }
 
     public void removeChild(UIComponent child) {
@@ -224,6 +232,11 @@ public abstract class UIComponent {
         return Collections.unmodifiableList(children);
     }
 
+    /** Returns the parent component, or {@code null} if this is a root. */
+    public UIComponent getParent() {
+        return parent;
+    }
+
     // =====================================================================
     //  Accessors
     // =====================================================================
@@ -237,6 +250,60 @@ public abstract class UIComponent {
     public void setSize(int w, int h)     { this.width = w; this.height = h; }
     public void setBounds(int x, int y, int w, int h) {
         this.x = x; this.y = y; this.width = w; this.height = h;
+    }
+
+    // ── Relative / offset positioning ────────────────────────────────────
+
+    /**
+     * Set a parent-relative offset. When the parent's position changes
+     * the child's absolute position is recomputed as
+     * {@code parentX + offsetX, parentY + offsetY}.
+     *
+     * @param offsetX X offset from parent's top-left
+     * @param offsetY Y offset from parent's top-left
+     */
+    public void setRelativePosition(int offsetX, int offsetY) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        this.useRelativePosition = true;
+        resolveRelativePosition();
+    }
+
+    /** @return the X offset when using relative positioning. */
+    public int getOffsetX() { return offsetX; }
+
+    /** @return the Y offset when using relative positioning. */
+    public int getOffsetY() { return offsetY; }
+
+    /** @return {@code true} if this component uses parent-relative positioning. */
+    public boolean isUsingRelativePosition() { return useRelativePosition; }
+
+    /** Stop using relative positioning — reverts to absolute coordinates. */
+    public void clearRelativePosition() { this.useRelativePosition = false; }
+
+    /**
+     * Resolve this component's absolute position from its parent + offset.
+     * Called automatically when added to a parent or when the parent moves.
+     */
+    void resolveRelativePosition() {
+        if (!useRelativePosition || parent == null) return;
+        this.x = parent.x + offsetX;
+        this.y = parent.y + offsetY;
+        // Cascade to children that also use relative positioning
+        for (UIComponent child : children) {
+            child.resolveRelativePosition();
+        }
+    }
+
+    /**
+     * Update position and cascade to relative children.
+     */
+    public void setPositionAndResolve(int x, int y) {
+        this.x = x;
+        this.y = y;
+        for (UIComponent child : children) {
+            child.resolveRelativePosition();
+        }
     }
 
     public boolean isVisible() { return visible; }
@@ -282,6 +349,21 @@ public abstract class UIComponent {
         return tooltipLines != null && tooltipLines.length > 0;
     }
 
+    /**
+     * Set the tooltip hover delay in milliseconds.
+     * Default is 500 ms. Set to 0 for instant tooltips.
+     *
+     * @param ms delay in milliseconds
+     */
+    public void setTooltipDelayMs(long ms) {
+        this.tooltipDelayNs = Math.max(0, ms) * 1_000_000L;
+    }
+
+    /** @return tooltip delay in milliseconds. */
+    public long getTooltipDelayMs() {
+        return tooltipDelayNs / 1_000_000L;
+    }
+
     /** Track how long the mouse has been hovering over this component. */
     private void updateTooltipHover(int mouseX, int mouseY) {
         boolean hov = isHovered(mouseX, mouseY);
@@ -314,7 +396,7 @@ public abstract class UIComponent {
         if (target == null) return;
 
         long elapsed = System.nanoTime() - target.tooltipHoverStartNanos;
-        if (elapsed < TOOLTIP_DELAY_NS) return;
+        if (elapsed < target.tooltipDelayNs) return;
 
         drawTooltipBox(ctx, target.tooltipLines, mouseX, mouseY);
     }

@@ -13,9 +13,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * EstateManager — Server-side passive income system.
  * <p>
  * Every server tick, each online player's "estate growth" percentage
- * increments by a configurable rate.  When that percentage reaches
- * {@code 100.0f} the player automatically receives a passive-income
- * payout via {@link EconomyManager#addMoney} and the cycle resets.
+ * increments by a configurable rate (see {@link EconomyConfig}).
+ * When that percentage reaches {@code 100.0f} the player automatically
+ * receives a passive-income payout via {@link EconomyManager#addMoney}
+ * and the cycle resets.
+ * <p>
+ * <b>Persistence:</b> Estate growth is saved into the player's vault
+ * state on disconnect and restored on join, so progress is never lost
+ * across sessions.
  * <p>
  * The current growth percentage is synced to the client via
  * {@link SyncEstatePayload} so the {@code /pocket} menu can render a
@@ -35,26 +40,8 @@ public final class EstateManager {
     private EstateManager() { /* utility class */ }
 
     // =====================================================================
-    //  Configuration
+    //  Configuration — now externalised to EconomyConfig
     // =====================================================================
-
-    /**
-     * Percentage points added per server tick (20 tps).
-     * At 0.05 per tick → full cycle ≈ 100 seconds (2000 ticks).
-     */
-    private static final float GROWTH_PER_TICK = 0.05f;
-
-    /**
-     * Money deposited when the growth bar completes a full cycle.
-     */
-    private static final int PAYOUT_AMOUNT = 50;
-
-    /**
-     * How often (in ticks) to sync the percentage to clients.
-     * Every 10 ticks = 2 Hz — smooth enough for a progress bar,
-     * cheap enough to avoid network spam.
-     */
-    private static final int SYNC_INTERVAL = 10;
 
     // =====================================================================
     //  State
@@ -82,19 +69,19 @@ public final class EstateManager {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             UUID uuid = player.getUuid();
             float current = growthMap.getOrDefault(uuid, 0.0f);
-            current += GROWTH_PER_TICK;
+            current += EconomyConfig.ESTATE_GROWTH_PER_TICK;
 
             if (current >= 100.0f) {
                 current = 0.0f;
-                EconomyManager.addMoney(player, PAYOUT_AMOUNT);
+                EconomyManager.addMoney(player, EconomyConfig.ESTATE_PAYOUT_AMOUNT);
                 PocketUICore.LOGGER.debug("[Estate] Payout ${} → {}",
-                        PAYOUT_AMOUNT, player.getName().getString());
+                        EconomyConfig.ESTATE_PAYOUT_AMOUNT, player.getName().getString());
             }
 
             growthMap.put(uuid, current);
 
             // Sync to client at throttled rate
-            if (tickCounter % SYNC_INTERVAL == 0) {
+            if (tickCounter % EconomyConfig.ESTATE_SYNC_INTERVAL == 0) {
                 syncToClient(player, current);
             }
         }
@@ -116,10 +103,60 @@ public final class EstateManager {
 
     /**
      * Reset a player's growth (e.g. on disconnect cleanup).
+     * Also persists the current value before removing from memory.
+     *
+     * @param uuid   the player's UUID
+     * @param server the MinecraftServer (for persistence)
+     */
+    public static void resetGrowth(UUID uuid, MinecraftServer server) {
+        float current = growthMap.getOrDefault(uuid, 0.0f);
+        if (server != null && current > 0.0f) {
+            EstateGrowthState state = EstateGrowthState.getServerState(server);
+            state.setGrowth(uuid, current);
+        }
+        growthMap.remove(uuid);
+    }
+
+    /**
+     * Reset a player's growth without saving (legacy/simple cleanup).
      *
      * @param uuid the player's UUID
      */
     public static void resetGrowth(UUID uuid) {
+        growthMap.remove(uuid);
+    }
+
+    // =====================================================================
+    //  Persistence
+    // =====================================================================
+
+    /**
+     * Load a player's saved estate growth from disk into the in-memory
+     * map.  Call on player join.
+     *
+     * @param player the joining player
+     * @param server the MinecraftServer
+     */
+    public static void loadGrowth(ServerPlayerEntity player, MinecraftServer server) {
+        EstateGrowthState state = EstateGrowthState.getServerState(server);
+        float saved = state.getGrowth(player.getUuid());
+        if (saved > 0.0f) {
+            growthMap.put(player.getUuid(), saved);
+        }
+    }
+
+    /**
+     * Save a player's current estate growth to disk.
+     * Call on player disconnect.
+     *
+     * @param player the disconnecting player
+     * @param server the MinecraftServer
+     */
+    public static void saveGrowth(ServerPlayerEntity player, MinecraftServer server) {
+        UUID uuid = player.getUuid();
+        float current = growthMap.getOrDefault(uuid, 0.0f);
+        EstateGrowthState state = EstateGrowthState.getServerState(server);
+        state.setGrowth(uuid, current);
         growthMap.remove(uuid);
     }
 

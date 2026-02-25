@@ -264,12 +264,14 @@ public final class FocusManager {
             int dx = tx - cx;
             int dy = ty - cy;
 
-            // Direction filter — target must be in the correct half-plane
+            // Direction filter — target must be in a ~60° cone from the
+            // navigation direction (relaxed from strict 45° half-plane
+            // to accept diagonal stick / d-pad input more gracefully).
             boolean valid = switch (dir) {
-                case UP    -> dy < 0 && Math.abs(dy) >= Math.abs(dx);
-                case DOWN  -> dy > 0 && Math.abs(dy) >= Math.abs(dx);
-                case LEFT  -> dx < 0 && Math.abs(dx) >= Math.abs(dy);
-                case RIGHT -> dx > 0 && Math.abs(dx) >= Math.abs(dy);
+                case UP    -> dy < 0 && Math.abs(dy) >= Math.abs(dx) * 0.5;
+                case DOWN  -> dy > 0 && Math.abs(dy) >= Math.abs(dx) * 0.5;
+                case LEFT  -> dx < 0 && Math.abs(dx) >= Math.abs(dy) * 0.5;
+                case RIGHT -> dx > 0 && Math.abs(dx) >= Math.abs(dy) * 0.5;
             };
             if (!valid) continue;
 

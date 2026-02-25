@@ -6,6 +6,7 @@ import com.pocketuicore.component.TextLabel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -149,33 +150,103 @@ public class ObservableState<T> {
      * @param <R> the derived value type
      */
     public static class MappedState<R> extends ObservableState<R> {
-        private final ObservableState<?> source;
+        private final List<ObservableState<?>> sources = new ArrayList<>();
+        private final List<Consumer<?>> bridges = new ArrayList<>();
         Consumer<?> sourceBridge;
         private boolean disposed = false;
 
         MappedState(R initialValue, ObservableState<?> source, Consumer<?> bridge) {
             super(initialValue);
-            this.source = source;
+            this.sources.add(source);
             this.sourceBridge = bridge;
         }
 
+        MappedState(R initialValue) {
+            super(initialValue);
+        }
+
+        void addSource(ObservableState<?> source, Consumer<?> bridge) {
+            this.sources.add(source);
+            this.bridges.add(bridge);
+        }
+
         /**
-         * Unsubscribe from the source observable. After calling this,
+         * Unsubscribe from the source observable(s). After calling this,
          * this mapped state will no longer receive updates.
          * <p>
          * Safe to call multiple times.
          */
         @SuppressWarnings("unchecked")
         public void dispose() {
-            if (!disposed && sourceBridge != null) {
-                ((ObservableState<Object>) source)
-                        .removeListener((Consumer<Object>) sourceBridge);
+            if (!disposed) {
+                // Legacy single-source bridge
+                if (sourceBridge != null && !sources.isEmpty()) {
+                    ((ObservableState<Object>) sources.get(0))
+                            .removeListener((Consumer<Object>) sourceBridge);
+                }
+                // Multi-source bridges (from combine)
+                for (int i = 0; i < bridges.size(); i++) {
+                    if (i < sources.size()) {
+                        ((ObservableState<Object>) sources.get(i))
+                                .removeListener((Consumer<Object>) bridges.get(i));
+                    }
+                }
                 disposed = true;
             }
         }
 
         /** @return {@code true} if this mapped state has been disposed. */
         public boolean isDisposed() { return disposed; }
+    }
+
+    // =====================================================================
+    //  Combining multiple observables
+    // =====================================================================
+
+    /**
+     * Create a new derived ObservableState that combines two source
+     * observables using a combining function.  The derived state updates
+     * whenever <em>either</em> source changes.
+     * <p>
+     * Call {@link MappedState#dispose()} on the result when it is no
+     * longer needed.
+     * <p>
+     * <b>Usage:</b>
+     * <pre>{@code
+     *     ObservableState<Integer> a = new ObservableState<>(3);
+     *     ObservableState<Integer> b = new ObservableState<>(4);
+     *     var sum = ObservableState.combine(a, b, Integer::sum);
+     *     // sum.get() == 7
+     *     a.set(10);
+     *     // sum.get() == 14
+     * }</pre>
+     *
+     * @param stateA   first source
+     * @param stateB   second source
+     * @param combiner function that merges the two values
+     * @param <A>      type of first source
+     * @param <B>      type of second source
+     * @param <R>      type of the combined result
+     * @return a new MappedState tracking both sources
+     */
+    public static <A, B, R> MappedState<R> combine(
+            ObservableState<A> stateA,
+            ObservableState<B> stateB,
+            BiFunction<A, B, R> combiner) {
+
+        R initial = combiner.apply(stateA.get(), stateB.get());
+        MappedState<R> derived = new MappedState<>(initial);
+
+        Consumer<A> bridgeA = val -> derived.set(combiner.apply(val, stateB.get()));
+        Consumer<B> bridgeB = val -> derived.set(combiner.apply(stateA.get(), val));
+
+        derived.addSource(stateA, bridgeA);
+        derived.addSource(stateB, bridgeB);
+
+        stateA.addListener(bridgeA);
+        stateB.addListener(bridgeB);
+
+        return derived;
     }
 
     // =====================================================================

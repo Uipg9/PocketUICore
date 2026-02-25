@@ -116,6 +116,50 @@ public final class ControllerHandler {
     /** @return {@code true} if a gamepad is connected and active. */
     public boolean isActive() { return active; }
 
+    /**
+     * Trigger a haptic rumble on the connected gamepad (if supported).
+     * <p>
+     * Internally calls {@code glfwSetJoystickRumble} when available.
+     * Falls back silently if rumble is not supported by the driver.
+     *
+     * @param strongMagnitude intensity of the low-frequency motor (0.0–1.0)
+     * @param weakMagnitude   intensity of the high-frequency motor (0.0–1.0)
+     * @param durationMs      rumble duration in milliseconds
+     */
+    public void rumble(float strongMagnitude, float weakMagnitude, int durationMs) {
+        if (!active || connectedJoystick < 0) return;
+        // GLFW 3.4+ added glfwSetJoystickRumble; older versions lack it.
+        // We use reflection so the code compiles against any LWJGL version.
+        try {
+            java.lang.reflect.Method m = org.lwjgl.glfw.GLFW.class.getMethod(
+                    "glfwSetJoystickRumble", int.class, float.class, float.class, int.class);
+            m.invoke(null, connectedJoystick, strongMagnitude, weakMagnitude, durationMs);
+        } catch (Throwable ignored) {
+            // Not supported on this GLFW/LWJGL version — silently ignore.
+        }
+    }
+
+    /**
+     * Convenience: short 100 ms tap rumble.
+     */
+    public void rumbleTap() {
+        rumble(0.3f, 0.2f, 100);
+    }
+
+    /**
+     * Convenience: medium 200 ms rumble for confirmations.
+     */
+    public void rumbleConfirm() {
+        rumble(0.5f, 0.3f, 200);
+    }
+
+    /**
+     * Convenience: strong 400 ms rumble for errors/impacts.
+     */
+    public void rumbleError() {
+        rumble(0.8f, 0.6f, 400);
+    }
+
     // =====================================================================
     //  Tick — called every END_CLIENT_TICK
     // =====================================================================
@@ -312,12 +356,38 @@ public final class ControllerHandler {
     // =====================================================================
 
     private void handleScroll(float ry) {
+        // Auto-detect scroll target if not manually set
+        if (scrollTarget == null) {
+            scrollTarget = findScrollablePanel();
+        }
         if (scrollTarget == null) return;
         if (Math.abs(ry) <= STICK_DEADZONE) return;
 
         // Map stick deflection to scroll amount (positive ry = scroll down)
         double amount = -ry * SCROLL_SPEED;
         scrollTarget.scrollBy(amount);
+    }
+
+    /**
+     * Walk up the parent chain from the currently focused component to
+     * find the nearest scrollable {@link DarkPanel}.  This allows the
+     * right-stick scroll to work automatically without a manual
+     * {@link #setScrollTarget(DarkPanel)} call.
+     *
+     * @return the nearest scrollable DarkPanel, or {@code null}
+     */
+    private DarkPanel findScrollablePanel() {
+        UIComponent focused = FocusManager.getInstance().getFocused();
+        if (focused == null) return null;
+
+        UIComponent current = focused;
+        while (current != null) {
+            if (current instanceof DarkPanel dp && dp.isScrollable()) {
+                return dp;
+            }
+            current = current.getParent();
+        }
+        return null;
     }
 
     // =====================================================================

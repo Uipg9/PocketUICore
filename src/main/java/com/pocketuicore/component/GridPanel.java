@@ -47,6 +47,28 @@ public class GridPanel extends DarkPanel {
     }
 
     // =====================================================================
+    //  Auto-layout on tree changes
+    // =====================================================================
+
+    @Override
+    public void addChild(UIComponent child) {
+        super.addChild(child);
+        layout();
+    }
+
+    @Override
+    public void removeChild(UIComponent child) {
+        super.removeChild(child);
+        layout();
+    }
+
+    @Override
+    public void clearChildren() {
+        super.clearChildren();
+        layout();
+    }
+
+    // =====================================================================
     //  Layout
     // =====================================================================
 

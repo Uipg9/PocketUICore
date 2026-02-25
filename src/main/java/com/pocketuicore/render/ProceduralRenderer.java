@@ -317,16 +317,29 @@ public final class ProceduralRenderer {
 
     /**
      * Horizontal gradient rectangle (left colour → right colour).
-     * Implemented as vertical 1-px-wide columns with interpolated colour.
-     * For very wide gradients (>300 px) consider batching externally.
+     * <p>
+     * Uses stepped batching: instead of one {@code ctx.fill()} per pixel
+     * column, draws multi-pixel bands with the interpolated colour at
+     * each band's midpoint.  This reduces draw-call count by up to 4×
+     * while remaining visually smooth at typical UI scales.
+     *
+     * @param leftColor  ARGB colour on the left edge
+     * @param rightColor ARGB colour on the right edge
      */
     public static void fillGradientH(DrawContext ctx, int x, int y, int w, int h,
                                       int leftColor, int rightColor) {
         if (w <= 0 || h <= 0) return;
-        for (int col = 0; col < w; col++) {
-            float t = (float) col / Math.max(w - 1, 1);
+
+        // For very narrow widths, per-pixel is fine and cheaper than
+        // the bookkeeping overhead of batching.
+        int step = w <= 16 ? 1 : 4;
+
+        for (int col = 0; col < w; col += step) {
+            int bandW = Math.min(step, w - col);
+            // Sample colour at band midpoint for best visual quality
+            float t = (float) (col + bandW / 2) / Math.max(w - 1, 1);
             int c = lerpColor(leftColor, rightColor, t);
-            ctx.fill(x + col, y, x + col + 1, y + h, c);
+            ctx.fill(x + col, y, x + col + bandW, y + h, c);
         }
     }
 

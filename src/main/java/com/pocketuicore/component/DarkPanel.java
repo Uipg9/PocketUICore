@@ -31,6 +31,11 @@ public class DarkPanel extends UIComponent {
     private int contentHeight = 0;  // set externally if content exceeds panel
     private boolean scrollable = false;
 
+    // ── Horizontal scroll support ────────────────────────────────────────
+    private int scrollOffsetX = 0;
+    private int contentWidth = 0;
+    private boolean scrollableH = false;
+
     // =====================================================================
     //  Builders
     // =====================================================================
@@ -59,7 +64,7 @@ public class DarkPanel extends UIComponent {
         this.drawShadow      = drawShadow;
         this.shadowLayers    = 6;
         this.shadowAlpha     = 102; // ~40 %
-        this.blockInputInBounds = true; // DarkPanel blocks all input within bounds
+        this.blockInputInBounds = false; // default to false — caller opts in explicitly
     }
 
     // =====================================================================
@@ -85,19 +90,24 @@ public class DarkPanel extends UIComponent {
 
     /**
      * Overridden to apply scissoring and scroll offset when the panel is
-     * scrollable.
+     * scrollable (vertically and/or horizontally).
      */
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         if (!visible) return;
         renderSelf(ctx, mouseX, mouseY, delta);
 
-        if (scrollable) {
+        boolean anyScroll = scrollable || scrollableH;
+        if (anyScroll) {
             ctx.enableScissor(x, y, x + width, y + height);
             ctx.getMatrices().pushMatrix();
-            ctx.getMatrices().translate(0, -scrollOffset);
+            float tx = scrollableH ? -scrollOffsetX : 0;
+            float ty = scrollable  ? -scrollOffset  : 0;
+            ctx.getMatrices().translate(tx, ty);
+            int adjMX = scrollableH ? mouseX + scrollOffsetX : mouseX;
+            int adjMY = scrollable  ? mouseY + scrollOffset  : mouseY;
             for (UIComponent child : children) {
-                child.render(ctx, mouseX, mouseY + scrollOffset, delta);
+                child.render(ctx, adjMX, adjMY, delta);
             }
             ctx.getMatrices().popMatrix();
             ctx.disableScissor();
@@ -119,9 +129,10 @@ public class DarkPanel extends UIComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        double adjustedY = scrollable ? mouseY + scrollOffset : mouseY;
+        double adjustedX = scrollableH ? mouseX + scrollOffsetX : mouseX;
+        double adjustedY = scrollable  ? mouseY + scrollOffset  : mouseY;
         for (int i = children.size() - 1; i >= 0; i--) {
-            if (children.get(i).mouseClicked(mouseX, adjustedY, button)) return true;
+            if (children.get(i).mouseClicked(adjustedX, adjustedY, button)) return true;
         }
         return blockInputInBounds && isHovered(mouseX, mouseY);
     }
@@ -129,9 +140,10 @@ public class DarkPanel extends UIComponent {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        double adjustedY = scrollable ? mouseY + scrollOffset : mouseY;
+        double adjustedX = scrollableH ? mouseX + scrollOffsetX : mouseX;
+        double adjustedY = scrollable  ? mouseY + scrollOffset  : mouseY;
         for (int i = children.size() - 1; i >= 0; i--) {
-            if (children.get(i).mouseReleased(mouseX, adjustedY, button)) return true;
+            if (children.get(i).mouseReleased(adjustedX, adjustedY, button)) return true;
         }
         return blockInputInBounds && isHovered(mouseX, mouseY);
     }
@@ -139,17 +151,28 @@ public class DarkPanel extends UIComponent {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
         if (!visible || !enabled) return false;
-        double adjustedY = scrollable ? mouseY + scrollOffset : mouseY;
+        double adjustedX = scrollableH ? mouseX + scrollOffsetX : mouseX;
+        double adjustedY = scrollable  ? mouseY + scrollOffset  : mouseY;
         // Children get first chance at the scroll event
         for (int i = children.size() - 1; i >= 0; i--) {
-            if (children.get(i).mouseScrolled(mouseX, adjustedY, hAmount, vAmount)) return true;
+            if (children.get(i).mouseScrolled(adjustedX, adjustedY, hAmount, vAmount)) return true;
         }
         // Own scroll handling
-        if (scrollable && isHovered(mouseX, mouseY)) {
-            scrollOffset -= (int) (vAmount * 20);
-            int maxScroll = Math.max(0, contentHeight - height);
-            scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
-            return true;
+        if (isHovered(mouseX, mouseY)) {
+            boolean consumed = false;
+            if (scrollable && vAmount != 0) {
+                scrollOffset -= (int) (vAmount * 20);
+                int maxScroll = Math.max(0, contentHeight - height);
+                scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
+                consumed = true;
+            }
+            if (scrollableH && hAmount != 0) {
+                scrollOffsetX -= (int) (hAmount * 20);
+                int maxScrollX = Math.max(0, contentWidth - width);
+                scrollOffsetX = Math.max(0, Math.min(scrollOffsetX, maxScrollX));
+                consumed = true;
+            }
+            if (consumed) return true;
         }
         return blockInputInBounds && isHovered(mouseX, mouseY);
     }
@@ -205,4 +228,45 @@ public class DarkPanel extends UIComponent {
 
     /** @return total content height (0 if not scrollable). */
     public int getContentHeight() { return contentHeight; }
+
+    // ── Horizontal scroll accessors ──────────────────────────────────────
+
+    /**
+     * Enable or disable horizontal scrolling and set the total content
+     * width.  The scroll offset is clamped automatically.
+     *
+     * @param scrollable   whether horizontal scrolling is enabled
+     * @param contentWidth total width of the content (in pixels)
+     */
+    public void setScrollableH(boolean scrollable, int contentWidth) {
+        this.scrollableH  = scrollable;
+        this.contentWidth = contentWidth;
+        int max = Math.max(0, contentWidth - width);
+        this.scrollOffsetX = Math.max(0, Math.min(this.scrollOffsetX, max));
+    }
+
+    public int getScrollOffsetX() { return scrollOffsetX; }
+    public void setScrollOffsetX(int offset) {
+        int max = Math.max(0, contentWidth - width);
+        this.scrollOffsetX = Math.max(0, Math.min(offset, max));
+    }
+
+    /**
+     * Scroll horizontally by a continuous amount.
+     * Positive values scroll right, negative scroll left.
+     *
+     * @param amount scroll delta in GUI pixels
+     */
+    public void scrollByX(double amount) {
+        if (!scrollableH) return;
+        int max = Math.max(0, contentWidth - width);
+        this.scrollOffsetX = Math.max(0, Math.min(
+                this.scrollOffsetX + (int) amount, max));
+    }
+
+    /** @return {@code true} if this panel has horizontal scrolling enabled. */
+    public boolean isScrollableH() { return scrollableH; }
+
+    /** @return total content width (0 if horizontal scroll is disabled). */
+    public int getContentWidth() { return contentWidth; }
 }

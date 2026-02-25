@@ -31,14 +31,16 @@ public class PocketUICore implements ModInitializer {
                 .register(SyncEstatePayload.ID, SyncEstatePayload.CODEC);
 
         // Sync balance + estate growth to client when a player joins
+        // Also restore persisted estate growth from disk
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            EstateManager.loadGrowth(handler.player, server);
             EconomyManager.syncOnJoin(handler.player);
             EstateManager.syncOnJoin(handler.player);
         });
 
-        // Clean up estate growth on disconnect
+        // Save estate growth to disk on disconnect, then clean up
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
-                EstateManager.resetGrowth(handler.player.getUuid())
+                EstateManager.saveGrowth(handler.player, server)
         );
 
         // Tick the estate passive-income system every server tick
