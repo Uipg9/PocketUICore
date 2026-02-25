@@ -25,7 +25,7 @@ public final class ClientNetworkHandler {
 
     private ClientNetworkHandler() { /* utility class */ }
 
-    // ── Global observable that UI components can bind to ─────────────────
+    // ── Global observables that UI components can bind to ────────────────
     /**
      * The player's current balance as received from the server.
      * Starts at {@code 0} and is updated each time a
@@ -33,6 +33,15 @@ public final class ClientNetworkHandler {
      */
     public static final ObservableState<Integer> CLIENT_BALANCE =
             new ObservableState<>(0);
+
+    /**
+     * The player's current estate growth percentage (0.0–100.0).
+     * Updated by {@link SyncEstatePayload} packets from the server.
+     * Bind a {@link com.pocketuicore.component.PercentageBar} to this
+     * for a live-filling progress bar in the {@code /pocket} menu.
+     */
+    public static final ObservableState<Float> CLIENT_ESTATE_GROWTH =
+            new ObservableState<>(0.0f);
 
     // ── Registration ─────────────────────────────────────────────────────
 
@@ -51,6 +60,19 @@ public final class ClientNetworkHandler {
                         PocketUICore.LOGGER.debug(
                                 "[Economy] Client balance synced: ${}",
                                 newBalance);
+                    });
+                }
+        );
+
+        // Estate growth percentage receiver
+        ClientPlayNetworking.registerGlobalReceiver(
+                SyncEstatePayload.ID,
+                (payload, context) -> {
+                    float pct = payload.percentage();
+                    context.client().execute(() -> {
+                        CLIENT_ESTATE_GROWTH.set(pct);
+                        PocketUICore.LOGGER.debug(
+                                "[Estate] Client growth synced: {}%", pct);
                     });
                 }
         );

@@ -1,8 +1,11 @@
 package com.pocketuicore;
 
 import com.pocketuicore.economy.EconomyManager;
+import com.pocketuicore.economy.EstateManager;
 import com.pocketuicore.economy.SyncBalancePayload;
+import com.pocketuicore.economy.SyncEstatePayload;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import org.slf4j.Logger;
@@ -21,15 +24,26 @@ public class PocketUICore implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        // Register S2C payload type so the server can send balance packets
+        // Register S2C payload types
         PayloadTypeRegistry.playS2C()
                 .register(SyncBalancePayload.ID, SyncBalancePayload.CODEC);
+        PayloadTypeRegistry.playS2C()
+                .register(SyncEstatePayload.ID, SyncEstatePayload.CODEC);
 
-        // Sync balance to client when a player joins
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-                EconomyManager.syncOnJoin(handler.player)
+        // Sync balance + estate growth to client when a player joins
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            EconomyManager.syncOnJoin(handler.player);
+            EstateManager.syncOnJoin(handler.player);
+        });
+
+        // Clean up estate growth on disconnect
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+                EstateManager.resetGrowth(handler.player.getUuid())
         );
 
-        LOGGER.info("[PocketUICore] Core library loaded — procedural UI, economy, notifications, animations ready.");
+        // Tick the estate passive-income system every server tick
+        ServerTickEvents.END_SERVER_TICK.register(EstateManager::tick);
+
+        LOGGER.info("[PocketUICore] Core library loaded — procedural UI, economy, estate, caravan, notifications, animations ready.");
     }
 }

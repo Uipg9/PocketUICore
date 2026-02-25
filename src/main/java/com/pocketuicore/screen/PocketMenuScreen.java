@@ -70,6 +70,23 @@ public class PocketMenuScreen extends Screen {
         ObservableState.bindText(walletText, walletLabel);
         mainPanel.addChild(walletLabel);
 
+        // ── Estate Growth Progress Bar (live server-synced) ───────────────
+        TextLabel estateLabel = new TextLabel(0, 0, 0, 14, "");
+        estateLabel.setAlign(TextLabel.Align.CENTER);
+        estateLabel.setColor(ProceduralRenderer.COL_ACCENT_TEAL);
+        ObservableState<String> estateText = ClientNetworkHandler.CLIENT_ESTATE_GROWTH
+                .map(pct -> String.format("Estate Growth: %.1f%%", pct));
+        ObservableState.bindText(estateText, estateLabel);
+        mainPanel.addChild(estateLabel);
+
+        PercentageBar estateBar = new PercentageBar(0, 0, 0, 12, 0.0f);
+        estateBar.setBarColor(ProceduralRenderer.COL_ACCENT_TEAL);
+        estateBar.setTooltip("Passive Income", "Earn $50 when bar fills");
+        ObservableState.bindProgress(
+                ClientNetworkHandler.CLIENT_ESTATE_GROWTH.map(pct -> pct / 100.0f),
+                estateBar);
+        mainPanel.addChild(estateBar);
+
         // ── Estate item display (Diamond) ────────────────────────────────
         ItemDisplayComponent estateItem = new ItemDisplayComponent(
                 0, 0, new ItemStack(Items.DIAMOND));
@@ -98,6 +115,7 @@ public class PocketMenuScreen extends Screen {
         // ── Focus registration (controller / keyboard nav) ───────────────
         fm.register(upgradeBtn);
         fm.register(estateItem);
+        fm.register(estateBar);
         fm.focusFirst();
 
         // ── Controller support — enable gamepad polling + scroll ─────────
