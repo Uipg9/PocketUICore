@@ -12,12 +12,19 @@
     "environment": "*",
     "entrypoints": {
         "main": ["com.pocketuicore.PocketUICore"],
-        "client": ["com.pocketuicore.PocketUICoreClient"]
+        "client": ["com.pocketuicore.PocketUICoreClient"],
+        "controlify": ["com.pocketuicore.controller.PocketControlifyCompat"]
     },
     "depends": {
         "fabricloader": ">=0.18.0",
         "minecraft": ">=1.21.11",
         "java": ">=21",
         "fabric-api": "*"
+    },
+    "suggests": {
+        "controlify": ">=3.0.0-beta.1"
+    },
+    "breaks": {
+        "controlify": "<3.0.0-beta.1"
     }
 }

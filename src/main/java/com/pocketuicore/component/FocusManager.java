@@ -16,8 +16,10 @@ import java.util.List;
  * next/previous cycling.
  * <p>
  * <b>Controller integration:</b> This manager provides the focus graph;
- * input routing from a controller mod such as Controlify should call
- * {@link #navigateDirection(Direction)} and {@link #activateFocused()}.
+ * input routing from the {@link com.pocketuicore.controller.ControllerHandler}
+ * calls {@link #navigateDirection(Direction)} and {@link #activateFocused()}.
+ * A {@link FocusChangeListener} can be registered to react when the
+ * focused component changes (e.g. cursor snapping).
  * <p>
  * <b>Usage:</b>
  * <pre>{@code
@@ -34,6 +36,19 @@ import java.util.List;
  */
 public final class FocusManager {
 
+    /**
+     * Listener notified when the focused component changes.
+     * Useful for cursor snapping, sound effects, or visual updates.
+     */
+    @FunctionalInterface
+    public interface FocusChangeListener {
+        /**
+         * @param previous the previously focused component (may be {@code null})
+         * @param current  the newly focused component (may be {@code null})
+         */
+        void onFocusChanged(UIComponent previous, UIComponent current);
+    }
+
     // ── Singleton ────────────────────────────────────────────────────────
     private static final FocusManager INSTANCE = new FocusManager();
 
@@ -47,6 +62,36 @@ public final class FocusManager {
     // ── State ────────────────────────────────────────────────────────────
     private final List<UIComponent> focusables = new ArrayList<>();
     private UIComponent focused;
+    private final List<FocusChangeListener> listeners = new ArrayList<>();
+
+    // =====================================================================
+    //  Focus change listeners
+    // =====================================================================
+
+    /** Add a listener that fires whenever the focused component changes. */
+    public void addFocusChangeListener(FocusChangeListener listener) {
+        if (listener != null && !listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+
+    /** Remove a previously registered listener. */
+    public void removeFocusChangeListener(FocusChangeListener listener) {
+        listeners.remove(listener);
+    }
+
+    /** Remove all focus change listeners. */
+    public void clearFocusChangeListeners() {
+        listeners.clear();
+    }
+
+    /** Notify all listeners of a focus change. */
+    private void fireFocusChanged(UIComponent previous, UIComponent current) {
+        if (previous == current) return;
+        for (FocusChangeListener l : listeners) {
+            l.onFocusChanged(previous, current);
+        }
+    }
 
     // =====================================================================
     //  Registration
@@ -62,13 +107,20 @@ public final class FocusManager {
     /** Unregister a component. If it was focused, focus is cleared. */
     public void unregister(UIComponent component) {
         focusables.remove(component);
-        if (focused == component) focused = null;
+        if (focused == component) {
+            UIComponent prev = focused;
+            focused = null;
+            fireFocusChanged(prev, null);
+        }
     }
 
-    /** Clear all registrations and the focused component. */
+    /** Clear all registrations, listeners, and the focused component. */
     public void clear() {
+        UIComponent prev = focused;
         focusables.clear();
         focused = null;
+        clearFocusChangeListeners();
+        if (prev != null) fireFocusChanged(prev, null);
     }
 
     // =====================================================================
@@ -77,23 +129,30 @@ public final class FocusManager {
 
     /** Set focus to a specific component (should already be registered). */
     public void focus(UIComponent component) {
+        UIComponent prev = this.focused;
         this.focused = component;
+        fireFocusChanged(prev, component);
     }
 
     /** Clear focus (nothing focused). */
     public void clearFocus() {
+        UIComponent prev = this.focused;
         this.focused = null;
+        fireFocusChanged(prev, null);
     }
 
     /** Focus the first registered visible + enabled component. */
     public void focusFirst() {
+        UIComponent prev = focused;
         for (UIComponent c : focusables) {
             if (c.isVisible() && c.isEnabled()) {
                 focused = c;
+                fireFocusChanged(prev, c);
                 return;
             }
         }
         focused = null;
+        fireFocusChanged(prev, null);
     }
 
     /** @return the currently focused component, or {@code null}. */
@@ -117,12 +176,14 @@ public final class FocusManager {
      */
     public void navigateNext() {
         if (focusables.isEmpty()) return;
+        UIComponent prev = focused;
         int start = focused != null ? focusables.indexOf(focused) : -1;
         for (int i = 1; i <= focusables.size(); i++) {
             int idx = (start + i) % focusables.size();
             UIComponent c = focusables.get(idx);
             if (c.isVisible() && c.isEnabled()) {
                 focused = c;
+                fireFocusChanged(prev, c);
                 return;
             }
         }
@@ -134,12 +195,14 @@ public final class FocusManager {
      */
     public void navigatePrevious() {
         if (focusables.isEmpty()) return;
+        UIComponent prev = focused;
         int start = focused != null ? focusables.indexOf(focused) : focusables.size();
         for (int i = 1; i <= focusables.size(); i++) {
             int idx = (start - i + focusables.size()) % focusables.size();
             UIComponent c = focusables.get(idx);
             if (c.isVisible() && c.isEnabled()) {
                 focused = c;
+                fireFocusChanged(prev, c);
                 return;
             }
         }
@@ -192,7 +255,11 @@ public final class FocusManager {
             }
         }
 
-        if (best != null) focused = best;
+        if (best != null) {
+            UIComponent prev = focused;
+            focused = best;
+            fireFocusChanged(prev, best);
+        }
     }
 
     // =====================================================================

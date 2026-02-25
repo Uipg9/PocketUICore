@@ -1,6 +1,7 @@
 package com.pocketuicore.screen;
 
 import com.pocketuicore.component.*;
+import com.pocketuicore.controller.ControllerHandler;
 import com.pocketuicore.data.ObservableState;
 import com.pocketuicore.economy.ClientNetworkHandler;
 import com.pocketuicore.render.ProceduralRenderer;
@@ -98,6 +99,11 @@ public class PocketMenuScreen extends Screen {
         fm.register(upgradeBtn);
         fm.register(estateItem);
         fm.focusFirst();
+
+        // ── Controller support — enable gamepad polling + scroll ─────────
+        ControllerHandler ch = ControllerHandler.getInstance();
+        ch.setScrollTarget(mainPanel);
+        ch.enable();
     }
 
     // =====================================================================
@@ -170,6 +176,7 @@ public class PocketMenuScreen extends Screen {
 
     @Override
     public void removed() {
+        ControllerHandler.getInstance().disable();
         FocusManager.getInstance().clear();
         super.removed();
     }

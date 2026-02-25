@@ -181,4 +181,23 @@ public class DarkPanel extends UIComponent {
         int max = Math.max(0, contentHeight - height);
         this.scrollOffset = Math.max(0, Math.min(offset, max));
     }
+
+    /**
+     * Scroll by a continuous amount (for analog controller sticks).
+     * Positive values scroll down, negative scroll up.
+     *
+     * @param amount scroll delta in GUI pixels
+     */
+    public void scrollBy(double amount) {
+        if (!scrollable) return;
+        int max = Math.max(0, contentHeight - height);
+        this.scrollOffset = Math.max(0, Math.min(
+                this.scrollOffset + (int) amount, max));
+    }
+
+    /** @return {@code true} if this panel is currently scrollable. */
+    public boolean isScrollable() { return scrollable; }
+
+    /** @return total content height (0 if not scrollable). */
+    public int getContentHeight() { return contentHeight; }
 }

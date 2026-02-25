@@ -12,6 +12,18 @@ base {
 
 repositories {
     mavenCentral()
+    // isXander's maven — Controlify + its libraries
+    maven { url = "https://maven.isxander.dev/releases/" }
+    maven { url = "https://maven.isxander.dev/snapshots/" }
+    // Quilt maven — quilt parsers (Controlify transitive)
+    maven { url = "https://maven.quiltmc.org/repository/release/" }
+    // ModMenu maven
+    maven { url = "https://maven.terraformersmc.com/" }
+    // Modrinth maven — ImmediatelyFast, Simple Voice Chat (Controlify compat)
+    maven {
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
 }
 
 dependencies {
@@ -19,6 +31,9 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Controlify — optional controller integration (compile-only, not bundled)
+    modCompileOnly "dev.isxander:controlify:${project.controlify_version}"
 }
 
 processResources {
