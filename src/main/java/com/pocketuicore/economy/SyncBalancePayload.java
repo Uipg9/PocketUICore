@@ -22,7 +22,7 @@ public record SyncBalancePayload(int balance) implements CustomPayload {
 
     // ── Payload ID ───────────────────────────────────────────────────────
     public static final CustomPayload.Id<SyncBalancePayload> ID =
-            CustomPayload.id("pocketuicore:sync_balance");
+            new CustomPayload.Id<>(Identifier.of("pocketuicore", "sync_balance"));
 
     // ── Packet Codec ─────────────────────────────────────────────────────
     public static final PacketCodec<io.netty.buffer.ByteBuf, SyncBalancePayload> CODEC =

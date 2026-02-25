@@ -3,6 +3,7 @@ package com.pocketuicore.economy;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.Identifier;
 
 /**
  * SyncEstatePayload — S2C network payload for estate growth sync.
@@ -21,7 +22,7 @@ public record SyncEstatePayload(float percentage) implements CustomPayload {
 
     // ── Payload ID ───────────────────────────────────────────────────────
     public static final CustomPayload.Id<SyncEstatePayload> ID =
-            CustomPayload.id("pocketuicore:sync_estate");
+            new CustomPayload.Id<>(Identifier.of("pocketuicore", "sync_estate"));
 
     // ── Packet Codec ─────────────────────────────────────────────────────
     public static final PacketCodec<io.netty.buffer.ByteBuf, SyncEstatePayload> CODEC =

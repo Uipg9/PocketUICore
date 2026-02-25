@@ -140,12 +140,19 @@ public class PercentageBar extends UIComponent {
     public float getDisplayProgress() { return displayProgress; }
 
     public void setBarColor(int c)        { this.barColor = c; }
+    public int  getBarColor()              { return barColor; }
     public void setTrackColor(int c)      { this.trackColor = c; }
+    public int  getTrackColor()            { return trackColor; }
     public void setTextColor(int c)       { this.textColor = c; }
+    public int  getTextColor()             { return textColor; }
     public void setCornerRadius(int r)    { this.cornerRadius = r; }
+    public int  getCornerRadius()          { return cornerRadius; }
     public void setLabel(String l)        { this.label = l; }
+    public String getLabel()               { return label; }
     public void setShowPercentage(boolean b) { this.showPercentage = b; }
+    public boolean isShowPercentage()      { return showPercentage; }
     public void setEasingSpeed(float s)   { this.easingSpeed = s; }
+    public float getEasingSpeed()          { return easingSpeed; }
 
     // =====================================================================
     //  Utility

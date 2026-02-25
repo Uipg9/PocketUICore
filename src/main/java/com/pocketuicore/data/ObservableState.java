@@ -120,15 +120,62 @@ public class ObservableState<T> {
      * Create a new ObservableState that is derived from this one via a
      * mapping function.  When this state changes, the derived state
      * automatically updates.
+     * <p>
+     * The returned {@link MappedState} extends {@code ObservableState<R>}
+     * and provides a {@link MappedState#dispose()} method to unsubscribe
+     * from the source, preventing memory leaks when the derived state
+     * is no longer needed.
      *
      * @param mapper transformation function
      * @param <R>    result type
-     * @return a new ObservableState that tracks this one
+     * @return a new MappedState that tracks this one
      */
-    public <R> ObservableState<R> map(Function<T, R> mapper) {
-        ObservableState<R> derived = new ObservableState<>(mapper.apply(value));
-        addListener(val -> derived.set(mapper.apply(val)));
+    public <R> MappedState<R> map(Function<T, R> mapper) {
+        Consumer<T> bridge = val -> {}; // placeholder — replaced below
+        MappedState<R> derived = new MappedState<>(mapper.apply(value), this, bridge);
+        // Build the real bridge that updates the derived state
+        Consumer<T> realBridge = val -> derived.set(mapper.apply(val));
+        derived.sourceBridge = realBridge;
+        addListener(realBridge);
         return derived;
+    }
+
+    /**
+     * A derived observable state returned by {@link #map(Function)}.
+     * <p>
+     * Call {@link #dispose()} when this mapped state is no longer needed
+     * to remove the listener from the source and avoid memory leaks.
+     *
+     * @param <R> the derived value type
+     */
+    public static class MappedState<R> extends ObservableState<R> {
+        private final ObservableState<?> source;
+        Consumer<?> sourceBridge;
+        private boolean disposed = false;
+
+        MappedState(R initialValue, ObservableState<?> source, Consumer<?> bridge) {
+            super(initialValue);
+            this.source = source;
+            this.sourceBridge = bridge;
+        }
+
+        /**
+         * Unsubscribe from the source observable. After calling this,
+         * this mapped state will no longer receive updates.
+         * <p>
+         * Safe to call multiple times.
+         */
+        @SuppressWarnings("unchecked")
+        public void dispose() {
+            if (!disposed && sourceBridge != null) {
+                ((ObservableState<Object>) source)
+                        .removeListener((Consumer<Object>) sourceBridge);
+                disposed = true;
+            }
+        }
+
+        /** @return {@code true} if this mapped state has been disposed. */
+        public boolean isDisposed() { return disposed; }
     }
 
     // =====================================================================

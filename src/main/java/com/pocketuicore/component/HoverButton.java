@@ -90,14 +90,14 @@ public class HoverButton extends UIComponent {
 
         // ── Colour blending ──────────────────────────────────────────────
         int bgColor;
-        if (pressed && hovered) {
+        if (!enabled) {
+            // Disabled state: desaturated, dimmed background
+            int gray = ((normalColor >> 16 & 0xFF) + (normalColor >> 8 & 0xFF) + (normalColor & 0xFF)) / 3;
+            bgColor = 0xFF000000 | (gray / 2) << 16 | (gray / 2) << 8 | (gray / 2);
+        } else if (pressed && hovered) {
             bgColor = pressedColor;
         } else {
             bgColor = ProceduralRenderer.lerpColor(normalColor, hoverColor, hoverTransition);
-        }
-
-        if (!enabled) {
-            bgColor = ProceduralRenderer.withAlpha(bgColor, 100);
         }
 
         // ── Draw ─────────────────────────────────────────────────────────
@@ -107,7 +107,13 @@ public class HoverButton extends UIComponent {
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer tr = client.textRenderer;
         int textY = y + (height - tr.fontHeight) / 2;
-        int tc = enabled ? textColor : ProceduralRenderer.COL_TEXT_MUTED;
+        int tc;
+        if (!enabled) {
+            // Disabled text: 50% alpha for clear visual distinction
+            tc = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_TEXT_MUTED, 128);
+        } else {
+            tc = textColor;
+        }
         ProceduralRenderer.drawCenteredText(ctx, tr, label, x + width / 2, textY, tc);
 
         // ── Focus ring (controller / keyboard navigation) ────────────────
@@ -168,13 +174,20 @@ public class HoverButton extends UIComponent {
     // =====================================================================
 
     public void setLabel(String label)           { this.label = label; }
+    /** Alias for {@link #setLabel(String)} — consistent with TextLabel. */
+    public void setText(String text)              { this.label = text; }
     public String getLabel()                     { return label; }
     public void setOnClick(Runnable r)           { this.onClick = r; }
     public void setNormalColor(int c)            { this.normalColor = c; }
+    public int  getNormalColor()                 { return normalColor; }
     public void setHoverColor(int c)             { this.hoverColor = c; }
+    public int  getHoverColor()                  { return hoverColor; }
     public void setPressedColor(int c)           { this.pressedColor = c; }
+    public int  getPressedColor()                { return pressedColor; }
     public void setTextColor(int c)              { this.textColor = c; }
+    public int  getTextColor()                   { return textColor; }
     public void setCornerRadius(int r)           { this.cornerRadius = r; }
+    public int  getCornerRadius()                { return cornerRadius; }
     public boolean isHoveredState()              { return hovered; }
     public boolean isPressedState()              { return pressed; }
 }

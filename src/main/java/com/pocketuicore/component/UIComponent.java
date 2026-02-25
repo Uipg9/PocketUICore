@@ -44,6 +44,9 @@ public abstract class UIComponent {
     /** Tooltip hover delay in nanoseconds (default 0.5 s). */
     private static final long TOOLTIP_DELAY_NS = 500_000_000L;
 
+    // ── Click handler ────────────────────────────────────────────────────
+    private Runnable onClick;
+
     // ── Tree ─────────────────────────────────────────────────────────────
     protected UIComponent parent;
     protected final List<UIComponent> children = new ArrayList<>();
@@ -98,6 +101,11 @@ public abstract class UIComponent {
         for (int i = children.size() - 1; i >= 0; i--) {
             if (children.get(i).mouseClicked(mouseX, mouseY, button)) return true;
         }
+        // onClick handler — fires on left-click when hovered
+        if (button == 0 && onClick != null && isHovered(mouseX, mouseY)) {
+            onClick.run();
+            return true;
+        }
         // Strict Z-index blocking: consume the event if within bounds
         if (blockInputInBounds && isHovered(mouseX, mouseY)) return true;
         return false;
@@ -125,6 +133,56 @@ public abstract class UIComponent {
         }
         if (blockInputInBounds && isHovered(mouseX, mouseY)) return true;
         return false;
+    }
+
+    /**
+     * Forward a mouse-drag event.
+     *
+     * @return {@code true} if the drag was consumed.
+     */
+    public boolean mouseDragged(double mouseX, double mouseY, int button,
+                                 double deltaX, double deltaY) {
+        if (!visible || !enabled) return false;
+        for (int i = children.size() - 1; i >= 0; i--) {
+            if (children.get(i).mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Forward a key press.
+     *
+     * @return {@code true} if the key was consumed.
+     */
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (!visible || !enabled) return false;
+        for (int i = children.size() - 1; i >= 0; i--) {
+            if (children.get(i).keyPressed(keyCode, scanCode, modifiers)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Forward a character typed event.
+     *
+     * @return {@code true} if the character was consumed.
+     */
+    public boolean charTyped(char chr, int modifiers) {
+        if (!visible || !enabled) return false;
+        for (int i = children.size() - 1; i >= 0; i--) {
+            if (children.get(i).charTyped(chr, modifiers)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Forward a mouse-moved event (for precise hover tracking).
+     */
+    public void mouseMoved(double mouseX, double mouseY) {
+        if (!visible) return;
+        for (int i = children.size() - 1; i >= 0; i--) {
+            children.get(i).mouseMoved(mouseX, mouseY);
+        }
     }
 
     // =====================================================================
@@ -189,6 +247,17 @@ public abstract class UIComponent {
 
     public boolean isBlockInputInBounds() { return blockInputInBounds; }
     public void setBlockInputInBounds(boolean b) { this.blockInputInBounds = b; }
+
+    /**
+     * Set a click handler on any component.  When set, the component
+     * will consume left-clicks within its bounds and invoke this callback.
+     *
+     * @param handler action to run on click, or {@code null} to remove
+     */
+    public void setOnClick(Runnable handler) { this.onClick = handler; }
+
+    /** @return the current click handler, or {@code null}. */
+    public Runnable getOnClick() { return onClick; }
 
     // =====================================================================
     //  Tooltip API

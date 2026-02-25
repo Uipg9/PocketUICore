@@ -121,6 +121,70 @@ public final class ProceduralRenderer {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
+    /**
+     * Darken a colour by multiplying its RGB channels.
+     *
+     * @param argb   the colour to darken
+     * @param factor 0.0 = black, 1.0 = original colour
+     */
+    public static int darken(int argb, float factor) {
+        factor = Math.clamp(factor, 0f, 1f);
+        int a = (argb >> 24) & 0xFF;
+        int r = (int) (((argb >> 16) & 0xFF) * factor);
+        int g = (int) (((argb >>  8) & 0xFF) * factor);
+        int b = (int) ((argb & 0xFF) * factor);
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    /**
+     * Lighten a colour by blending toward white.
+     *
+     * @param argb   the colour to lighten
+     * @param factor 0.0 = original colour, 1.0 = white
+     */
+    public static int lighten(int argb, float factor) {
+        factor = Math.clamp(factor, 0f, 1f);
+        int a = (argb >> 24) & 0xFF;
+        int r = (int) (((argb >> 16) & 0xFF) + (255 - ((argb >> 16) & 0xFF)) * factor);
+        int g = (int) (((argb >>  8) & 0xFF) + (255 - ((argb >>  8) & 0xFF)) * factor);
+        int b = (int) ((argb & 0xFF) + (255 - (argb & 0xFF)) * factor);
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    /**
+     * Adjust colour saturation by blending toward its luminance grey.
+     *
+     * @param argb   the colour to desaturate/saturate
+     * @param factor 0.0 = grayscale, 1.0 = original colour
+     */
+    public static int saturate(int argb, float factor) {
+        factor = Math.clamp(factor, 0f, 1f);
+        int a = (argb >> 24) & 0xFF;
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >>  8) & 0xFF;
+        int b = argb & 0xFF;
+        // Luminance grey (perceptual weights)
+        int grey = (int) (0.299f * r + 0.587f * g + 0.114f * b);
+        r = (int) (grey + (r - grey) * factor);
+        g = (int) (grey + (g - grey) * factor);
+        b = (int) (grey + (b - grey) * factor);
+        return (a << 24) | (Math.clamp(r, 0, 255) << 16)
+                         | (Math.clamp(g, 0, 255) << 8)
+                         |  Math.clamp(b, 0, 255);
+    }
+
+    /**
+     * Return {@code color} with its alpha channel set to a 0.0–1.0 float.
+     * Alternative to {@link #withAlpha(int, int)} for float-based APIs.
+     *
+     * @param argb    the colour
+     * @param alpha01 alpha as 0.0 (transparent) to 1.0 (opaque)
+     */
+    public static int setAlpha(int argb, float alpha01) {
+        int a = (int) (Math.clamp(alpha01, 0f, 1f) * 255);
+        return (argb & 0x00FFFFFF) | (a << 24);
+    }
+
     // =====================================================================
     //  Basic shapes
     // =====================================================================

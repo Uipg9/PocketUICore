@@ -1,6 +1,8 @@
 package com.pocketuicore.component;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -63,6 +65,29 @@ public final class FocusManager {
     private final List<UIComponent> focusables = new ArrayList<>();
     private UIComponent focused;
     private final List<FocusChangeListener> listeners = new ArrayList<>();
+
+    // ── Context stacking (for sub-screens / dialogs) ────────────────────
+    private final Deque<FocusContext> contextStack = new ArrayDeque<>();
+
+    /**
+     * Snapshot of a focus context (focusable list + focused element + listeners).
+     */
+    private static final class FocusContext {
+        final String name;
+        final List<UIComponent> focusables;
+        final UIComponent focused;
+        final List<FocusChangeListener> listeners;
+
+        FocusContext(String name,
+                     List<UIComponent> focusables,
+                     UIComponent focused,
+                     List<FocusChangeListener> listeners) {
+            this.name       = name;
+            this.focusables = new ArrayList<>(focusables);
+            this.focused    = focused;
+            this.listeners  = new ArrayList<>(listeners);
+        }
+    }
 
     // =====================================================================
     //  Focus change listeners
@@ -280,6 +305,60 @@ public final class FocusManager {
         focused.mouseClicked(cx, cy, 0);
         focused.mouseReleased(cx, cy, 0);
         return true;
+    }
+
+    // =====================================================================
+    //  Context stacking
+    // =====================================================================
+
+    /**
+     * Push the current focus state onto the stack and start a fresh
+     * empty context. Useful when opening a dialog or sub-screen so
+     * the dialog gets its own focusable set.
+     *
+     * @param name descriptive name for debugging (e.g. "prestige-dialog")
+     */
+    public void pushContext(String name) {
+        contextStack.push(new FocusContext(
+                name, focusables, focused, listeners));
+
+        // Start fresh
+        focusables.clear();
+        listeners.clear();
+        UIComponent prev = focused;
+        focused = null;
+        // Don't fire — old listeners are saved, fresh context has none
+    }
+
+    /**
+     * Pop the most-recently-pushed context, restoring the previous
+     * focusable set, focused element, and listeners.
+     *
+     * @return the name of the popped context, or {@code null} if the
+     *         stack was empty
+     */
+    public String popContext() {
+        if (contextStack.isEmpty()) return null;
+
+        FocusContext ctx = contextStack.pop();
+
+        // Restore
+        focusables.clear();
+        focusables.addAll(ctx.focusables);
+        listeners.clear();
+        listeners.addAll(ctx.listeners);
+        UIComponent prev = focused;
+        focused = ctx.focused;
+        fireFocusChanged(prev, focused);
+
+        return ctx.name;
+    }
+
+    /**
+     * @return the number of saved contexts on the stack.
+     */
+    public int getContextDepth() {
+        return contextStack.size();
     }
 
     // =====================================================================

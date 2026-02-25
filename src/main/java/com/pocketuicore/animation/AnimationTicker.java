@@ -223,4 +223,88 @@ public final class AnimationTicker {
             case EASE_IN_OUT_SINE -> -(float) (Math.cos(Math.PI * t) - 1f) / 2f;
         };
     }
+
+    // =====================================================================
+    //  Namespaced contexts
+    // =====================================================================
+
+    /**
+     * Create a namespaced animation context.  All keys passed through
+     * the returned {@link AnimationContext} are automatically prefixed
+     * with {@code "namespace:"}, preventing collisions between screens
+     * or components that share the global AnimationTicker.
+     *
+     * <pre>{@code
+     *     AnimationContext ctx = AnimationTicker.getInstance()
+     *             .createContext("shop");
+     *     ctx.start("fade", 0, 1, 300);    // stored as "shop:fade"
+     *     float f = ctx.get("fade");        // reads "shop:fade"
+     *     ctx.cancelAll();                  // cancels "shop:*" only
+     * }</pre>
+     *
+     * @param namespace the prefix (must not contain {@code ':'})
+     * @return a new AnimationContext bound to this ticker
+     */
+    public AnimationContext createContext(String namespace) {
+        return new AnimationContext(this, namespace);
+    }
+
+    /**
+     * A namespaced view over the global {@link AnimationTicker}.
+     * All keys are transparently prefixed so different callers
+     * never collide.
+     */
+    public static final class AnimationContext {
+        private final AnimationTicker ticker;
+        private final String prefix;
+
+        AnimationContext(AnimationTicker ticker, String namespace) {
+            this.ticker = ticker;
+            this.prefix = namespace + ":";
+        }
+
+        private String key(String id) { return prefix + id; }
+
+        /** @see AnimationTicker#start(String, float, float, long, EasingType) */
+        public void start(String id, float from, float to, long durationMs, EasingType easing) {
+            ticker.start(key(id), from, to, durationMs, easing);
+        }
+
+        /** @see AnimationTicker#start(String, float, float, long) */
+        public void start(String id, float from, float to, long durationMs) {
+            ticker.start(key(id), from, to, durationMs);
+        }
+
+        /** @see AnimationTicker#get(String, float) */
+        public float get(String id, float defaultValue) {
+            return ticker.get(key(id), defaultValue);
+        }
+
+        /** @see AnimationTicker#get(String) */
+        public float get(String id) { return ticker.get(key(id)); }
+
+        /** @see AnimationTicker#get01(String) */
+        public float get01(String id) { return ticker.get01(key(id)); }
+
+        /** @see AnimationTicker#isActive(String) */
+        public boolean isActive(String id) { return ticker.isActive(key(id)); }
+
+        /** @see AnimationTicker#exists(String) */
+        public boolean exists(String id) { return ticker.exists(key(id)); }
+
+        /** @see AnimationTicker#cancel(String) */
+        public void cancel(String id) { ticker.cancel(key(id)); }
+
+        /**
+         * Cancel all animations whose key starts with this context's
+         * namespace prefix.  Other contexts are unaffected.
+         */
+        public void cancelAll() {
+            ticker.animations.entrySet().removeIf(
+                    e -> e.getKey().startsWith(prefix));
+        }
+
+        /** @return the namespace prefix (without trailing ':'). */
+        public String getNamespace() { return prefix.substring(0, prefix.length() - 1); }
+    }
 }

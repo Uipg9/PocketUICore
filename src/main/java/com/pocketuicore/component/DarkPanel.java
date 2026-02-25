@@ -123,7 +123,7 @@ public class DarkPanel extends UIComponent {
         for (int i = children.size() - 1; i >= 0; i--) {
             if (children.get(i).mouseClicked(mouseX, adjustedY, button)) return true;
         }
-        return isHovered(mouseX, mouseY);
+        return blockInputInBounds && isHovered(mouseX, mouseY);
     }
 
     @Override
@@ -133,7 +133,7 @@ public class DarkPanel extends UIComponent {
         for (int i = children.size() - 1; i >= 0; i--) {
             if (children.get(i).mouseReleased(mouseX, adjustedY, button)) return true;
         }
-        return isHovered(mouseX, mouseY);
+        return blockInputInBounds && isHovered(mouseX, mouseY);
     }
 
     @Override
@@ -151,17 +151,22 @@ public class DarkPanel extends UIComponent {
             scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
             return true;
         }
-        return isHovered(mouseX, mouseY);
+        return blockInputInBounds && isHovered(mouseX, mouseY);
     }
 
     // =====================================================================
     //  Accessors
     // =====================================================================
 
+    public int  getBackgroundColor()      { return backgroundColor; }
     public void setBackgroundColor(int c) { this.backgroundColor = c; }
+    public int  getBorderColor()          { return borderColor; }
     public void setBorderColor(int c)     { this.borderColor = c; }
+    public int  getCornerRadius()         { return cornerRadius; }
     public void setCornerRadius(int r)    { this.cornerRadius = r; }
+    public boolean isDrawBorder()         { return drawBorder; }
     public void setDrawBorder(boolean b)  { this.drawBorder = b; }
+    public boolean isDrawShadow()         { return drawShadow; }
     public void setDrawShadow(boolean b)  { this.drawShadow = b; }
     public void setShadow(int layers, int maxAlpha) {
         this.shadowLayers = layers;

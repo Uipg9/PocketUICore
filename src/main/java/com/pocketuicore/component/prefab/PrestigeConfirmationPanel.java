@@ -207,15 +207,22 @@ public class PrestigeConfirmationPanel extends DarkPanel {
     /**
      * Convenience: reposition the panel (and all children) to a new centre.
      * Useful after a window resize.
+     * <p>
+     * Uses absolute layout offsets from the constructor rather than
+     * computing deltas from current positions, preventing cumulative
+     * drift when called multiple times.
      */
     public void center(int screenW, int screenH) {
         int newX = (screenW - PANEL_W) / 2;
         int newY = (screenH - PANEL_H) / 2;
-        int dx = newX - x;
-        int dy = newY - y;
         setPosition(newX, newY);
-        for (UIComponent child : getChildren()) {
-            child.setPosition(child.getX() + dx, child.getY() + dy);
-        }
+
+        // Reposition children using the same layout offsets as the constructor
+        beaconToggle.setPosition(newX + PAD, newY + 124);
+
+        int btnY = newY + PANEL_H - PAD - BTN_H;
+        int gap  = (PANEL_W - BTN_W * 2) / 3;
+        confirmBtn.setPosition(newX + gap, btnY);
+        cancelBtn.setPosition(newX + gap * 2 + BTN_W, btnY);
     }
 }
