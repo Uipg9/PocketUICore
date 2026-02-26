@@ -34,6 +34,39 @@ public class PercentageBar extends UIComponent {
     private String label;           // nullable — if set, drawn centred on the bar
     private boolean showPercentage; // if true, shows "XX %" even when label is null
 
+    // ── v1.9 — Enhanced label formatting ─────────────────────────────────
+
+    /** Label display format. */
+    public enum LabelFormat {
+        /** Show "75%" */
+        PERCENT,
+        /** Show "75 / 100" (requires max to be set) */
+        FRACTION,
+        /** Use a custom formatter callback */
+        CUSTOM,
+        /** No label */
+        NONE
+    }
+
+    private LabelFormat labelFormat = LabelFormat.PERCENT;
+    /** Max value for FRACTION display. */
+    private int maxValue = 100;
+    /** Current value for FRACTION display. */
+    private int currentValue = 0;
+    /** Custom label formatter callback. */
+    private LabelFormatter customFormatter;
+
+    /** Whether to use health-style gradient colours automatically. */
+    private boolean useGradientColors = false;
+    /** Whether to show a pulse/glow effect at 100%. */
+    private boolean pulseAtFull = false;
+
+    /** Functional interface for custom label formatting. */
+    @FunctionalInterface
+    public interface LabelFormatter {
+        String format(float progress, int current, int max);
+    }
+
     // =====================================================================
     //  Construction
     // =====================================================================
@@ -84,6 +117,11 @@ public class PercentageBar extends UIComponent {
             displayProgress += diff * Math.min(easingSpeed * delta, 1f);
         }
 
+        // ── Auto gradient colours ────────────────────────────────────────
+        if (useGradientColors) {
+            applyHealthColors();
+        }
+
         // ── Track (background) ───────────────────────────────────────────
         ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, trackColor);
 
@@ -94,17 +132,31 @@ public class PercentageBar extends UIComponent {
             int barRadius = Math.min(cornerRadius, fillW / 2);
             // Use scissor to ensure the bar doesn't bleed past the track bounds
             ctx.enableScissor(x, y, x + width, y + height);
-            ProceduralRenderer.fillRoundedRect(ctx, x, y, fillW, height, barRadius, barColor);
+
+            int renderColor = barColor;
+            // Gradient fill: red → yellow → green based on progress
+            if (useGradientColors) {
+                renderColor = getGradientColor(displayProgress);
+            }
+
+            ProceduralRenderer.fillRoundedRect(ctx, x, y, fillW, height, barRadius, renderColor);
             ctx.disableScissor();
         }
 
-        // ── Label / percentage text ──────────────────────────────────────
-        String displayText = null;
-        if (label != null) {
-            displayText = label;
-        } else if (showPercentage) {
-            displayText = Math.round(displayProgress * 100) + "%";
+        // ── Pulse / glow at 100% ────────────────────────────────────────
+        if (pulseAtFull && displayProgress >= 0.999f) {
+            float pulse = (float) (Math.sin(System.nanoTime() / 200_000_000.0) * 0.3 + 0.7);
+            int glowAlpha = (int) (pulse * 80);
+            int glowColor = ProceduralRenderer.withAlpha(0xFFFFFFFF, glowAlpha);
+            ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, glowColor);
+            // Bright border pulse
+            int borderAlpha = (int) (pulse * 160);
+            int borderColor = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_SUCCESS, borderAlpha);
+            ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height, cornerRadius, borderColor);
         }
+
+        // ── Label / percentage text ──────────────────────────────────────
+        String displayText = resolveDisplayText();
 
         if (displayText != null) {
             MinecraftClient client = MinecraftClient.getInstance();
@@ -112,6 +164,42 @@ public class PercentageBar extends UIComponent {
             int textY = y + (height - tr.fontHeight) / 2;
             ProceduralRenderer.drawCenteredText(ctx, tr, displayText,
                     x + width / 2, textY, textColor);
+        }
+    }
+
+    /**
+     * Resolve the label text based on the current format settings.
+     */
+    private String resolveDisplayText() {
+        // Explicit label always takes priority
+        if (label != null) return label;
+
+        return switch (labelFormat) {
+            case PERCENT -> Math.round(displayProgress * 100) + "%";
+            case FRACTION -> currentValue + " / " + maxValue;
+            case CUSTOM -> customFormatter != null
+                    ? customFormatter.format(displayProgress, currentValue, maxValue)
+                    : null;
+            case NONE -> null;
+        };
+    }
+
+    /**
+     * Get a gradient color based on progress (red → yellow → green).
+     */
+    private int getGradientColor(float progress) {
+        if (progress < 0.5f) {
+            // Red → Yellow (0% → 50%)
+            return ProceduralRenderer.lerpColor(
+                    ProceduralRenderer.COL_ERROR,
+                    ProceduralRenderer.COL_WARNING,
+                    progress * 2f);
+        } else {
+            // Yellow → Green (50% → 100%)
+            return ProceduralRenderer.lerpColor(
+                    ProceduralRenderer.COL_WARNING,
+                    ProceduralRenderer.COL_SUCCESS,
+                    (progress - 0.5f) * 2f);
         }
     }
 
@@ -153,6 +241,70 @@ public class PercentageBar extends UIComponent {
     public boolean isShowPercentage()      { return showPercentage; }
     public void setEasingSpeed(float s)   { this.easingSpeed = s; }
     public float getEasingSpeed()          { return easingSpeed; }
+
+    // ── v1.9 — Enhanced label & gradient accessors ───────────────────────
+
+    /**
+     * Set the label display format.
+     *
+     * @param format the label format mode
+     */
+    public void setLabelFormat(LabelFormat format) {
+        this.labelFormat = format;
+        // Backwards compat: if switching to PERCENT, enable showPercentage
+        this.showPercentage = (format == LabelFormat.PERCENT);
+    }
+
+    public LabelFormat getLabelFormat() { return labelFormat; }
+
+    /**
+     * Set the max value for {@link LabelFormat#FRACTION} display.
+     */
+    public void setMaxValue(int max) { this.maxValue = max; }
+    public int getMaxValue() { return maxValue; }
+
+    /**
+     * Set the current value for {@link LabelFormat#FRACTION} display.
+     * Also updates the target progress to {@code current / max}.
+     */
+    public void setCurrentValue(int current) {
+        this.currentValue = current;
+    }
+
+    /**
+     * Set current and max values together, updating progress automatically.
+     *
+     * @param current current value
+     * @param max     maximum value
+     */
+    public void setValues(int current, int max) {
+        this.currentValue = current;
+        this.maxValue = max;
+        setProgress(max > 0 ? (float) current / max : 0f);
+    }
+
+    public int getCurrentValue() { return currentValue; }
+
+    /**
+     * Set a custom label formatter for {@link LabelFormat#CUSTOM} mode.
+     */
+    public void setCustomFormatter(LabelFormatter formatter) {
+        this.customFormatter = formatter;
+        this.labelFormat = LabelFormat.CUSTOM;
+    }
+
+    /**
+     * Enable automatic gradient colours (red → yellow → green) based
+     * on the current fill level.
+     */
+    public void setUseGradientColors(boolean use) { this.useGradientColors = use; }
+    public boolean isUseGradientColors() { return useGradientColors; }
+
+    /**
+     * Enable a pulsing glow effect when the bar reaches 100%.
+     */
+    public void setPulseAtFull(boolean pulse) { this.pulseAtFull = pulse; }
+    public boolean isPulseAtFull() { return pulseAtFull; }
 
     // =====================================================================
     //  Utility

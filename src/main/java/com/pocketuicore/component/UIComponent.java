@@ -50,6 +50,8 @@ public abstract class UIComponent {
     private static final long DEFAULT_TOOLTIP_DELAY_NS = 500_000_000L;
     /** Per-instance tooltip delay — defaults to the static default. */
     private long tooltipDelayNs = DEFAULT_TOOLTIP_DELAY_NS;
+    /** Rich tooltip (takes priority over plain tooltipLines). */
+    private RichTooltip richTooltip;
 
     // ── Click handler ────────────────────────────────────────────────────
     private Runnable onClick;
@@ -346,8 +348,21 @@ public abstract class UIComponent {
 
     /** @return {@code true} if this component has tooltip text. */
     public boolean hasTooltip() {
-        return tooltipLines != null && tooltipLines.length > 0;
+        return (tooltipLines != null && tooltipLines.length > 0) || richTooltip != null;
     }
+
+    /**
+     * Set a {@link RichTooltip} on this component.
+     * Takes priority over plain tooltip lines set via {@link #setTooltip(String...)}.
+     *
+     * @param tooltip the rich tooltip, or {@code null} to remove
+     */
+    public void setRichTooltip(RichTooltip tooltip) {
+        this.richTooltip = tooltip;
+    }
+
+    /** @return the rich tooltip, or {@code null} if none. */
+    public RichTooltip getRichTooltip() { return richTooltip; }
 
     /**
      * Set the tooltip hover delay in milliseconds.
@@ -397,6 +412,12 @@ public abstract class UIComponent {
 
         long elapsed = System.nanoTime() - target.tooltipHoverStartNanos;
         if (elapsed < target.tooltipDelayNs) return;
+
+        // Rich tooltip takes priority
+        if (target.richTooltip != null) {
+            RichTooltip.renderTooltip(ctx, target.richTooltip, mouseX, mouseY);
+            return;
+        }
 
         drawTooltipBox(ctx, target.tooltipLines, mouseX, mouseY);
     }

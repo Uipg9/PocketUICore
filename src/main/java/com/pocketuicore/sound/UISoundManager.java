@@ -150,4 +150,71 @@ public final class UISoundManager {
     public static void playBoundary() {
         playClick(0.3f, 0.2f);
     }
+
+    // =====================================================================
+    //  v1.9 — Additional semantic presets
+    // =====================================================================
+
+    /**
+     * Harvest / collect sound — satisfying ascending double-note.
+     * Suitable for crop harvest, resource collection.
+     */
+    public static void playHarvest() {
+        playClick(1.3f, 0.5f);
+        playClick(1.7f, 0.3f);
+    }
+
+    /**
+     * Plant / place sound — soft descending note.
+     * Suitable for planting crops, placing items.
+     */
+    public static void playPlant() {
+        playClick(1.2f, 0.35f);
+        playClick(0.9f, 0.2f);
+    }
+
+    /**
+     * Upgrade / level-up sound — bright ascending triple-note fanfare.
+     * Suitable for upgrades, prestige, tier-ups.
+     */
+    public static void playUpgrade() {
+        playClick(1.4f, 0.5f);
+        playClick(1.8f, 0.4f);
+        playClick(2.0f, 0.5f);
+    }
+
+    /**
+     * Warning sound — low double-thud.
+     * Suitable for low resources, expiring timers, danger.
+     */
+    public static void playWarning() {
+        playClick(0.5f, 0.5f);
+        playClick(0.4f, 0.3f);
+    }
+
+    /**
+     * Transition / whoosh sound — brief mid-pitch sweep.
+     * Suitable for screen transitions, tab switches, page flips.
+     */
+    public static void playTransition() {
+        playClick(1.1f, 0.25f);
+    }
+
+    /**
+     * Milestone achieved — triumphant ascending cascade with emphasis.
+     * More dramatic than {@link #playCelebration()}.
+     */
+    public static void playMilestone() {
+        playClick(1.2f, 0.5f);
+        playClick(1.6f, 0.5f);
+        playClick(2.0f, 0.6f);
+    }
+
+    /**
+     * Notification ping — single bright note.
+     * Suitable for toast notifications, alerts.
+     */
+    public static void playNotification() {
+        playClick(1.8f, 0.4f);
+    }
 }
