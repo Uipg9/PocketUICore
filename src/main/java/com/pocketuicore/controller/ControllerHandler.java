@@ -160,6 +160,18 @@ public final class ControllerHandler {
         rumble(0.8f, 0.6f, 400);
     }
 
+    /**
+     * Simplified rumble with a single intensity value.
+     * Maps the intensity equally to both the strong and weak motors.
+     *
+     * @param intensity  motor intensity (0.0–1.0)
+     * @param durationMs rumble duration in milliseconds
+     * @since 1.10.0
+     */
+    public void rumble(float intensity, int durationMs) {
+        rumble(intensity, intensity * 0.7f, durationMs);
+    }
+
     // =====================================================================
     //  Tick — called every END_CLIENT_TICK
     // =====================================================================

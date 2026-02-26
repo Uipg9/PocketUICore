@@ -2,6 +2,8 @@ package com.pocketuicore.animation;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Module 4 — Animation Engine
@@ -99,12 +101,21 @@ public final class AnimationTicker {
      * @param to         ending value
      * @param durationMs duration in <b>milliseconds</b>
      * @param easing     easing curve
+     * @since 1.0.0
      */
     public void start(String id, float from, float to, long durationMs, EasingType easing) {
         animations.put(id, new Animation(from, to, Math.max(1, durationMs), easing));
     }
 
-    /** Convenience — defaults to {@link EasingType#EASE_IN_OUT}. */
+    /**
+     * Convenience — defaults to {@link EasingType#EASE_IN_OUT}.
+     *
+     * @param id         unique animation key
+     * @param from       starting value
+     * @param to         ending value
+     * @param durationMs duration in milliseconds
+     * @since 1.0.0
+     */
     public void start(String id, float from, float to, long durationMs) {
         start(id, from, to, durationMs, EasingType.EASE_IN_OUT);
     }
@@ -114,13 +125,21 @@ public final class AnimationTicker {
      *
      * @param id           animation key
      * @param defaultValue returned if no animation with this key exists
+     * @return the current eased value, or {@code defaultValue}
+     * @since 1.0.0
      */
     public float get(String id, float defaultValue) {
         Animation a = animations.get(id);
         return a != null ? a.evaluate() : defaultValue;
     }
 
-    /** Shorthand — default value is 0. */
+    /**
+     * Shorthand — default value is 0.
+     *
+     * @param id animation key
+     * @return the current eased value, or 0
+     * @since 1.0.0
+     */
     public float get(String id) {
         return get(id, 0f);
     }
@@ -128,12 +147,34 @@ public final class AnimationTicker {
     /**
      * Get the current value and clamp it to [0, 1].
      * Convenient for progress / alpha multipliers.
+     *
+     * @param id animation key
+     * @return the current value clamped to [0, 1]
+     * @since 1.0.0
      */
     public float get01(String id) {
         return Math.clamp(get(id, 0f), 0f, 1f);
     }
 
-    /** @return {@code true} if the animation exists and has not yet finished. */
+    /**
+     * Alias for {@link #get01(String)} — reads more naturally when
+     * querying animation progress: {@code anim.getProgress("fade")}.
+     *
+     * @param id animation key
+     * @return the current value clamped to [0, 1]
+     * @since 1.10.0
+     */
+    public float getProgress(String id) {
+        return get01(id);
+    }
+
+    /**
+     * Check if an animation is currently running.
+     *
+     * @param id animation key
+     * @return {@code true} if the animation exists and has not yet finished
+     * @since 1.0.0
+     */
     public boolean isActive(String id) {
         Animation a = animations.get(id);
         return a != null && !a.completed;
@@ -144,12 +185,21 @@ public final class AnimationTicker {
         return animations.containsKey(id);
     }
 
-    /** Cancel an animation immediately and remove it from the map. */
+    /**
+     * Cancel an animation immediately and remove it from the map.
+     *
+     * @param id animation key to cancel
+     * @since 1.0.0
+     */
     public void cancel(String id) {
         animations.remove(id);
     }
 
-    /** Cancel all active animations. */
+    /**
+     * Cancel all active animations and clear the animation map.
+     *
+     * @since 1.0.0
+     */
     public void cancelAll() {
         animations.clear();
     }
@@ -186,6 +236,12 @@ public final class AnimationTicker {
 
     /**
      * Linear interpolation: {@code a + (b - a) * t}.
+     *
+     * @param a start value
+     * @param b end value
+     * @param t blend factor (0.0 → a, 1.0 → b)
+     * @return the interpolated value
+     * @since 1.0.0
      */
     public static float lerp(float a, float b, float t) {
         return a + (b - a) * t;
@@ -206,6 +262,11 @@ public final class AnimationTicker {
 
     /**
      * Apply an easing curve to a linear {@code t} in [0, 1].
+     *
+     * @param t    linear progress (0.0–1.0)
+     * @param type the easing curve to apply
+     * @return the eased value
+     * @since 1.0.0
      */
     public static float applyEasing(float t, EasingType type) {
         return switch (type) {
@@ -222,6 +283,165 @@ public final class AnimationTicker {
             }
             case EASE_IN_OUT_SINE -> -(float) (Math.cos(Math.PI * t) - 1f) / 2f;
         };
+    }
+
+    // =====================================================================
+    //  Sequence / chain API  (v1.10.0)
+    // =====================================================================
+
+    /**
+     * Create a fluent animation sequence builder.  Sequences run
+     * multiple animations one after another using the global ticker.
+     * <p>
+     * <b>Usage:</b>
+     * <pre>{@code
+     *     AnimationTicker.getInstance()
+     *         .sequence("intro")
+     *         .then(0f, 1f, 300, EasingType.EASE_OUT)
+     *         .then(1f, 0.5f, 200)
+     *         .onComplete(() -> System.out.println("done!"))
+     *         .start();
+     * }</pre>
+     *
+     * @param baseName prefix for the generated animation keys
+     *                 (step keys will be {@code "baseName:0"}, {@code "baseName:1"}, etc.)
+     * @return a new {@link AnimationSequence} builder
+     * @since 1.10.0
+     */
+    public AnimationSequence sequence(String baseName) {
+        return new AnimationSequence(this, baseName);
+    }
+
+    /**
+     * Fluent builder for chained / sequential animations.
+     * Each step runs after the previous one completes.
+     *
+     * @since 1.10.0
+     */
+    public static final class AnimationSequence {
+        private final AnimationTicker ticker;
+        private final String baseName;
+        private final List<SequenceStep> steps = new ArrayList<>();
+        private Runnable onComplete;
+        private int currentStep = -1;
+        private boolean running = false;
+
+        AnimationSequence(AnimationTicker ticker, String baseName) {
+            this.ticker   = ticker;
+            this.baseName = baseName;
+        }
+
+        /**
+         * Append an animation step to the sequence.
+         *
+         * @param from       starting value
+         * @param to         ending value
+         * @param durationMs duration in milliseconds
+         * @param easing     easing curve
+         * @return this builder
+         */
+        public AnimationSequence then(float from, float to, long durationMs, EasingType easing) {
+            steps.add(new SequenceStep(from, to, durationMs, easing));
+            return this;
+        }
+
+        /**
+         * Append an animation step with {@link EasingType#EASE_IN_OUT}.
+         *
+         * @param from       starting value
+         * @param to         ending value
+         * @param durationMs duration in milliseconds
+         * @return this builder
+         */
+        public AnimationSequence then(float from, float to, long durationMs) {
+            return then(from, to, durationMs, EasingType.EASE_IN_OUT);
+        }
+
+        /**
+         * Set a callback to run when the entire sequence completes.
+         *
+         * @param callback the completion callback
+         * @return this builder
+         */
+        public AnimationSequence onComplete(Runnable callback) {
+            this.onComplete = callback;
+            return this;
+        }
+
+        /**
+         * Start the sequence. The first step begins immediately.
+         * Subsequent steps are advanced by calling {@link #tick()} every
+         * frame or client tick.
+         */
+        public void start() {
+            if (steps.isEmpty()) {
+                if (onComplete != null) onComplete.run();
+                return;
+            }
+            running = true;
+            currentStep = 0;
+            startCurrentStep();
+        }
+
+        /**
+         * Check whether the current step has completed and advance to
+         * the next one. Call this every client tick or render frame.
+         * <p>
+         * Alternatively, the sequence can be auto-advanced by calling
+         * this from any tick loop.
+         */
+        public void tick() {
+            if (!running || currentStep < 0) return;
+            String key = stepKey(currentStep);
+            if (!ticker.isActive(key)) {
+                // Current step finished — advance
+                ticker.cancel(key);
+                currentStep++;
+                if (currentStep >= steps.size()) {
+                    // All steps done
+                    running = false;
+                    if (onComplete != null) onComplete.run();
+                } else {
+                    startCurrentStep();
+                }
+            }
+        }
+
+        /** @return {@code true} if the sequence is currently running. */
+        public boolean isRunning() { return running; }
+
+        /** Cancel the sequence immediately. */
+        public void cancel() {
+            if (running && currentStep >= 0) {
+                ticker.cancel(stepKey(currentStep));
+            }
+            running = false;
+            currentStep = -1;
+        }
+
+        /**
+         * Get the current animated value of the running step.
+         *
+         * @param defaultValue value returned when the sequence is not running
+         * @return the current value
+         */
+        public float get(float defaultValue) {
+            if (!running || currentStep < 0) return defaultValue;
+            return ticker.get(stepKey(currentStep), defaultValue);
+        }
+
+        /** @return the current step index (0-based), or -1 if not running. */
+        public int getCurrentStep() { return currentStep; }
+
+        private void startCurrentStep() {
+            SequenceStep step = steps.get(currentStep);
+            ticker.start(stepKey(currentStep), step.from, step.to,
+                         step.durationMs, step.easing);
+        }
+
+        private String stepKey(int idx) { return baseName + ":" + idx; }
+
+        private record SequenceStep(float from, float to, long durationMs, EasingType easing) { }
     }
 
     // =====================================================================

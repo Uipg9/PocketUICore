@@ -177,9 +177,37 @@ public final class ScreenShakeHelper {
     /** @return {@code true} if a shake is currently in progress. */
     public boolean isActive() { return active; }
 
+    /**
+     * Alias for {@link #isActive()} — provided for API naming consistency.
+     *
+     * @return {@code true} if a shake is currently in progress
+     * @since 1.10.0
+     */
+    public boolean isShaking() { return isActive(); }
+
     /** @return the last computed X offset (for external use). */
     public float getLastOffsetX() { return lastOffsetX; }
 
     /** @return the last computed Y offset (for external use). */
     public float getLastOffsetY() { return lastOffsetY; }
+
+    // ── Aliases (API naming consistency — v1.10.0) ───────────────────────
+
+    /**
+     * Alias for {@link #apply(net.minecraft.client.gui.DrawContext)}.
+     * Reads more naturally in render methods: {@code shake.applyShake(ctx)}.
+     *
+     * @param ctx the DrawContext
+     * @since 1.10.0
+     */
+    public void applyShake(net.minecraft.client.gui.DrawContext ctx) { apply(ctx); }
+
+    /**
+     * Alias for {@link #restore(net.minecraft.client.gui.DrawContext)}.
+     * Reads more naturally in render methods: {@code shake.restoreShake(ctx)}.
+     *
+     * @param ctx the DrawContext
+     * @since 1.10.0
+     */
+    public void restoreShake(net.minecraft.client.gui.DrawContext ctx) { restore(ctx); }
 }

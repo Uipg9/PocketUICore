@@ -3,7 +3,9 @@ package com.pocketuicore.component;
 import com.pocketuicore.render.ProceduralRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.KeyInput;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -192,6 +194,61 @@ public abstract class UIComponent {
         for (int i = children.size() - 1; i >= 0; i--) {
             children.get(i).mouseMoved(mouseX, mouseY);
         }
+    }
+
+    // ── MC 1.21.11 Input API bridges (v1.10.0) ─────────────────────────
+
+    /**
+     * Bridge for MC 1.21.11's {@link Click} record.
+     * Decomposes the record and delegates to
+     * {@link #mouseClicked(double, double, int)}.
+     *
+     * @param click the Click record from the new input API
+     * @return {@code true} if the click was consumed
+     * @since 1.10.0
+     */
+    public boolean mouseClicked(Click click) {
+        return mouseClicked(click.x(), click.y(), click.buttonInfo().button());
+    }
+
+    /**
+     * Bridge for MC 1.21.11's {@link Click} record with keyboard flag.
+     * The {@code fromKeyboard} parameter is provided for compatibility
+     * but is currently unused by the component tree.
+     *
+     * @param click        the Click record
+     * @param fromKeyboard {@code true} if the click originated from a keyboard
+     * @return {@code true} if the click was consumed
+     * @since 1.10.0
+     */
+    public boolean mouseClicked(Click click, boolean fromKeyboard) {
+        return mouseClicked(click.x(), click.y(), click.buttonInfo().button());
+    }
+
+    /**
+     * Bridge for MC 1.21.11's {@link Click} record on mouse release.
+     * Decomposes the record and delegates to
+     * {@link #mouseReleased(double, double, int)}.
+     *
+     * @param click the Click record
+     * @return {@code true} if the release was consumed
+     * @since 1.10.0
+     */
+    public boolean mouseReleased(Click click) {
+        return mouseReleased(click.x(), click.y(), click.buttonInfo().button());
+    }
+
+    /**
+     * Bridge for MC 1.21.11's {@link KeyInput} record.
+     * Decomposes the record and delegates to
+     * {@link #keyPressed(int, int, int)}.
+     *
+     * @param input the KeyInput record
+     * @return {@code true} if the key was consumed
+     * @since 1.10.0
+     */
+    public boolean keyPressed(KeyInput input) {
+        return keyPressed(input.key(), input.scancode(), input.modifiers());
     }
 
     // =====================================================================

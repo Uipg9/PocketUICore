@@ -269,4 +269,39 @@ public class DarkPanel extends UIComponent {
 
     /** @return total content width (0 if horizontal scroll is disabled). */
     public int getContentWidth() { return contentWidth; }
+
+    // =====================================================================
+    //  Second-pass tooltip rendering
+    // =====================================================================
+
+    /**
+     * Render tooltips for all children of this panel, guaranteed to draw
+     * <b>on top</b> of every sibling component.
+     * <p>
+     * Call this method <b>after</b> all panels have been rendered via
+     * {@link #render(DrawContext, int, int, float)} so that tooltips are
+     * never clipped by sibling panels or overlapping children.
+     * <p>
+     * <b>Usage:</b>
+     * <pre>{@code
+     *     // In your screen's render():
+     *     mainPanel.render(ctx, mx, my, delta);
+     *     sidePanel.render(ctx, mx, my, delta);
+     *     // ─ second pass ─
+     *     mainPanel.renderTooltipPass(ctx, mx, my);
+     *     sidePanel.renderTooltipPass(ctx, mx, my);
+     * }</pre>
+     *
+     * @param ctx    the DrawContext
+     * @param mouseX current mouse X
+     * @param mouseY current mouse Y
+     * @since 1.10.0
+     */
+    public void renderTooltipPass(DrawContext ctx, int mouseX, int mouseY) {
+        if (!visible) return;
+        // Adjust mouse coordinates for scroll offset
+        int adjMX = scrollableH ? mouseX + scrollOffsetX : mouseX;
+        int adjMY = scrollable  ? mouseY + scrollOffset  : mouseY;
+        UIComponent.renderTooltip(ctx, this, adjMX, adjMY);
+    }
 }

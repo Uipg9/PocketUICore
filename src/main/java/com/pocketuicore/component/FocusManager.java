@@ -357,6 +357,36 @@ public final class FocusManager {
     }
 
     /**
+     * Pop the most-recently-pushed context, asserting that its name matches
+     * the expected name.  This prevents wrong-context-pop bugs in nested
+     * modals or dialogs.
+     * <p>
+     * If the top context's name does not match {@code expectedName}, an
+     * {@link IllegalStateException} is thrown and the stack is left unchanged.
+     *
+     * @param expectedName the name that was passed to
+     *                     {@link #pushContext(String)}
+     * @return the name of the popped context
+     * @throws IllegalStateException if the stack is empty or the top
+     *                               context name does not match
+     * @since 1.10.0
+     */
+    public String popContext(String expectedName) {
+        if (contextStack.isEmpty()) {
+            throw new IllegalStateException(
+                    "FocusManager: popContext(\"" + expectedName +
+                    "\") called but the context stack is empty.");
+        }
+        String topName = contextStack.peek().name;
+        if (!java.util.Objects.equals(topName, expectedName)) {
+            throw new IllegalStateException(
+                    "FocusManager: popContext(\"" + expectedName +
+                    "\") called but the top context is \"" + topName + "\".");
+        }
+        return popContext();
+    }
+
+    /**
      * @return the number of saved contexts on the stack.
      */
     public int getContextDepth() {

@@ -1,5 +1,6 @@
 package com.pocketuicore.render;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -441,6 +442,52 @@ public final class ProceduralRenderer {
         ctx.getMatrices().scale(scale, scale);
         ctx.drawTextWithShadow(tr, text, 0, 0, color);
         ctx.getMatrices().popMatrix();
+    }
+
+    // ── Convenience overloads (auto-resolve TextRenderer) ────────────────
+
+    /**
+     * Left-aligned text with shadow, standard scale.
+     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     *
+     * @since 1.10.0
+     */
+    public static void drawText(DrawContext ctx, String text,
+                                int x, int y, int color) {
+        drawText(ctx, MinecraftClient.getInstance().textRenderer, text, x, y, color);
+    }
+
+    /**
+     * Centred text with shadow, standard scale.
+     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     *
+     * @since 1.10.0
+     */
+    public static void drawCenteredText(DrawContext ctx, String text,
+                                        int centerX, int y, int color) {
+        drawCenteredText(ctx, MinecraftClient.getInstance().textRenderer, text, centerX, y, color);
+    }
+
+    /**
+     * Left-aligned text at an arbitrary scale.
+     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     *
+     * @since 1.10.0
+     */
+    public static void drawScaledText(DrawContext ctx, String text,
+                                      int x, int y, int color, float scale) {
+        drawScaledText(ctx, MinecraftClient.getInstance().textRenderer, text, x, y, color, scale);
+    }
+
+    /**
+     * Centred text at an arbitrary scale.
+     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     *
+     * @since 1.10.0
+     */
+    public static void drawScaledCenteredText(DrawContext ctx, String text,
+                                              int centerX, int y, int color, float scale) {
+        drawScaledCenteredText(ctx, MinecraftClient.getInstance().textRenderer, text, centerX, y, color, scale);
     }
 
     // =====================================================================

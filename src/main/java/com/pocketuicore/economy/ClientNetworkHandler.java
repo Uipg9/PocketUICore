@@ -4,6 +4,9 @@ import com.pocketuicore.PocketUICore;
 import com.pocketuicore.data.ObservableState;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 /**
  * ClientNetworkHandler — Client-side receiver for economy payloads.
  * <p>
@@ -42,6 +45,61 @@ public final class ClientNetworkHandler {
      */
     public static final ObservableState<Float> CLIENT_ESTATE_GROWTH =
             new ObservableState<>(0.0f);
+
+    // ── Balance change event bus (v1.10.0) ───────────────────────────────
+
+    /**
+     * Register a listener that fires whenever the client balance changes.
+     * The callback receives {@code (oldBalance, newBalance)}.
+     * <p>
+     * This is a convenience over manually listening on {@link #CLIENT_BALANCE}
+     * and eliminates the need for poll-based checking every tick.
+     * <p>
+     * <b>Usage:</b>
+     * <pre>{@code
+     *     ClientNetworkHandler.onBalanceChanged((oldBal, newBal) -> {
+     *         int diff = newBal - oldBal;
+     *         if (diff > 0) showPopup("+$" + diff);
+     *     });
+     * }</pre>
+     *
+     * @param listener callback receiving (oldBalance, newBalance)
+     * @since 1.10.0
+     */
+    public static void onBalanceChanged(BiConsumer<Integer, Integer> listener) {
+        CLIENT_BALANCE.addListener(new Consumer<Integer>() {
+            private int previousValue = CLIENT_BALANCE.get();
+
+            @Override
+            public void accept(Integer newValue) {
+                int old = previousValue;
+                previousValue = newValue;
+                listener.accept(old, newValue);
+            }
+        });
+    }
+
+    /**
+     * Register a simple listener that fires whenever the client balance
+     * changes.  Receives only the new balance value.
+     *
+     * @param listener callback receiving the new balance
+     * @since 1.10.0
+     */
+    public static void onBalanceChanged(Consumer<Integer> listener) {
+        CLIENT_BALANCE.addListener(listener);
+    }
+
+    /**
+     * Register a listener that fires whenever estate growth changes.
+     * The callback receives the new growth percentage (0.0–100.0).
+     *
+     * @param listener callback receiving the new growth percentage
+     * @since 1.10.0
+     */
+    public static void onEstateGrowthChanged(Consumer<Float> listener) {
+        CLIENT_ESTATE_GROWTH.addListener(listener);
+    }
 
     // ── Registration ─────────────────────────────────────────────────────
 
