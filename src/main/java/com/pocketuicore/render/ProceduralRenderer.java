@@ -65,8 +65,16 @@ public final class ProceduralRenderer {
     /**
      * Maps corner radius → array of arc widths (dx) per scanline row.
      * Computed once per unique radius, reused every subsequent frame.
+     * LRU eviction keeps memory bounded (max 64 entries).
      */
-    private static final Map<Integer, int[]> SCANLINE_CACHE = new HashMap<>();
+    private static final int SCANLINE_CACHE_MAX = 64;
+    private static final Map<Integer, int[]> SCANLINE_CACHE =
+            new java.util.LinkedHashMap<>(32, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<Integer, int[]> eldest) {
+                    return size() > SCANLINE_CACHE_MAX;
+                }
+            };
 
     private static int[] getScanlineDx(int radius) {
         return SCANLINE_CACHE.computeIfAbsent(radius, r -> {
@@ -338,6 +346,27 @@ public final class ProceduralRenderer {
         for (int col = 0; col < w; col += step) {
             int bandW = Math.min(step, w - col);
             // Sample colour at band midpoint for best visual quality
+            float t = (float) (col + bandW / 2) / Math.max(w - 1, 1);
+            int c = lerpColor(leftColor, rightColor, t);
+            ctx.fill(x + col, y, x + col + bandW, y + h, c);
+        }
+    }
+
+    /**
+     * Horizontal gradient with configurable quality (band width).
+     * Smaller {@code step} = higher quality (more fill calls).
+     *
+     * @param step       pixel width of each colour band (1 = per-pixel, 4 = default)
+     * @param leftColor  ARGB colour on the left edge
+     * @param rightColor ARGB colour on the right edge
+     * @since 1.13.0
+     */
+    public static void fillGradientH(DrawContext ctx, int x, int y, int w, int h,
+                                      int leftColor, int rightColor, int step) {
+        if (w <= 0 || h <= 0) return;
+        step = Math.max(1, step);
+        for (int col = 0; col < w; col += step) {
+            int bandW = Math.min(step, w - col);
             float t = (float) (col + bandW / 2) / Math.max(w - 1, 1);
             int c = lerpColor(leftColor, rightColor, t);
             ctx.fill(x + col, y, x + col + bandW, y + h, c);

@@ -1,5 +1,6 @@
 package com.pocketuicore.notification;
 
+import com.pocketuicore.component.NotificationManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -152,5 +153,39 @@ public final class PocketNotifier {
         sendChatReminder(player, body);
         sendActionBar(player, Text.literal("✦ " + milestone)
                 .formatted(Formatting.LIGHT_PURPLE));
+    }
+
+    // =====================================================================
+    //  Client-side bridge  (v1.13.0)
+    // =====================================================================
+
+    /**
+     * Show a client-side UI notification via {@link NotificationManager}.
+     * This is a convenience bridge so server-aware code that already uses
+     * PocketNotifier can also trigger the rich on-screen notification
+     * system on the client.
+     * <p>
+     * <b>Must be called from the client (render) thread.</b>
+     *
+     * @param type    notification type (colour + icon)
+     * @param message the message to display
+     * @since 1.13.0
+     */
+    public static void showClient(NotificationManager.NotificationType type,
+                                   String message) {
+        NotificationManager.show(type, message);
+    }
+
+    /**
+     * Show a client-side notification with custom duration.
+     *
+     * @param type       notification type
+     * @param message    the message
+     * @param durationMs display duration in milliseconds
+     * @since 1.13.0
+     */
+    public static void showClient(NotificationManager.NotificationType type,
+                                   String message, long durationMs) {
+        NotificationManager.show(type, message, durationMs);
     }
 }

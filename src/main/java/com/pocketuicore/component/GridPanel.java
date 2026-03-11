@@ -26,6 +26,7 @@ public class GridPanel extends DarkPanel {
     private int padding;
     private int cellSpacingX;
     private int cellSpacingY;
+    private boolean suppressLayout;
 
     // =====================================================================
     //  Construction
@@ -81,7 +82,7 @@ public class GridPanel extends DarkPanel {
      * height the panel becomes scrollable automatically.
      */
     public void layout() {
-        if (children.isEmpty()) return;
+        if (suppressLayout || children.isEmpty()) return;
 
         int innerW        = width - padding * 2;
         int totalSpacingX = cellSpacingX * (columns - 1);
@@ -127,4 +128,17 @@ public class GridPanel extends DarkPanel {
     public GridPanel setCellSpacingX(int s)     { this.cellSpacingX = s; return this; }
     public int  getCellSpacingY()          { return cellSpacingY; }
     public GridPanel setCellSpacingY(int s)     { this.cellSpacingY = s; return this; }
+
+    /**
+     * Suppress automatic {@link #layout()} calls during bulk child operations.
+     * Remember to call {@link #layout()} manually after re-enabling.
+     *
+     * @param suppress {@code true} to suppress, {@code false} to re-enable
+     * @since 1.13.0
+     */
+    public GridPanel setSuppressLayout(boolean suppress) {
+        this.suppressLayout = suppress;
+        return this;
+    }
+    public boolean isSuppressLayout() { return suppressLayout; }
 }

@@ -14,8 +14,14 @@ A dark-mode procedural UI framework for Minecraft 1.21.11 (Fabric). Zero texture
 - **Controller Support** — Native GLFW gamepad polling, D-pad spatial navigation, thumbstick scroll, rumble feedback presets.
 - **Focus Management** — Spatial + linear focus traversal, context stacking, `registerTree()` for automatic discovery.
 - **Economy System** — Server → client balance & estate-growth synchronisation via `ObservableState<T>` reactive bindings. Opt-in via `PocketUICore.setEconomyEnabled()`.
-- **Notifications** — Queued toast-style popups with auto-dismiss and stacking.
-- **Sound Manager** — Click, hover, success, error presets + master volume and mute control.
+- **Notifications** — Queued toast-style popups, persistent notifications, auto-dismiss, and stacking.
+- **Sound Manager** — Click, hover, success, error presets + master volume, mute control, and scheduled playback.
+- **Controller Glyphs** — Xbox/PlayStation/Nintendo/Generic button prompt labels and rendering.
+- **Anchor Layout** — Position components relative to screen bounds (9 anchor points, fill, distribute).
+- **Input Helper** — Click/key decomposition, modifier checks, input-mode tracking.
+- **Model/View Architecture** — `ButtonModel`, `SliderModel`, `ToggleModel`, `ListModel`, `TextModel` for data/UI separation.
+- **Tooltip Renderer** — Global tooltip render queue with correct z-ordering.
+- **Version Helper** — Runtime Minecraft version detection for multi-version compatibility.
 - **Debug Overlay** — F3+P to visualise component bounds, hierarchy depth, and focus state.
 - **Utilities** — `UIFormatUtils`, `KeyShortcutManager`, `ScreenTintManager` (with screen transitions), `UIDataStore`, `ObservableState.bindBidirectional()`.
 
@@ -34,7 +40,7 @@ Add PocketUICore as a dependency in your mod's `build.gradle`:
 
 ```groovy
 dependencies {
-    modImplementation "com.pocketuicore:pocketuicore:1.12.0"
+    modImplementation "com.pocketuicore:pocketuicore:1.13.0"
 }
 ```
 
@@ -72,6 +78,10 @@ shake.withShake(ctx, () -> { /* render here */ });
 // Theme switching
 Theme.setCurrent(Theme.LIGHT);
 ```
+
+## Dependency Usage Guide
+
+See **[USAGE_GUIDE.md](USAGE_GUIDE.md)** for a comprehensive guide on using PocketUICore as a dependency — setup instructions, code examples for every system, and best practices.
 
 ## Economy Opt-Out
 

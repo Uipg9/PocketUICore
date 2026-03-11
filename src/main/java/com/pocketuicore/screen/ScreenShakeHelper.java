@@ -239,4 +239,35 @@ public final class ScreenShakeHelper {
      * @since 1.10.0
      */
     public void restoreShake(net.minecraft.client.gui.DrawContext ctx) { restore(ctx); }
+
+    // =====================================================================
+    //  Additive shake stacking  (v1.13.0)
+    // =====================================================================
+
+    /**
+     * Trigger an additive shake — if a shake is already running, the new
+     * intensity is <em>added</em> to the remaining intensity and the
+     * duration is extended rather than replaced.  This lets small
+     * repeated impacts (e.g. rapid hits) build up a larger effect.
+     *
+     * @param addIntensity  additional pixel intensity
+     * @param durationMs    duration of the new shake impulse
+     * @since 1.13.0
+     */
+    public void triggerAdditive(float addIntensity, int durationMs) {
+        if (!active) {
+            trigger(addIntensity, durationMs);
+            return;
+        }
+        // Calculate remaining intensity from current shake
+        long elapsed = System.currentTimeMillis() - startTimeMs;
+        float progress = Math.min(1f, (float) elapsed / this.durationMs);
+        float remaining = intensity * (1f - progress);
+
+        // Stack: new intensity = remaining + additive
+        this.intensity  = remaining + addIntensity;
+        this.durationMs = durationMs;
+        this.startTimeMs = System.currentTimeMillis();
+        this.directionAngle = Float.NaN;
+    }
 }

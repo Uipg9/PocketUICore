@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Notification Manager — Typed notification system with queue,
@@ -100,6 +101,34 @@ public final class NotificationManager {
         }
     }
 
+    // ── Persistent notification data (v1.13.0) ──────────────────────────
+    private static final List<PersistentNotification> persistent =
+            java.util.Collections.synchronizedList(new ArrayList<>());
+    private static final AtomicInteger nextPersistentId = new AtomicInteger(1);
+
+    /**
+     * A persistent notification that stays on screen until explicitly
+     * dismissed via {@link #dismissPersistent(int)}.
+     *
+     * @since 1.13.0
+     */
+    public static final class PersistentNotification {
+        public final int id;
+        public final String message;
+        public final NotificationType type;
+        public final long spawnTimeMs;
+        private final Runnable onDismiss;
+
+        PersistentNotification(int id, String message, NotificationType type,
+                               Runnable onDismiss) {
+            this.id          = id;
+            this.message     = message;
+            this.type        = type;
+            this.spawnTimeMs = System.currentTimeMillis();
+            this.onDismiss   = onDismiss;
+        }
+    }
+
     // =====================================================================
     //  Configuration
     // =====================================================================
@@ -169,6 +198,64 @@ public final class NotificationManager {
     public static void clearAll() {
         active.clear();
         queue.clear();
+        persistent.clear();
+    }
+
+    // =====================================================================
+    //  Persistent notification API  (v1.13.0)
+    // =====================================================================
+
+    /**
+     * Show a persistent notification that stays on screen until dismissed.
+     *
+     * @param type    notification type
+     * @param message the message text
+     * @return the notification ID — pass to {@link #dismissPersistent} to remove
+     * @since 1.13.0
+     */
+    public static int showPersistent(NotificationType type, String message) {
+        return showPersistent(type, message, null);
+    }
+
+    /**
+     * Show a persistent notification with a dismiss callback.
+     *
+     * @param type      notification type
+     * @param message   the message text
+     * @param onDismiss callback when dismissed (may be {@code null})
+     * @return the notification ID
+     * @since 1.13.0
+     */
+    public static int showPersistent(NotificationType type, String message,
+                                      Runnable onDismiss) {
+        int id = nextPersistentId.getAndIncrement();
+        persistent.add(new PersistentNotification(id, message, type, onDismiss));
+        return id;
+    }
+
+    /**
+     * Dismiss a persistent notification by ID.
+     *
+     * @param id the ID returned by {@link #showPersistent}
+     * @return {@code true} if a notification was found and removed
+     * @since 1.13.0
+     */
+    public static boolean dismissPersistent(int id) {
+        Iterator<PersistentNotification> it = persistent.iterator();
+        while (it.hasNext()) {
+            PersistentNotification pn = it.next();
+            if (pn.id == id) {
+                it.remove();
+                if (pn.onDismiss != null) pn.onDismiss.run();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** @return unmodifiable view of active persistent notifications. @since 1.13.0 */
+    public static List<PersistentNotification> getPersistent() {
+        return java.util.Collections.unmodifiableList(persistent);
     }
 
     // =====================================================================
@@ -269,6 +356,56 @@ public final class NotificationManager {
 
             idx++;
         }
+
+        // ── Persistent notifications (below/above timed ones) ────────────
+        for (PersistentNotification pn : persistent) {
+            long elapsed = now - pn.spawnTimeMs;
+            float alpha = Math.min(1f, elapsed / 200f); // 200 ms fade-in
+
+            String fullText = pn.type.prefix + pn.message;
+            int textW = tr.getWidth(fullText);
+            int boxW  = textW + pad * 2 + 12; // extra for "×" dismiss hint
+            int boxH  = tr.fontHeight + pad * 2;
+
+            int bx, by;
+            switch (position) {
+                case TOP_LEFT      -> { bx = 10;                    by = 10; }
+                case TOP_CENTER    -> { bx = (screenW - boxW) / 2; by = 10; }
+                case TOP_RIGHT     -> { bx = screenW - boxW - 10;  by = 10; }
+                case BOTTOM_LEFT   -> { bx = 10;                    by = screenH - boxH - 10; }
+                case BOTTOM_CENTER -> { bx = (screenW - boxW) / 2; by = screenH - boxH - 10; }
+                case BOTTOM_RIGHT  -> { bx = screenW - boxW - 10;  by = screenH - boxH - 10; }
+                default            -> { bx = (screenW - boxW) / 2; by = 10; }
+            }
+
+            boolean topAnchored = position == Position.TOP_LEFT
+                    || position == Position.TOP_CENTER
+                    || position == Position.TOP_RIGHT;
+            if (topAnchored) {
+                by += idx * (boxH + spacing);
+            } else {
+                by -= idx * (boxH + spacing);
+            }
+
+            int bgAlpha = (int) (alpha * 220);
+            int bgColor = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_BG_ELEVATED, bgAlpha);
+            int borderAlpha = (int) (alpha * 220);
+            int border  = ProceduralRenderer.withAlpha(pn.type.color, borderAlpha);
+            int txtCol  = ProceduralRenderer.withAlpha(pn.type.color, (int) (alpha * 255));
+
+            ProceduralRenderer.fillRoundedRect(ctx, bx, by, boxW, boxH, 4, bgColor);
+            ProceduralRenderer.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, border);
+
+            // Accent stripe + pulsing left edge
+            int stripeAlpha = (int) (alpha * (160 + 40 * Math.sin(elapsed / 400.0)));
+            int stripeColor = ProceduralRenderer.withAlpha(pn.type.color, Math.clamp(stripeAlpha, 0, 255));
+            ctx.fill(bx + 1, by + 3, bx + 3, by + boxH - 3, stripeColor);
+
+            ctx.drawTextWithShadow(tr, Text.literal(fullText),
+                    bx + pad, by + pad, txtCol);
+
+            idx++;
+        }
     }
 
     private static void playTypeSound(NotificationType type) {
@@ -290,4 +427,36 @@ public final class NotificationManager {
 
     /** @return number of queued notifications waiting to display. */
     public static int getQueuedCount() { return queue.size(); }
+
+    // =====================================================================
+    //  FloatingText-compatible toast API  (v1.13.0)
+    // =====================================================================
+
+    /**
+     * Show a lightweight toast at any {@link FloatingText.Anchor} position.
+     * This replaces the old {@link FloatingText#show} API; new code should
+     * use this method instead.
+     *
+     * @param message    the text to display
+     * @param anchor     screen anchor/position
+     * @param durationMs how long the toast stays visible (ms)
+     * @since 1.13.0
+     */
+    public static void showToast(String message, FloatingText.Anchor anchor, long durationMs) {
+        FloatingText.show(message, anchor, ProceduralRenderer.COL_TEXT_PRIMARY, durationMs);
+    }
+
+    /**
+     * Show a coloured toast at any {@link FloatingText.Anchor} position.
+     *
+     * @param message    the text to display
+     * @param anchor     screen anchor/position
+     * @param color      ARGB text colour
+     * @param durationMs how long the toast stays visible (ms)
+     * @since 1.13.0
+     */
+    public static void showToast(String message, FloatingText.Anchor anchor,
+                                  int color, long durationMs) {
+        FloatingText.show(message, anchor, color, durationMs);
+    }
 }

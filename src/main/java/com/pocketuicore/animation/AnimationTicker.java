@@ -1,7 +1,7 @@
 package com.pocketuicore.animation;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +38,8 @@ public final class AnimationTicker {
     private AnimationTicker() { }
 
     // ── Active animations, keyed by a caller-chosen ID ───────────────────
-    private final Map<String, Animation> animations = new ConcurrentHashMap<>();
+    // Only accessed from the client render/tick thread — no need for ConcurrentHashMap.
+    private final Map<String, Animation> animations = new HashMap<>();
 
     // =====================================================================
     //  Easing types

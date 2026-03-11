@@ -6,6 +6,10 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * UI Sound Manager — Centralised sound playback for PocketUICore screens.
  * <p>
@@ -249,5 +253,59 @@ public final class UISoundManager {
      */
     public static void playNotification() {
         playClick(1.8f, 0.4f);
+    }
+
+    // =====================================================================
+    //  Scheduled playback  (v1.13.0)
+    // =====================================================================
+
+    private record ScheduledSound(SoundEvent event, float pitch, float volume,
+                                   long playAtMs) {}
+
+    private static final List<ScheduledSound> scheduled = new ArrayList<>();
+
+    /**
+     * Schedule a sound to play after a delay.  Useful for multi-note
+     * sequences that should be spaced out over time (e.g. musical chords).
+     * <p>
+     * Call {@link #tickScheduled()} from your client tick handler to
+     * service the queue.
+     *
+     * @param event   the sound event
+     * @param pitch   pitch multiplier
+     * @param volume  volume multiplier
+     * @param delayMs delay before playback (milliseconds)
+     * @since 1.13.0
+     */
+    public static void schedulePlay(SoundEvent event, float pitch,
+                                     float volume, long delayMs) {
+        scheduled.add(new ScheduledSound(event, pitch, volume,
+                System.currentTimeMillis() + delayMs));
+    }
+
+    /** Overload accepting a {@link RegistryEntry}. @since 1.13.0 */
+    public static void schedulePlay(RegistryEntry<SoundEvent> entry,
+                                     float pitch, float volume, long delayMs) {
+        schedulePlay(entry.value(), pitch, volume, delayMs);
+    }
+
+    /**
+     * Tick the scheduled-sound queue — plays any sounds whose delay has
+     * elapsed.  Should be called once per client tick
+     * (e.g. from {@code ClientTickEvents.END_CLIENT_TICK}).
+     *
+     * @since 1.13.0
+     */
+    public static void tickScheduled() {
+        if (scheduled.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        Iterator<ScheduledSound> it = scheduled.iterator();
+        while (it.hasNext()) {
+            ScheduledSound s = it.next();
+            if (now >= s.playAtMs()) {
+                playCustom(s.event(), s.pitch(), s.volume());
+                it.remove();
+            }
+        }
     }
 }

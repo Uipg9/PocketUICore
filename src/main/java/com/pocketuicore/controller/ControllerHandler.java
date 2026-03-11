@@ -3,6 +3,7 @@ package com.pocketuicore.controller;
 import com.pocketuicore.component.DarkPanel;
 import com.pocketuicore.component.FocusManager;
 import com.pocketuicore.component.UIComponent;
+import com.pocketuicore.input.InputHelper;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWGamepadState;
@@ -201,6 +202,7 @@ public final class ControllerHandler {
                 return;
             }
             active = true;
+            InputHelper.markController();
 
             ByteBuffer buttons = state.buttons();
             FloatBuffer axes   = state.axes();

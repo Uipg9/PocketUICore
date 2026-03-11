@@ -5,6 +5,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.13.0] — 2025-07-14
+
+### Added — New Components & Systems
+- **InputHelper** — Click/key decomposition, `InputMode` tracking (keyboard-mouse vs controller), modifier checks (`isShiftDown`, `isCtrlDown`, `isAltDown`).
+- **ControllerGlyphs** — Xbox/PlayStation/Nintendo/Generic button prompt labels. `getActionLabel()`, `renderPrompt()`, `renderPromptWithLabel()`, `renderActionBar()` for 12 controller actions.
+- **AnchorLayout** — 9-point anchor positioning (`TOP_LEFT` through `BOTTOM_RIGHT` + `CENTER`), plus `fill()`, `center()`, `distributeHorizontally()`, `distributeVertically()`.
+- **TooltipRenderer** — Global tooltip render queue with `queue(Runnable)`, `flush(DrawContext)` for correct z-ordering.
+- **VersionHelper** — Runtime Minecraft version detection via `SharedConstants`. `isAtLeast()`, `isExactly()`, `major()`/`minor()`/`patch()` accessors.
+- **Model/View Architecture** — Five model classes for data/UI separation:
+  - `ButtonModel` — label, enabled, pressed states + action binding
+  - `SliderModel` — value/min/max + normalized get/set
+  - `ToggleModel` — toggled/enabled states + toggle()
+  - `ListModel` — item list management + selected index tracking
+  - `TextModel` — text/placeholder + max length + append
+
+### Added — API Enhancements
+- **NotificationManager.showToast()** — Toast API replacing deprecated `FloatingText`. Two overloads with anchor and duration.
+- **NotificationManager.showPersistent()** — Persistent notifications that stay on screen until explicitly dismissed. Includes pulsing accent stripe rendering.
+- **NotificationManager.dismissPersistent()** / **getPersistent()** — Manage persistent notification lifecycle.
+- **PocketNotifier.showClient()** — Client-side bridge methods that delegate to `NotificationManager.show()`.
+- **VerticalListPanel.setSuppressLayout()** — Suppress auto-layout during batch child additions for performance.
+- **GridPanel.setSuppressLayout()** — Same batch layout suppression for grid panels.
+- **UISoundManager.schedulePlay()** — Schedule sounds with delay for multi-note sequences. Auto-ticked via client tick.
+- **ScreenShakeHelper.triggerAdditive()** — Additive shake stacking that builds on existing shake intensity.
+- **ProceduralRenderer.fillGradientH(int step)** — Quality-parameterized gradient with configurable pixel step.
+
+### Changed
+- **ProceduralRenderer SCANLINE_CACHE** — Converted from unbounded `HashMap` to LRU `LinkedHashMap` capped at 64 entries.
+- **AnimationTicker** — Internal map changed from `ConcurrentHashMap` to `HashMap` (only accessed from client thread).
+
+### Deprecated
+- **FloatingText** — Deprecated in favour of `NotificationManager.showToast()`. Marked for removal.
+
+---
+
 ## [1.12.0] — 2025-07-14
 
 ### Added — New Components

@@ -4,6 +4,7 @@ import com.pocketuicore.animation.AnimationTicker;
 import com.pocketuicore.command.PocketCommandRegister;
 import com.pocketuicore.component.HudOverlayComponent;
 import com.pocketuicore.controller.ControllerHandler;
+import com.pocketuicore.sound.UISoundManager;
 import com.pocketuicore.economy.ClientNetworkHandler;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -27,6 +28,7 @@ public class PocketUICoreClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             AnimationTicker.getInstance().tick();
             ControllerHandler.getInstance().tick();
+            UISoundManager.tickScheduled();
         });
 
         // Register HUD overlay rendering

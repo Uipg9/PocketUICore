@@ -23,6 +23,7 @@ public class VerticalListPanel extends DarkPanel {
     private int padding;
     private int spacing;
     private boolean stretchWidth;
+    private boolean suppressLayout;
 
     // =====================================================================
     //  Construction
@@ -76,7 +77,7 @@ public class VerticalListPanel extends DarkPanel {
      * child's width is set to {@code panelWidth - 2 * padding}.
      */
     public void layout() {
-        if (children.isEmpty()) return;
+        if (suppressLayout || children.isEmpty()) return;
 
         int curY   = y + padding;
         int innerW = width - padding * 2;
@@ -108,4 +109,17 @@ public class VerticalListPanel extends DarkPanel {
     public VerticalListPanel setSpacing(int s)            { this.spacing = s; return this; }
     public boolean isStretchWidth()          { return stretchWidth; }
     public VerticalListPanel setStretchWidth(boolean b)   { this.stretchWidth = b; return this; }
+
+    /**
+     * Suppress automatic {@link #layout()} calls during bulk child operations.
+     * Remember to call {@link #layout()} manually after re-enabling.
+     *
+     * @param suppress {@code true} to suppress, {@code false} to re-enable
+     * @since 1.13.0
+     */
+    public VerticalListPanel setSuppressLayout(boolean suppress) {
+        this.suppressLayout = suppress;
+        return this;
+    }
+    public boolean isSuppressLayout() { return suppressLayout; }
 }

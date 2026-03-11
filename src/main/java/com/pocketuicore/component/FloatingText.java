@@ -29,7 +29,11 @@ import java.util.List;
  *     // In your screen's render():
  *     FloatingText.renderAll(ctx, screenWidth, screenHeight, delta);
  * }</pre>
+ *
+ * @deprecated Since 1.13.0 — use {@link NotificationManager#showToast} instead.
+ *             This class will be removed in a future release.
  */
+@Deprecated(since = "1.13.0", forRemoval = true)
 public final class FloatingText {
 
     /** Screen anchor point for toast positioning. */
