@@ -82,7 +82,6 @@ public final class UIDataStore {
      * @param version integer version number (default 1)
      */
     public UIDataStore setDataVersion(int version) {
-        int oldVersion = this.dataVersion;
         this.dataVersion = version;
         // Trigger migration if on-disk version is older
         int diskVersion = getInt(VERSION_KEY, 1);

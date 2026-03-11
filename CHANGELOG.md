@@ -5,6 +5,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.11.0] — 2025-07-08
+
+### Fixed
+- **InteractiveGrid** — Division-by-zero crash when columns/rows set to 0 (now clamped to ≥ 1)
+- **InteractiveGrid** — Arrow-key navigation from unselected state now initializes to (0,0) instead of crashing
+- **NotificationManager** — Thread-unsafe static collections replaced with synchronized/concurrent variants
+- **FloatingText** — Thread-unsafe static list + stale stacking indices causing visual gaps after dismissal
+- **EstateManager** — `ArithmeticException` when `EconomyConfig.ESTATE_SYNC_INTERVAL` is 0
+- **PaginatedContainer** — Page position not restored to exact coordinates after slide animation completes
+- **VerticalListPanel** — Missing empty-children guard causing negative scroll height
+- **GridPanel / VerticalListPanel** — Scrollable flag never cleared when content shrinks below panel height
+- **PocketMenuScreen** — TOCTOU race condition on wallet balance check-and-deduct
+- **PocketMenuScreen** — Missing `mouseDragged` forwarding (sliders and drags inside the menu now work)
+- **TabbedPanel** — Active tab index not adjusted when removing a tab before the active tab
+- **PlayerVaultState** — Balance cap now enforces `EconomyConfig.MAX_BALANCE` instead of `Integer.MAX_VALUE`
+
+### Changed
+- Removed unused `slideFromX` field from `PaginatedContainer`
+- Removed dead `oldVersion` variable from `UIDataStore`
+- Removed unused `Text` import from `RichTooltip`
+
+### Added
+- **DEVELOPER_GUIDE.md** — Comprehensive developer documentation with usage examples for all components
+
+---
+
 ## [1.10.0] — 2025-02-26
 
 ### Added

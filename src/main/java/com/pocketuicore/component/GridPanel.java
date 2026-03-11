@@ -110,6 +110,8 @@ public class GridPanel extends DarkPanel {
         int totalHeight = (curY + rowHeight + padding) - y;
         if (totalHeight > height) {
             setScrollable(true, totalHeight);
+        } else {
+            setScrollable(false, height);
         }
     }
 

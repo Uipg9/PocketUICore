@@ -73,14 +73,14 @@ public class PlayerVaultState extends PersistentState {
     }
 
     /**
-     * Add to a player's balance (clamped at {@link Integer#MAX_VALUE}).
+     * Add to a player's balance (clamped at {@link EconomyConfig#MAX_BALANCE}).
      *
      * @param uuid   player UUID
      * @param amount amount to add (must be positive)
      */
     public void addBalance(UUID uuid, int amount) {
         int current = getBalance(uuid);
-        setBalance(uuid, (int) Math.min((long) current + amount, Integer.MAX_VALUE));
+        setBalance(uuid, (int) Math.min((long) current + amount, EconomyConfig.MAX_BALANCE));
     }
 
     /**

@@ -89,8 +89,8 @@ public final class InteractiveGrid<T> extends UIComponent {
     public InteractiveGrid(int x, int y, int width, int height,
                            int columns, int rows) {
         super(x, y, width, height);
-        this.columns = columns;
-        this.rows    = rows;
+        this.columns = Math.max(1, columns);
+        this.rows    = Math.max(1, rows);
     }
 
     // =====================================================================
@@ -256,7 +256,15 @@ public final class InteractiveGrid<T> extends UIComponent {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!visible || !enabled) return false;
 
-        // Arrow key navigation
+        // Arrow key navigation — initialise to (0,0) on first press
+        boolean isArrow = keyCode == GLFW.GLFW_KEY_UP || keyCode == GLFW.GLFW_KEY_DOWN
+                || keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_RIGHT;
+        if (isArrow && (selectedRow < 0 || selectedCol < 0)) {
+            selectedRow = 0;
+            selectedCol = 0;
+            UISoundManager.playClick();
+            return true;
+        }
         boolean moved = false;
         if (keyCode == GLFW.GLFW_KEY_UP && selectedRow > 0) {
             selectedRow--;
@@ -273,8 +281,6 @@ public final class InteractiveGrid<T> extends UIComponent {
         }
 
         if (moved) {
-            if (selectedRow < 0) selectedRow = 0;
-            if (selectedCol < 0) selectedCol = 0;
             UISoundManager.playClick();
             return true;
         }
@@ -326,8 +332,8 @@ public final class InteractiveGrid<T> extends UIComponent {
     }
 
     public InteractiveGrid<T> setGridDimensions(int columns, int rows) {
-        this.columns = columns;
-        this.rows = rows;
+        this.columns = Math.max(1, columns);
+        this.rows    = Math.max(1, rows);
         return this;
     }
 

@@ -44,7 +44,6 @@ public final class PaginatedContainer extends UIComponent {
     private boolean animateSlide = true;
     private long slideStartMs;
     private long slideDurationMs = 250;
-    private int slideFromX;
     private int slideDirection; // -1 left, +1 right
     private boolean sliding = false;
 
@@ -132,7 +131,6 @@ public final class PaginatedContainer extends UIComponent {
             sliding = true;
             slideStartMs = System.currentTimeMillis();
             slideDirection = direction;
-            slideFromX = x + direction * width;
         }
 
         if (onPageChange != null) onPageChange.accept(currentPage);
@@ -166,6 +164,8 @@ public final class PaginatedContainer extends UIComponent {
             long elapsed = System.currentTimeMillis() - slideStartMs;
             if (elapsed >= slideDurationMs) {
                 sliding = false;
+                // Restore exact position after animation completes
+                pages.get(currentPage).setPosition(x, y);
             } else {
                 // Ease-out
                 float t = (float) elapsed / slideDurationMs;

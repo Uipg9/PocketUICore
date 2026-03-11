@@ -76,8 +76,8 @@ public final class NotificationManager {
     }
 
     // ── State ────────────────────────────────────────────────────────────
-    private static final List<Notification> active = new ArrayList<>();
-    private static final Deque<Notification> queue = new ArrayDeque<>();
+    private static final List<Notification> active = java.util.Collections.synchronizedList(new ArrayList<>());
+    private static final Deque<Notification> queue = new java.util.concurrent.ConcurrentLinkedDeque<>();
     private static int maxVisible = 5;
     private static Position position = Position.TOP_CENTER;
 

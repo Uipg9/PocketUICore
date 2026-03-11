@@ -86,6 +86,9 @@ public final class TabbedPanel extends UIComponent {
             setActiveTab(Math.max(0, tabs.size() - 1));
         } else if (activeIndex == index) {
             setActiveTab(activeIndex);
+        } else if (activeIndex > index) {
+            // Tab removed before active — adjust index without triggering callback
+            activeIndex--;
         }
     }
 

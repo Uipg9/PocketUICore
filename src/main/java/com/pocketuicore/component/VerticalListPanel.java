@@ -76,6 +76,8 @@ public class VerticalListPanel extends DarkPanel {
      * child's width is set to {@code panelWidth - 2 * padding}.
      */
     public void layout() {
+        if (children.isEmpty()) return;
+
         int curY   = y + padding;
         int innerW = width - padding * 2;
 
@@ -91,6 +93,8 @@ public class VerticalListPanel extends DarkPanel {
         int totalHeight = (curY - spacing + padding) - y;
         if (totalHeight > height) {
             setScrollable(true, totalHeight);
+        } else {
+            setScrollable(false, height);
         }
     }
 

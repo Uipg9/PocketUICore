@@ -40,7 +40,7 @@ public final class FloatingText {
     }
 
     // ── Active toasts ────────────────────────────────────────────────────
-    private static final List<Toast> toasts = new ArrayList<>();
+    private static final List<Toast> toasts = java.util.Collections.synchronizedList(new ArrayList<>());
 
     private FloatingText() {}
 
@@ -165,8 +165,14 @@ public final class FloatingText {
                 default              -> { bx = (screenW - textW) / 2 - pad; by = 10; }
             }
 
-            // Stack offset
-            by += toast.index * (textH + pad * 2 + 4);
+            // Stack offset — use live render-order index instead of baked index
+            int anchorIndex = 0;
+            for (int i = 0; i < toasts.size(); i++) {
+                Toast t2 = toasts.get(i);
+                if (t2 == toast) break;
+                if (t2.anchor == toast.anchor) anchorIndex++;
+            }
+            by += anchorIndex * (textH + pad * 2 + 4);
             by += (int) floatOffset;
 
             int boxW = textW + pad * 2;

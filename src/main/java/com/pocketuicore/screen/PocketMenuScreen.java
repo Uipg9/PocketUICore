@@ -101,8 +101,9 @@ public class PocketMenuScreen extends Screen {
         // ── Upgrade button ───────────────────────────────────────────────
         HoverButton upgradeBtn = new HoverButton(0, 0, 0, 26,
                 "Upgrade Estate", () -> {
-            if (walletState.get() != null && walletState.get() >= 100) {
-                walletState.set(walletState.get() - 100);
+            Integer bal = walletState.get();
+            if (bal != null && bal >= 100) {
+                walletState.set(bal - 100);
             }
         });
         upgradeBtn.setTooltip("Click to upgrade your estate",
@@ -162,6 +163,12 @@ public class PocketMenuScreen extends Screen {
                                   double hAmount, double vAmount) {
         if (mainPanel.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) return true;
         return super.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
+    }
+
+    @Override
+    public boolean mouseDragged(Click click, double deltaX, double deltaY) {
+        if (mainPanel.mouseDragged(click.x(), click.y(), click.button(), deltaX, deltaY)) return true;
+        return super.mouseDragged(click, deltaX, deltaY);
     }
 
     @Override

@@ -81,7 +81,8 @@ public final class EstateManager {
             growthMap.put(uuid, current);
 
             // Sync to client at throttled rate
-            if (tickCounter % EconomyConfig.ESTATE_SYNC_INTERVAL == 0) {
+            int syncInterval = Math.max(1, EconomyConfig.ESTATE_SYNC_INTERVAL);
+            if (tickCounter % syncInterval == 0) {
                 syncToClient(player, current);
             }
         }
