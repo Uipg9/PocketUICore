@@ -182,32 +182,35 @@ public class DarkPanel extends UIComponent {
     // =====================================================================
 
     public int  getBackgroundColor()      { return backgroundColor; }
-    public void setBackgroundColor(int c) { this.backgroundColor = c; }
+    public DarkPanel setBackgroundColor(int c) { this.backgroundColor = c; return this; }
     public int  getBorderColor()          { return borderColor; }
-    public void setBorderColor(int c)     { this.borderColor = c; }
+    public DarkPanel setBorderColor(int c)     { this.borderColor = c; return this; }
     public int  getCornerRadius()         { return cornerRadius; }
-    public void setCornerRadius(int r)    { this.cornerRadius = r; }
+    public DarkPanel setCornerRadius(int r)    { this.cornerRadius = r; return this; }
     public boolean isDrawBorder()         { return drawBorder; }
-    public void setDrawBorder(boolean b)  { this.drawBorder = b; }
+    public DarkPanel setDrawBorder(boolean b)  { this.drawBorder = b; return this; }
     public boolean isDrawShadow()         { return drawShadow; }
-    public void setDrawShadow(boolean b)  { this.drawShadow = b; }
-    public void setShadow(int layers, int maxAlpha) {
+    public DarkPanel setDrawShadow(boolean b)  { this.drawShadow = b; return this; }
+    public DarkPanel setShadow(int layers, int maxAlpha) {
         this.shadowLayers = layers;
         this.shadowAlpha  = maxAlpha;
+        return this;
     }
 
-    public void setScrollable(boolean scrollable, int contentHeight) {
+    public DarkPanel setScrollable(boolean scrollable, int contentHeight) {
         this.scrollable    = scrollable;
         this.contentHeight = contentHeight;
         // Clamp existing offset to the new bounds
         int max = Math.max(0, contentHeight - height);
         this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, max));
+        return this;
     }
 
     public int getScrollOffset() { return scrollOffset; }
-    public void setScrollOffset(int offset) {
+    public DarkPanel setScrollOffset(int offset) {
         int max = Math.max(0, contentHeight - height);
         this.scrollOffset = Math.max(0, Math.min(offset, max));
+        return this;
     }
 
     /**
@@ -238,17 +241,19 @@ public class DarkPanel extends UIComponent {
      * @param scrollable   whether horizontal scrolling is enabled
      * @param contentWidth total width of the content (in pixels)
      */
-    public void setScrollableH(boolean scrollable, int contentWidth) {
+    public DarkPanel setScrollableH(boolean scrollable, int contentWidth) {
         this.scrollableH  = scrollable;
         this.contentWidth = contentWidth;
         int max = Math.max(0, contentWidth - width);
         this.scrollOffsetX = Math.max(0, Math.min(this.scrollOffsetX, max));
+        return this;
     }
 
     public int getScrollOffsetX() { return scrollOffsetX; }
-    public void setScrollOffsetX(int offset) {
+    public DarkPanel setScrollOffsetX(int offset) {
         int max = Math.max(0, contentWidth - width);
         this.scrollOffsetX = Math.max(0, Math.min(offset, max));
+        return this;
     }
 
     /**

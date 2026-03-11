@@ -1,5 +1,6 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.animation.AnimationTicker;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import net.minecraft.client.MinecraftClient;
@@ -51,12 +52,21 @@ public final class TabbedPanel extends UIComponent {
     private int tabTextColor  = ProceduralRenderer.COL_TEXT_PRIMARY;
     private int accentColor   = ProceduralRenderer.COL_ACCENT;
 
+    // ── Transition animation (v1.12.0) ───────────────────────────────────
+    private boolean animateTransitions = true;
+    private long transitionDurationMs = 200;
+    private float transitionAlpha = 1f;
+    private static final String ANIM_KEY = "tabbedPanel:transition";
+    private static int instanceCounter = 0;
+    private final String animKey;
+
     // =====================================================================
     //  Constructor
     // =====================================================================
 
     public TabbedPanel(int x, int y, int width, int height) {
         super(x, y, width, height);
+        this.animKey = ANIM_KEY + ":" + (instanceCounter++);
     }
 
     // =====================================================================
@@ -120,6 +130,12 @@ public final class TabbedPanel extends UIComponent {
         t.content.setBounds(x, y + TAB_BAR_HEIGHT, width, height - TAB_BAR_HEIGHT);
         addChild(t.content);
         if (onTabChange != null) onTabChange.accept(activeIndex);
+        // Trigger fade-in transition
+        if (animateTransitions) {
+            AnimationTicker.getInstance().start(
+                    animKey, 0f, 1f, transitionDurationMs,
+                    AnimationTicker.EasingType.EASE_OUT);
+        }
     }
 
     /** Cycle to the next tab (wraps). */
@@ -144,6 +160,11 @@ public final class TabbedPanel extends UIComponent {
     protected void renderSelf(DrawContext ctx, int mouseX, int mouseY,
                               float delta) {
         if (tabs.isEmpty()) return;
+
+        // Update transition alpha
+        if (animateTransitions) {
+            transitionAlpha = AnimationTicker.getInstance().get(animKey, 1f);
+        }
 
         var textRenderer = MinecraftClient.getInstance().textRenderer;
 
@@ -285,4 +306,19 @@ public final class TabbedPanel extends UIComponent {
         this.accentColor = color;
         return this;
     }
+
+    /** Enable or disable tab-switch transition animation. @since 1.12.0 */
+    public TabbedPanel setAnimateTransitions(boolean animate) {
+        this.animateTransitions = animate;
+        return this;
+    }
+
+    /** Set the duration of the tab transition fade. @since 1.12.0 */
+    public TabbedPanel setTransitionDurationMs(long ms) {
+        this.transitionDurationMs = Math.max(1, ms);
+        return this;
+    }
+
+    /** @return the current transition alpha (1.0 = fully visible). @since 1.12.0 */
+    public float getTransitionAlpha() { return transitionAlpha; }
 }

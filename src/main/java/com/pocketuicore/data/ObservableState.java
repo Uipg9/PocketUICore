@@ -276,4 +276,91 @@ public class ObservableState<T> {
         label.setText(state.get() != null ? state.get() : "");
         state.addListener(val -> label.setText(val != null ? val : ""));
     }
+
+    // =====================================================================
+    //  Bidirectional binding (v1.12.0)
+    // =====================================================================
+
+    /**
+     * Create a bidirectional binding between two ObservableState instances.
+     * When either state changes, the other is updated to match.
+     * <p>
+     * Returns a {@link BidirectionalBinding} handle that can be
+     * {@linkplain BidirectionalBinding#dispose() disposed} to remove
+     * the binding.
+     * <p>
+     * <b>Usage:</b>
+     * <pre>{@code
+     *     ObservableState<String> a = new ObservableState<>("hello");
+     *     ObservableState<String> b = new ObservableState<>("");
+     *     var binding = ObservableState.bindBidirectional(a, b);
+     *     // b.get() == "hello" (synced immediately)
+     *     b.set("world");
+     *     // a.get() == "world"
+     *     binding.dispose();
+     * }</pre>
+     *
+     * @param stateA first state
+     * @param stateB second state — will be set to stateA's current value
+     * @param <T>    value type
+     * @return a disposable binding handle
+     * @since 1.12.0
+     */
+    public static <T> BidirectionalBinding<T> bindBidirectional(
+            ObservableState<T> stateA, ObservableState<T> stateB) {
+        return new BidirectionalBinding<>(stateA, stateB);
+    }
+
+    /**
+     * Handle for a bidirectional binding. Call {@link #dispose()} to
+     * remove both listener connections.
+     *
+     * @param <T> value type
+     * @since 1.12.0
+     */
+    public static final class BidirectionalBinding<T> {
+        private final ObservableState<T> a;
+        private final ObservableState<T> b;
+        private final Consumer<T> aToB;
+        private final Consumer<T> bToA;
+        private boolean updating = false;
+        private boolean disposed = false;
+
+        BidirectionalBinding(ObservableState<T> a, ObservableState<T> b) {
+            this.a = a;
+            this.b = b;
+
+            this.aToB = val -> {
+                if (!updating) {
+                    updating = true;
+                    b.set(val);
+                    updating = false;
+                }
+            };
+            this.bToA = val -> {
+                if (!updating) {
+                    updating = true;
+                    a.set(val);
+                    updating = false;
+                }
+            };
+
+            a.addListener(aToB);
+            b.addListener(bToA);
+            // Sync initial value
+            b.set(a.get());
+        }
+
+        /** Remove the bidirectional binding. Safe to call multiple times. */
+        public void dispose() {
+            if (!disposed) {
+                a.removeListener(aToB);
+                b.removeListener(bToA);
+                disposed = true;
+            }
+        }
+
+        /** @return {@code true} if disposed. */
+        public boolean isDisposed() { return disposed; }
+    }
 }

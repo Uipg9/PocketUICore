@@ -185,6 +185,35 @@ public final class ScreenShakeHelper {
      */
     public boolean isShaking() { return isActive(); }
 
+    // =====================================================================
+    //  Lambda convenience API (v1.12.0)
+    // =====================================================================
+
+    /**
+     * Apply the shake, execute the render block, then restore the matrix.
+     * Replaces the manual {@code apply()} / {@code restore()} pattern
+     * with a single lambda call.
+     * <p>
+     * <b>Usage:</b>
+     * <pre>{@code
+     *     shake.withShake(ctx, () -> {
+     *         // draw your UI here
+     *     });
+     * }</pre>
+     *
+     * @param ctx    the DrawContext
+     * @param render the rendering code to execute while the shake is applied
+     * @since 1.12.0
+     */
+    public void withShake(net.minecraft.client.gui.DrawContext ctx, Runnable render) {
+        apply(ctx);
+        try {
+            render.run();
+        } finally {
+            restore(ctx);
+        }
+    }
+
     /** @return the last computed X offset (for external use). */
     public float getLastOffsetX() { return lastOffsetX; }
 

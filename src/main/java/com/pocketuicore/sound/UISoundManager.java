@@ -28,6 +28,36 @@ public final class UISoundManager {
 
     private UISoundManager() { /* static utility */ }
 
+    // ── Master volume control (v1.12.0) ─────────────────────────────────
+    private static float masterVolume = 1.0f;
+    private static boolean muted = false;
+
+    /**
+     * Set the master volume for all PocketUICore UI sounds.
+     *
+     * @param volume 0.0 (silent) to 1.0 (full)
+     * @since 1.12.0
+     */
+    public static void setMasterVolume(float volume) {
+        masterVolume = Math.clamp(volume, 0f, 1f);
+    }
+
+    /** @return the current master volume (0.0–1.0). @since 1.12.0 */
+    public static float getMasterVolume() { return masterVolume; }
+
+    /**
+     * Mute or unmute all PocketUICore UI sounds.
+     *
+     * @param muted {@code true} to mute
+     * @since 1.12.0
+     */
+    public static void setMuted(boolean muted) {
+        UISoundManager.muted = muted;
+    }
+
+    /** @return {@code true} if muted. @since 1.12.0 */
+    public static boolean isMuted() { return muted; }
+
     // =====================================================================
     //  Core playback
     // =====================================================================
@@ -36,15 +66,18 @@ public final class UISoundManager {
      * Play a {@link SoundEvent} at the given pitch and volume.
      * Handles null-safety on the client player and uses the correct
      * UI sound instance factory.
+     * <p>
+     * Volume is scaled by the master volume and respects the mute flag.
      *
      * @param event  the sound event to play
      * @param pitch  pitch multiplier (1.0 = normal)
      * @param volume volume multiplier (1.0 = full)
      */
     public static void playCustom(SoundEvent event, float pitch, float volume) {
+        if (muted || masterVolume <= 0f) return;
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        client.getSoundManager().play(PositionedSoundInstance.ui(event, pitch, volume));
+        client.getSoundManager().play(PositionedSoundInstance.ui(event, pitch, volume * masterVolume));
     }
 
     /**

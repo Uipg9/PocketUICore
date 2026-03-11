@@ -56,6 +56,20 @@ public final class AnimationTicker {
     }
 
     // =====================================================================
+    //  Loop mode (v1.12.0)
+    // =====================================================================
+
+    /** Controls how an animation behaves when it reaches the end. @since 1.12.0 */
+    public enum LoopMode {
+        /** Play once and stop. */
+        ONCE,
+        /** Restart from the beginning when finished. */
+        LOOP,
+        /** Reverse direction when finished (from→to→from→to…). */
+        PING_PONG
+    }
+
+    // =====================================================================
     //  Animation record
     // =====================================================================
 
@@ -65,28 +79,88 @@ public final class AnimationTicker {
         final long startNanos;
         final long durationNanos;
         final EasingType easing;
+        final LoopMode loopMode;
         boolean completed;
         /** Set to true one tick after {@link #completed} becomes true. */
         boolean readyToRemove;
 
         Animation(float from, float to, long durationMs, EasingType easing) {
+            this(from, to, durationMs, easing, LoopMode.ONCE);
+        }
+
+        Animation(float from, float to, long durationMs, EasingType easing, LoopMode loopMode) {
             this.from          = from;
             this.to            = to;
             this.startNanos    = System.nanoTime();
             this.durationNanos = durationMs * 1_000_000L;
             this.easing        = easing;
+            this.loopMode      = loopMode;
         }
 
         float evaluate() {
             long elapsed = System.nanoTime() - startNanos;
-            if (elapsed >= durationNanos) {
-                completed = true;
-                return to;
+
+            switch (loopMode) {
+                case LOOP -> {
+                    elapsed = elapsed % durationNanos;
+                    float t = (float) elapsed / durationNanos;
+                    t = applyEasing(t, easing);
+                    return from + (to - from) * t;
+                }
+                case PING_PONG -> {
+                    long cycle = elapsed / durationNanos;
+                    elapsed = elapsed % durationNanos;
+                    float t = (float) elapsed / durationNanos;
+                    t = applyEasing(t, easing);
+                    // Odd cycles go in reverse
+                    if (cycle % 2 == 1) t = 1f - t;
+                    return from + (to - from) * t;
+                }
+                default -> { // ONCE
+                    if (elapsed >= durationNanos) {
+                        completed = true;
+                        return to;
+                    }
+                    float t = (float) elapsed / durationNanos;
+                    t = applyEasing(t, easing);
+                    return from + (to - from) * t;
+                }
             }
-            float t = (float) elapsed / durationNanos; // 0 → 1 linear
-            t = applyEasing(t, easing);
-            return from + (to - from) * t;
         }
+    }
+
+    // =====================================================================
+    //  Public API
+    // =====================================================================
+
+    // =====================================================================
+    //  Animation Handle — type-safe, cancellable reference (v1.12.0)
+    // =====================================================================
+
+    /**
+     * A handle to a running animation. Returned by the {@code startHandle}
+     * methods and provides a type-safe way to query and cancel the animation
+     * without needing to remember the string key.
+     *
+     * @since 1.12.0
+     */
+    public final class AnimationHandle {
+        private final String id;
+
+        AnimationHandle(String id) { this.id = id; }
+
+        /** @return the current animated value, or {@code defaultValue} if finished. */
+        public float get(float defaultValue) { return AnimationTicker.this.get(id, defaultValue); }
+        /** @return the current animated value, or 0 if finished. */
+        public float get() { return AnimationTicker.this.get(id); }
+        /** @return the current value clamped to [0, 1]. */
+        public float get01() { return AnimationTicker.this.get01(id); }
+        /** @return {@code true} if the animation is still running. */
+        public boolean isActive() { return AnimationTicker.this.isActive(id); }
+        /** Cancel this animation. */
+        public void cancel() { AnimationTicker.this.cancel(id); }
+        /** @return the string key. */
+        public String getId() { return id; }
     }
 
     // =====================================================================
@@ -118,6 +192,62 @@ public final class AnimationTicker {
      */
     public void start(String id, float from, float to, long durationMs) {
         start(id, from, to, durationMs, EasingType.EASE_IN_OUT);
+    }
+
+    /**
+     * Start an animation and return a type-safe {@link AnimationHandle}.
+     *
+     * @since 1.12.0
+     */
+    public AnimationHandle startHandle(String id, float from, float to,
+                                        long durationMs, EasingType easing) {
+        start(id, from, to, durationMs, easing);
+        return new AnimationHandle(id);
+    }
+
+    /** Start an animation (default easing) and return a handle. @since 1.12.0 */
+    public AnimationHandle startHandle(String id, float from, float to, long durationMs) {
+        return startHandle(id, from, to, durationMs, EasingType.EASE_IN_OUT);
+    }
+
+    // ── Looping animations (v1.12.0) ─────────────────────────────────────
+
+    /**
+     * Start (or restart) a looping animation that repeats from→to
+     * indefinitely until cancelled. The animation restarts from the
+     * beginning each time it completes.
+     *
+     * @param id         unique key
+     * @param from       starting value
+     * @param to         ending value
+     * @param durationMs duration of one cycle in milliseconds
+     * @param easing     easing curve
+     * @since 1.12.0
+     */
+    public void startLooping(String id, float from, float to,
+                             long durationMs, EasingType easing) {
+        animations.put(id, new Animation(from, to, Math.max(1, durationMs), easing, LoopMode.LOOP));
+    }
+
+    /** Start a looping animation with default easing. @since 1.12.0 */
+    public void startLooping(String id, float from, float to, long durationMs) {
+        startLooping(id, from, to, durationMs, EasingType.EASE_IN_OUT);
+    }
+
+    /**
+     * Start (or restart) a ping-pong animation that alternates from→to→from
+     * indefinitely until cancelled.
+     *
+     * @since 1.12.0
+     */
+    public void startPingPong(String id, float from, float to,
+                              long durationMs, EasingType easing) {
+        animations.put(id, new Animation(from, to, Math.max(1, durationMs), easing, LoopMode.PING_PONG));
+    }
+
+    /** Start a ping-pong animation with default easing. @since 1.12.0 */
+    public void startPingPong(String id, float from, float to, long durationMs) {
+        startPingPong(id, from, to, durationMs, EasingType.EASE_IN_OUT);
     }
 
     /**

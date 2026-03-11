@@ -270,4 +270,56 @@ public final class ScreenTintManager {
         layers.clear();
         clearTint();
     }
+
+    // =====================================================================
+    //  Screen transition helpers (v1.12.0)
+    // =====================================================================
+
+    /**
+     * Play a "screen open" fade-in: starts with a full-screen black
+     * overlay that fades out to transparent.
+     *
+     * @param durationMs fade-in duration in milliseconds
+     * @since 1.12.0
+     */
+    public void transitionIn(long durationMs) {
+        setTint(0xFF000000); // start fully black
+        fadeTo(0x00000000, durationMs);
+    }
+
+    /**
+     * Play a "screen close" fade-out: fades from transparent to a
+     * full-screen black overlay.
+     *
+     * @param durationMs fade-out duration in milliseconds
+     * @since 1.12.0
+     */
+    public void transitionOut(long durationMs) {
+        setTint(0x00000000);
+        fadeTo(0xFF000000, durationMs);
+    }
+
+    /**
+     * Play a "screen open" fade-in with a custom colour.
+     *
+     * @param color      the overlay colour (the alpha channel at start; fades to transparent)
+     * @param durationMs duration in milliseconds
+     * @since 1.12.0
+     */
+    public void transitionIn(int color, long durationMs) {
+        setTint(color);
+        fadeTo(0x00000000, durationMs);
+    }
+
+    /**
+     * Play a "screen close" fade-out to a custom colour.
+     *
+     * @param color      the target overlay colour
+     * @param durationMs duration in milliseconds
+     * @since 1.12.0
+     */
+    public void transitionOut(int color, long durationMs) {
+        setTint(0x00000000);
+        fadeTo(color, durationMs);
+    }
 }

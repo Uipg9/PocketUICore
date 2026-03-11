@@ -350,31 +350,32 @@ public class TextInputComponent extends UIComponent {
     // =====================================================================
 
     public String getText()                     { return text.toString(); }
-    public void   setText(String t) {
+    public TextInputComponent setText(String t) {
         text = new StringBuilder(t != null ? t : "");
         cursorPos = text.length();
         selectionStart = -1;
         scrollOffset = 0;
         fireChanged();
+        return this;
     }
     public boolean isFocused()                  { return focused; }
-    public void    setFocused(boolean f)        { this.focused = f; if (f) resetBlink(); }
+    public TextInputComponent    setFocused(boolean f)        { this.focused = f; if (f) resetBlink(); return this; }
     public int     getMaxLength()               { return maxLength; }
-    public void    setMaxLength(int m)          { this.maxLength = Math.max(1, m); }
+    public TextInputComponent    setMaxLength(int m)          { this.maxLength = Math.max(1, m); return this; }
     public String  getPlaceholder()             { return placeholder; }
-    public void    setPlaceholder(String p)     { this.placeholder = p != null ? p : ""; }
-    public void    setOnSubmit(Consumer<String> cb) { this.onSubmit = cb; }
-    public void    setOnChanged(Consumer<String> cb) { this.onChanged = cb; }
-    public void    setCharFilter(Predicate<Character> f) { this.charFilter = f; }
+    public TextInputComponent    setPlaceholder(String p)     { this.placeholder = p != null ? p : ""; return this; }
+    public TextInputComponent    setOnSubmit(Consumer<String> cb) { this.onSubmit = cb; return this; }
+    public TextInputComponent    setOnChanged(Consumer<String> cb) { this.onChanged = cb; return this; }
+    public TextInputComponent    setCharFilter(Predicate<Character> f) { this.charFilter = f; return this; }
     public int     getCursorPos()               { return cursorPos; }
-    public void    setCursorPos(int pos)        { this.cursorPos = Math.clamp(pos, 0, text.length()); }
+    public TextInputComponent    setCursorPos(int pos)        { this.cursorPos = Math.clamp(pos, 0, text.length()); return this; }
 
     // ── Appearance setters ───────────────────────────────────────────────
-    public void setBackgroundColor(int c)       { this.backgroundColor = c; }
-    public void setBorderColor(int c)           { this.borderColor = c; }
-    public void setFocusBorderColor(int c)      { this.focusBorderColor = c; }
-    public void setTextColor(int c)             { this.textColor = c; }
-    public void setPlaceholderColor(int c)      { this.placeholderColor = c; }
-    public void setCursorColor(int c)           { this.cursorColor = c; }
-    public void setCornerRadius(int r)          { this.cornerRadius = r; }
+    public TextInputComponent setBackgroundColor(int c)       { this.backgroundColor = c; return this; }
+    public TextInputComponent setBorderColor(int c)           { this.borderColor = c; return this; }
+    public TextInputComponent setFocusBorderColor(int c)      { this.focusBorderColor = c; return this; }
+    public TextInputComponent setTextColor(int c)             { this.textColor = c; return this; }
+    public TextInputComponent setPlaceholderColor(int c)      { this.placeholderColor = c; return this; }
+    public TextInputComponent setCursorColor(int c)           { this.cursorColor = c; return this; }
+    public TextInputComponent setCornerRadius(int r)          { this.cornerRadius = r; return this; }
 }

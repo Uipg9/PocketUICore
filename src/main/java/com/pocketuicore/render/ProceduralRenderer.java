@@ -712,4 +712,106 @@ public final class ProceduralRenderer {
         if (withBorder) sb.merge(bakeRoundedBorder(x, y, w, h, radius, borderColor));
         return sb.build();
     }
+
+    // =====================================================================
+    //  Additional primitives
+    // =====================================================================
+
+    /**
+     * Filled circle using the scanline arc approach.
+     *
+     * @param cx    centre X
+     * @param cy    centre Y
+     * @param radius radius in pixels
+     * @param color  ARGB colour
+     * @since 1.12.0
+     */
+    public static void fillCircle(DrawContext ctx, int cx, int cy, int radius, int color) {
+        if (radius <= 0) return;
+        int[] dx = getScanlineDx(radius);
+        for (int i = 0; i < radius; i++) {
+            int arcDx = dx[i];
+            // Upper half
+            ctx.fill(cx - arcDx, cy - radius + i, cx + arcDx, cy - radius + i + 1, color);
+            // Lower half
+            ctx.fill(cx - arcDx, cy + radius - 1 - i, cx + arcDx, cy + radius - i, color);
+        }
+        // Centre row
+        ctx.fill(cx - radius, cy, cx + radius, cy + 1, color);
+    }
+
+    /**
+     * 1-pixel circle outline using the scanline arc approach.
+     *
+     * @param cx    centre X
+     * @param cy    centre Y
+     * @param radius radius in pixels
+     * @param color  ARGB colour
+     * @since 1.12.0
+     */
+    public static void drawCircle(DrawContext ctx, int cx, int cy, int radius, int color) {
+        if (radius <= 0) return;
+        int[] dx = getScanlineDx(radius);
+        for (int i = 0; i < radius; i++) {
+            int arcDx = dx[i];
+            int prevDx = (i > 0) ? dx[i - 1] : 0;
+            // Upper half arcs
+            ctx.fill(cx - arcDx, cy - radius + i, cx - prevDx, cy - radius + i + 1, color);
+            ctx.fill(cx + prevDx, cy - radius + i, cx + arcDx, cy - radius + i + 1, color);
+            // Lower half arcs
+            ctx.fill(cx - arcDx, cy + radius - 1 - i, cx - prevDx, cy + radius - i, color);
+            ctx.fill(cx + prevDx, cy + radius - 1 - i, cx + arcDx, cy + radius - i, color);
+        }
+    }
+
+    /**
+     * Draw a 1-pixel line between two arbitrary points using Bresenham's
+     * line algorithm, rendering each pixel as a 1×1 fill.
+     *
+     * @param x1    start X
+     * @param y1    start Y
+     * @param x2    end X
+     * @param y2    end Y
+     * @param color ARGB colour
+     * @since 1.12.0
+     */
+    public static void drawLine(DrawContext ctx, int x1, int y1, int x2, int y2, int color) {
+        int dx = Math.abs(x2 - x1);
+        int dy = Math.abs(y2 - y1);
+        int sx = x1 < x2 ? 1 : -1;
+        int sy = y1 < y2 ? 1 : -1;
+        int err = dx - dy;
+
+        while (true) {
+            ctx.fill(x1, y1, x1 + 1, y1 + 1, color);
+            if (x1 == x2 && y1 == y2) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x1 += sx; }
+            if (e2 <  dx) { err += dx; y1 += sy; }
+        }
+    }
+
+    /**
+     * Draw a thick line between two points.
+     * Renders multiple parallel Bresenham lines to achieve the desired thickness.
+     *
+     * @param thickness line thickness in pixels (1 = standard line)
+     * @since 1.12.0
+     */
+    public static void drawLine(DrawContext ctx, int x1, int y1, int x2, int y2,
+                                int color, int thickness) {
+        if (thickness <= 1) {
+            drawLine(ctx, x1, y1, x2, y2, color);
+            return;
+        }
+        int half = thickness / 2;
+        for (int i = -half; i <= half; i++) {
+            boolean steep = Math.abs(y2 - y1) > Math.abs(x2 - x1);
+            if (steep) {
+                drawLine(ctx, x1 + i, y1, x2 + i, y2, color);
+            } else {
+                drawLine(ctx, x1, y1 + i, x2, y2 + i, color);
+            }
+        }
+    }
 }

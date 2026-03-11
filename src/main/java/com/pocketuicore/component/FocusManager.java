@@ -129,6 +129,49 @@ public final class FocusManager {
         }
     }
 
+    /**
+     * Register an entire component tree. Walks the given root and all
+     * its descendants, registering every interactive (visible + enabled)
+     * component.
+     * <p>
+     * A component is considered "interactive" if it is an instance of a
+     * known interactive type (buttons, sliders, inputs, etc.) or if it
+     * has an onClick handler set.
+     *
+     * @param root the root component whose tree should be registered
+     * @since 1.12.0
+     */
+    public void registerTree(UIComponent root) {
+        if (root == null) return;
+        if (isInteractive(root)) {
+            register(root);
+        }
+        for (UIComponent child : root.getChildren()) {
+            registerTree(child);
+        }
+    }
+
+    /**
+     * Heuristic for whether a component is "interactive" and should
+     * receive focus. Override-friendly: any component with an onClick
+     * handler is considered interactive.
+     */
+    private boolean isInteractive(UIComponent c) {
+        if (!c.isVisible() || !c.isEnabled()) return false;
+        // Known interactive types
+        if (c instanceof HoverButton) return true;
+        if (c instanceof SliderComponent) return true;
+        if (c instanceof TextInputComponent) return true;
+        if (c instanceof SelectableList) return true;
+        if (c instanceof ToggleSwitch) return true;
+        if (c instanceof Dropdown) return true;
+        if (c instanceof SpinnerComponent) return true;
+        if (c instanceof RadioGroup) return true;
+        // Generic: has onClick handler
+        if (c.getOnClick() != null) return true;
+        return false;
+    }
+
     /** Unregister a component. If it was focused, focus is cleared. */
     public void unregister(UIComponent component) {
         focusables.remove(component);

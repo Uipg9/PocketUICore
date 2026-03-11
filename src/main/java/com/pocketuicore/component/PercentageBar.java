@@ -212,8 +212,9 @@ public class PercentageBar extends UIComponent {
      *
      * @param progress 0.0 (empty) to 1.0 (full)
      */
-    public void setProgress(float progress) {
+    public PercentageBar setProgress(float progress) {
         this.targetProgress = clamp01(progress);
+        return this;
     }
 
     /**
@@ -227,19 +228,23 @@ public class PercentageBar extends UIComponent {
     public float getTargetProgress()  { return targetProgress; }
     public float getDisplayProgress() { return displayProgress; }
 
-    public void setBarColor(int c)        { this.barColor = c; }
+    public PercentageBar setBarColor(int c)        { this.barColor = c; return this; }
     public int  getBarColor()              { return barColor; }
-    public void setTrackColor(int c)      { this.trackColor = c; }
+    public PercentageBar setTrackColor(int c)      { this.trackColor = c; return this; }
     public int  getTrackColor()            { return trackColor; }
-    public void setTextColor(int c)       { this.textColor = c; }
+    public PercentageBar setTextColor(int c)       { this.textColor = c; return this; }
     public int  getTextColor()             { return textColor; }
-    public void setCornerRadius(int r)    { this.cornerRadius = r; }
+    public PercentageBar setCornerRadius(int r)    { this.cornerRadius = r; return this; }
     public int  getCornerRadius()          { return cornerRadius; }
-    public void setLabel(String l)        { this.label = l; }
+    /** @deprecated Use {@link #setText(String)} instead. */
+    @Deprecated
+    public PercentageBar setLabel(String l)        { this.label = l; return this; }
+    /** Primary label setter — consistent with TextLabel. @since 1.12.0 */
+    public PercentageBar setText(String text)      { this.label = text; return this; }
     public String getLabel()               { return label; }
-    public void setShowPercentage(boolean b) { this.showPercentage = b; }
+    public PercentageBar setShowPercentage(boolean b) { this.showPercentage = b; return this; }
     public boolean isShowPercentage()      { return showPercentage; }
-    public void setEasingSpeed(float s)   { this.easingSpeed = s; }
+    public PercentageBar setEasingSpeed(float s)   { this.easingSpeed = s; return this; }
     public float getEasingSpeed()          { return easingSpeed; }
 
     // ── v1.9 — Enhanced label & gradient accessors ───────────────────────
@@ -249,10 +254,11 @@ public class PercentageBar extends UIComponent {
      *
      * @param format the label format mode
      */
-    public void setLabelFormat(LabelFormat format) {
+    public PercentageBar setLabelFormat(LabelFormat format) {
         this.labelFormat = format;
         // Backwards compat: if switching to PERCENT, enable showPercentage
         this.showPercentage = (format == LabelFormat.PERCENT);
+        return this;
     }
 
     public LabelFormat getLabelFormat() { return labelFormat; }
@@ -260,15 +266,16 @@ public class PercentageBar extends UIComponent {
     /**
      * Set the max value for {@link LabelFormat#FRACTION} display.
      */
-    public void setMaxValue(int max) { this.maxValue = max; }
+    public PercentageBar setMaxValue(int max) { this.maxValue = max; return this; }
     public int getMaxValue() { return maxValue; }
 
     /**
      * Set the current value for {@link LabelFormat#FRACTION} display.
      * Also updates the target progress to {@code current / max}.
      */
-    public void setCurrentValue(int current) {
+    public PercentageBar setCurrentValue(int current) {
         this.currentValue = current;
+        return this;
     }
 
     /**
@@ -277,10 +284,11 @@ public class PercentageBar extends UIComponent {
      * @param current current value
      * @param max     maximum value
      */
-    public void setValues(int current, int max) {
+    public PercentageBar setValues(int current, int max) {
         this.currentValue = current;
         this.maxValue = max;
         setProgress(max > 0 ? (float) current / max : 0f);
+        return this;
     }
 
     public int getCurrentValue() { return currentValue; }
@@ -288,22 +296,23 @@ public class PercentageBar extends UIComponent {
     /**
      * Set a custom label formatter for {@link LabelFormat#CUSTOM} mode.
      */
-    public void setCustomFormatter(LabelFormatter formatter) {
+    public PercentageBar setCustomFormatter(LabelFormatter formatter) {
         this.customFormatter = formatter;
         this.labelFormat = LabelFormat.CUSTOM;
+        return this;
     }
 
     /**
      * Enable automatic gradient colours (red → yellow → green) based
      * on the current fill level.
      */
-    public void setUseGradientColors(boolean use) { this.useGradientColors = use; }
+    public PercentageBar setUseGradientColors(boolean use) { this.useGradientColors = use; return this; }
     public boolean isUseGradientColors() { return useGradientColors; }
 
     /**
      * Enable a pulsing glow effect when the bar reaches 100%.
      */
-    public void setPulseAtFull(boolean pulse) { this.pulseAtFull = pulse; }
+    public PercentageBar setPulseAtFull(boolean pulse) { this.pulseAtFull = pulse; return this; }
     public boolean isPulseAtFull() { return pulseAtFull; }
 
     // =====================================================================

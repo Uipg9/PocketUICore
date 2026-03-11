@@ -252,42 +252,46 @@ public class TextLabel extends UIComponent {
 
     public String getText()           { return text; }
 
-    public void setText(String t) {
+    public TextLabel setText(String t) {
         this.text = t != null ? t : "";
         this.richText = null;
         this.linesDirty = true;
+        return this;
     }
 
     /**
      * Set the label text from a Minecraft {@link Text} object.
      */
-    public void setText(Text t) {
+    public TextLabel setText(Text t) {
         this.richText = t;
         this.text = t != null ? t.getString() : "";
         this.linesDirty = true;
+        return this;
     }
 
     /** Get the Minecraft Text, or null if set via String. */
     public Text getRichText()         { return richText; }
 
     public int  getColor()            { return color; }
-    public void setColor(int c)       { this.color = c; }
+    public TextLabel setColor(int c)       { this.color = c; return this; }
     public Align getAlign()           { return align; }
-    public void setAlign(Align a)     { this.align = a; }
+    public TextLabel setAlign(Align a)     { this.align = a; return this; }
     public float getScale()           { return scale; }
 
-    public void setScale(float s) {
+    public TextLabel setScale(float s) {
         this.scale = s;
         this.linesDirty = true;
+        return this;
     }
 
     /**
      * Set the wrapping width in pixels. When positive, text wraps at
      * word boundaries. Set to 0 to disable wrapping.
      */
-    public void setWrapWidth(int wrapWidth) {
+    public TextLabel setWrapWidth(int wrapWidth) {
         this.wrapWidth = Math.max(0, wrapWidth);
         this.linesDirty = true;
+        return this;
     }
 
     /** Get the current wrap width (0 = no wrapping). */

@@ -103,9 +103,9 @@ public class VerticalListPanel extends DarkPanel {
     // =====================================================================
 
     public int  getPadding()                 { return padding; }
-    public void setPadding(int p)            { this.padding = p; }
+    public VerticalListPanel setPadding(int p)            { this.padding = p; return this; }
     public int  getSpacing()                 { return spacing; }
-    public void setSpacing(int s)            { this.spacing = s; }
+    public VerticalListPanel setSpacing(int s)            { this.spacing = s; return this; }
     public boolean isStretchWidth()          { return stretchWidth; }
-    public void setStretchWidth(boolean b)   { this.stretchWidth = b; }
+    public VerticalListPanel setStretchWidth(boolean b)   { this.stretchWidth = b; return this; }
 }

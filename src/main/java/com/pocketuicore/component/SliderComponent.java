@@ -73,36 +73,38 @@ public class SliderComponent extends UIComponent {
     public float getValue() { return value; }
 
     /** Set the value programmatically (clamps to range, applies step). */
-    public void setValue(float newValue) {
+    public SliderComponent setValue(float newValue) {
         float old = this.value;
         this.value = quantize(clamp(newValue));
         if (this.value != old && onValueChanged != null) {
             onValueChanged.accept(this.value);
         }
+        return this;
     }
 
     /** Set the step size (0 = continuous). */
-    public void setStep(float step) { this.step = Math.max(0f, step); }
+    public SliderComponent setStep(float step) { this.step = Math.max(0f, step); return this; }
 
     public float getMinValue() { return minValue; }
     public float getMaxValue() { return maxValue; }
 
-    public void setRange(float min, float max) {
+    public SliderComponent setRange(float min, float max) {
         this.minValue = min;
         this.maxValue = max;
         setValue(this.value); // re-clamp
+        return this;
     }
 
     /** Register a callback fired whenever the value changes. */
-    public void setOnValueChanged(Consumer<Float> cb) { this.onValueChanged = cb; }
+    public SliderComponent setOnValueChanged(Consumer<Float> cb) { this.onValueChanged = cb; return this; }
 
-    // ── Appearance setters ───────────────────────────────────────────────
+    // ── Appearance setters ───────────────────────────────────────────────────────
 
-    public void setTrackColor(int color)  { this.trackColor = color; }
-    public void setFillColor(int color)   { this.fillColor = color; }
-    public void setThumbColor(int color)  { this.thumbColor = color; }
-    public void setThumbSize(int size)    { this.thumbSize = Math.max(2, size); }
-    public void setTrackHeight(int h)     { this.trackHeight = Math.max(1, h); }
+    public SliderComponent setTrackColor(int color)  { this.trackColor = color; return this; }
+    public SliderComponent setFillColor(int color)   { this.fillColor = color; return this; }
+    public SliderComponent setThumbColor(int color)  { this.thumbColor = color; return this; }
+    public SliderComponent setThumbSize(int size)    { this.thumbSize = Math.max(2, size); return this; }
+    public SliderComponent setTrackHeight(int h)     { this.trackHeight = Math.max(1, h); return this; }
 
     // =====================================================================
     //  Rendering
@@ -195,7 +197,7 @@ public class SliderComponent extends UIComponent {
     // =====================================================================
 
     /** Set whether this slider has keyboard/controller focus. */
-    public void setFocused(boolean focused) { this.focused = focused; }
+    public SliderComponent setFocused(boolean focused) { this.focused = focused; return this; }
     public boolean isFocused() { return focused; }
 
     // =====================================================================

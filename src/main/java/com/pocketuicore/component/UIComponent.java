@@ -54,6 +54,12 @@ public abstract class UIComponent {
     private long tooltipDelayNs = DEFAULT_TOOLTIP_DELAY_NS;
     /** Rich tooltip (takes priority over plain tooltipLines). */
     private RichTooltip richTooltip;
+    /** Disabled tooltip — shown instead of normal tooltip when component is disabled. */
+    private String[] disabledTooltipLines;
+
+    // ── Opacity ──────────────────────────────────────────────────────────
+    /** Component opacity (0.0 = fully transparent, 1.0 = fully opaque). Default 1.0. */
+    private float opacity = 1.0f;
 
     // ── Click handler ────────────────────────────────────────────────────
     private Runnable onClick;
@@ -305,10 +311,11 @@ public abstract class UIComponent {
     public int getWidth()   { return width; }
     public int getHeight()  { return height; }
 
-    public void setPosition(int x, int y) { this.x = x; this.y = y; }
-    public void setSize(int w, int h)     { this.width = w; this.height = h; }
-    public void setBounds(int x, int y, int w, int h) {
+    public UIComponent setPosition(int x, int y) { this.x = x; this.y = y; return this; }
+    public UIComponent setSize(int w, int h)     { this.width = w; this.height = h; return this; }
+    public UIComponent setBounds(int x, int y, int w, int h) {
         this.x = x; this.y = y; this.width = w; this.height = h;
+        return this;
     }
 
     // ── Relative / offset positioning ────────────────────────────────────
@@ -321,11 +328,12 @@ public abstract class UIComponent {
      * @param offsetX X offset from parent's top-left
      * @param offsetY Y offset from parent's top-left
      */
-    public void setRelativePosition(int offsetX, int offsetY) {
+    public UIComponent setRelativePosition(int offsetX, int offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         this.useRelativePosition = true;
         resolveRelativePosition();
+        return this;
     }
 
     /** @return the X offset when using relative positioning. */
@@ -338,7 +346,7 @@ public abstract class UIComponent {
     public boolean isUsingRelativePosition() { return useRelativePosition; }
 
     /** Stop using relative positioning — reverts to absolute coordinates. */
-    public void clearRelativePosition() { this.useRelativePosition = false; }
+    public UIComponent clearRelativePosition() { this.useRelativePosition = false; return this; }
 
     /**
      * Resolve this component's absolute position from its parent + offset.
@@ -357,22 +365,23 @@ public abstract class UIComponent {
     /**
      * Update position and cascade to relative children.
      */
-    public void setPositionAndResolve(int x, int y) {
+    public UIComponent setPositionAndResolve(int x, int y) {
         this.x = x;
         this.y = y;
         for (UIComponent child : children) {
             child.resolveRelativePosition();
         }
+        return this;
     }
 
     public boolean isVisible() { return visible; }
-    public void setVisible(boolean v) { this.visible = v; }
+    public UIComponent setVisible(boolean v) { this.visible = v; return this; }
 
     public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean e) { this.enabled = e; }
+    public UIComponent setEnabled(boolean e) { this.enabled = e; return this; }
 
     public boolean isBlockInputInBounds() { return blockInputInBounds; }
-    public void setBlockInputInBounds(boolean b) { this.blockInputInBounds = b; }
+    public UIComponent setBlockInputInBounds(boolean b) { this.blockInputInBounds = b; return this; }
 
     /**
      * Set a click handler on any component.  When set, the component
@@ -380,10 +389,40 @@ public abstract class UIComponent {
      *
      * @param handler action to run on click, or {@code null} to remove
      */
-    public void setOnClick(Runnable handler) { this.onClick = handler; }
+    public UIComponent setOnClick(Runnable handler) { this.onClick = handler; return this; }
 
     /** @return the current click handler, or {@code null}. */
     public Runnable getOnClick() { return onClick; }
+
+    // ── Opacity ──────────────────────────────────────────────────────────
+
+    /**
+     * Set the opacity of this component (0.0 = transparent, 1.0 = opaque).
+     * Subclass renderers should query {@link #getOpacity()} and apply it
+     * to their colour alpha channels.
+     *
+     * @param opacity opacity value, clamped to [0, 1]
+     */
+    public UIComponent setOpacity(float opacity) {
+        this.opacity = Math.max(0f, Math.min(1f, opacity));
+        return this;
+    }
+
+    /** @return current opacity (0.0–1.0). */
+    public float getOpacity() { return opacity; }
+
+    /**
+     * Apply this component's opacity to the given ARGB colour.
+     * Multiplies the colour's alpha channel by {@link #getOpacity()}.
+     *
+     * @param argb the source colour
+     * @return the colour with adjusted alpha
+     */
+    protected int applyOpacity(int argb) {
+        if (opacity >= 1f) return argb;
+        int a = (int) (((argb >> 24) & 0xFF) * opacity);
+        return (argb & 0x00FFFFFF) | (a << 24);
+    }
 
     // =====================================================================
     //  Tooltip API
@@ -396,8 +435,9 @@ public abstract class UIComponent {
      * @param lines one or more lines of tooltip text (pass {@code null}
      *              or empty to remove)
      */
-    public void setTooltip(String... lines) {
+    public UIComponent setTooltip(String... lines) {
         this.tooltipLines = (lines != null && lines.length > 0) ? lines : null;
+        return this;
     }
 
     /** @return the tooltip lines, or {@code null} if none. */
@@ -405,8 +445,25 @@ public abstract class UIComponent {
 
     /** @return {@code true} if this component has tooltip text. */
     public boolean hasTooltip() {
-        return (tooltipLines != null && tooltipLines.length > 0) || richTooltip != null;
+        return (tooltipLines != null && tooltipLines.length > 0)
+            || richTooltip != null
+            || (disabledTooltipLines != null && disabledTooltipLines.length > 0 && !enabled);
     }
+
+    /**
+     * Set a tooltip that is shown only when the component is disabled.
+     * Useful for explaining <em>why</em> a button cannot be clicked.
+     *
+     * @param lines tooltip lines, or {@code null} to remove
+     * @since 1.12.0
+     */
+    public UIComponent setDisabledTooltip(String... lines) {
+        this.disabledTooltipLines = (lines != null && lines.length > 0) ? lines : null;
+        return this;
+    }
+
+    /** @return the disabled tooltip lines, or {@code null}. */
+    public String[] getDisabledTooltip() { return disabledTooltipLines; }
 
     /**
      * Set a {@link RichTooltip} on this component.
@@ -414,8 +471,9 @@ public abstract class UIComponent {
      *
      * @param tooltip the rich tooltip, or {@code null} to remove
      */
-    public void setRichTooltip(RichTooltip tooltip) {
+    public UIComponent setRichTooltip(RichTooltip tooltip) {
         this.richTooltip = tooltip;
+        return this;
     }
 
     /** @return the rich tooltip, or {@code null} if none. */
@@ -427,8 +485,9 @@ public abstract class UIComponent {
      *
      * @param ms delay in milliseconds
      */
-    public void setTooltipDelayMs(long ms) {
+    public UIComponent setTooltipDelayMs(long ms) {
         this.tooltipDelayNs = Math.max(0, ms) * 1_000_000L;
+        return this;
     }
 
     /** @return tooltip delay in milliseconds. */
@@ -471,12 +530,20 @@ public abstract class UIComponent {
         if (elapsed < target.tooltipDelayNs) return;
 
         // Rich tooltip takes priority
-        if (target.richTooltip != null) {
+        if (target.richTooltip != null && target.enabled) {
             RichTooltip.renderTooltip(ctx, target.richTooltip, mouseX, mouseY);
             return;
         }
 
-        drawTooltipBox(ctx, target.tooltipLines, mouseX, mouseY);
+        // Disabled tooltip takes priority when disabled
+        if (!target.enabled && target.disabledTooltipLines != null && target.disabledTooltipLines.length > 0) {
+            drawTooltipBox(ctx, target.disabledTooltipLines, mouseX, mouseY);
+            return;
+        }
+
+        if (target.tooltipLines != null) {
+            drawTooltipBox(ctx, target.tooltipLines, mouseX, mouseY);
+        }
     }
 
     private static UIComponent findDeepestTooltipTarget(UIComponent comp,

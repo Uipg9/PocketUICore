@@ -120,11 +120,11 @@ public class GridPanel extends DarkPanel {
     // =====================================================================
 
     public int  getColumns()               { return columns; }
-    public void setColumns(int c)          { this.columns = Math.max(1, c); }
+    public GridPanel setColumns(int c)          { this.columns = Math.max(1, c); return this; }
     public int  getPadding()               { return padding; }
-    public void setPadding(int p)          { this.padding = p; }
+    public GridPanel setPadding(int p)          { this.padding = p; return this; }
     public int  getCellSpacingX()          { return cellSpacingX; }
-    public void setCellSpacingX(int s)     { this.cellSpacingX = s; }
+    public GridPanel setCellSpacingX(int s)     { this.cellSpacingX = s; return this; }
     public int  getCellSpacingY()          { return cellSpacingY; }
-    public void setCellSpacingY(int s)     { this.cellSpacingY = s; }
+    public GridPanel setCellSpacingY(int s)     { this.cellSpacingY = s; return this; }
 }

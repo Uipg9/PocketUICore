@@ -5,6 +5,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.12.0] — 2025-07-14
+
+### Added — New Components
+- **HorizontalListPanel** — Auto-layout panel that arranges children left-to-right with configurable padding and spacing.
+- **FlowPanel** — Wrapping flow layout: children fill left-to-right, wrapping to the next row automatically.
+- **ToggleSwitch** — Animated binary toggle with sliding knob, colour lerp, focus ring pulse, and sound feedback.
+- **Dropdown\<T\>** — Generic typed dropdown with collapsed/expanded states, custom label extractor, scrollable list, and keyboard navigation.
+- **Separator** — Horizontal or vertical line divider with configurable colour and thickness.
+- **SpinnerComponent** — Numeric ─/+ input with step quantization, range clamping, keyboard/scroll support, and integer or float modes.
+- **RadioGroup** — Single-selection radio button group with circular indicators, keyboard (Up/Down) navigation, and sound feedback.
+
+### Added — New Systems
+- **Theme** — Runtime theme system with `DARK` and `LIGHT` built-in palettes, builder pattern, and `Theme.current()`/`setCurrent()`/`resetToDefault()`.
+- **PocketScreen** — Abstract base screen class with automatic FocusManager and ControllerHandler lifecycle management, MC 1.21.11 input forwarding, and tooltip rendering. Subclasses implement `buildUI()`.
+- **DebugOverlay** — F3+P toggle overlay showing component bounds (colour-coded by hierarchy depth), class name/position/size labels, focused component highlight, and hovered component info at cursor.
+
+### Added — API Enhancements
+- **Fluent setters** — All setters across 9 existing components now return `this` for method chaining.
+- **UIComponent.opacity** — New `setOpacity(float)`/`getOpacity()` field on the base component class.
+- **UIComponent.disabledTooltipLines** — Separate tooltip shown when a component is disabled.
+- **ProceduralRenderer** — `fillCircle()`, `drawCircle()`, `drawLine()` (Bresenham), `drawLine()` with thickness.
+- **AnimationTicker.LoopMode** — `ONCE`, `LOOP`, `PING_PONG` loop modes for animations.
+- **AnimationTicker.AnimationHandle** — Type-safe animation reference with `get()`, `get01()`, `isActive()`, `cancel()`.
+- **AnimationTicker** — `startHandle()`, `startLooping()`, `startPingPong()` convenience methods.
+- **FocusManager.registerTree()** — Recursively walks a component tree and registers all interactive components.
+- **ObservableState.bindBidirectional()** — Two-way binding between two `ObservableState` instances with infinite-loop guard.
+- **TabbedPanel tab transitions** — Configurable fade-in animation when switching tabs, with `setAnimateTransitions()` and `setTransitionDurationMs()`.
+- **ScreenShakeHelper.withShake()** — Lambda API: `shake.withShake(ctx, () -> { ... })` wraps apply/restore in try/finally.
+- **UISoundManager** — `setMasterVolume(float)`, `setMuted(boolean)`, `getMasterVolume()`, `isMuted()` global controls.
+- **ScreenTintManager** — `transitionIn(durationMs)`, `transitionOut(durationMs)` screen transition helpers with optional custom colour.
+- **HoverButton.setText()** / **PercentageBar.setText()** — Primary label setter; `setLabel()` is now `@Deprecated`.
+
+### Changed
+- **Economy subsystem decoupled** — Economy registration (payload types, join/disconnect handlers, tick events) is now controlled by `PocketUICore.setEconomyEnabled(boolean)`. Default is `true` for backward compatibility. Set to `false` before initialization if your mod only needs the UI framework.
+- **settings.gradle** — Added `rootProject.name = 'pocketuicore'` for consistent artifact naming.
+
+### Deprecated
+- `HoverButton.setLabel(String)` — Use `setText(String)` instead.
+- `PercentageBar.setLabel(String)` — Use `setText(String)` instead.
+
+---
+
 ## [1.11.0] — 2025-07-08
 
 ### Fixed

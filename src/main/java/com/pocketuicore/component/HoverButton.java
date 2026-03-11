@@ -173,20 +173,22 @@ public class HoverButton extends UIComponent {
     //  Accessors
     // =====================================================================
 
-    public void setLabel(String label)           { this.label = label; }
-    /** Alias for {@link #setLabel(String)} — consistent with TextLabel. */
-    public void setText(String text)              { this.label = text; }
+    /** @deprecated Use {@link #setText(String)} instead. */
+    @Deprecated
+    public HoverButton setLabel(String label)           { this.label = label; return this; }
+    /** Primary setter — consistent with TextLabel. @since 1.12.0 */
+    public HoverButton setText(String text)              { this.label = text; return this; }
     public String getLabel()                     { return label; }
-    public void setOnClick(Runnable r)           { this.onClick = r; }
-    public void setNormalColor(int c)            { this.normalColor = c; }
+    public HoverButton setOnClick(Runnable r)           { this.onClick = r; return this; }
+    public HoverButton setNormalColor(int c)            { this.normalColor = c; return this; }
     public int  getNormalColor()                 { return normalColor; }
-    public void setHoverColor(int c)             { this.hoverColor = c; }
+    public HoverButton setHoverColor(int c)             { this.hoverColor = c; return this; }
     public int  getHoverColor()                  { return hoverColor; }
-    public void setPressedColor(int c)           { this.pressedColor = c; }
+    public HoverButton setPressedColor(int c)           { this.pressedColor = c; return this; }
     public int  getPressedColor()                { return pressedColor; }
-    public void setTextColor(int c)              { this.textColor = c; }
+    public HoverButton setTextColor(int c)              { this.textColor = c; return this; }
     public int  getTextColor()                   { return textColor; }
-    public void setCornerRadius(int r)           { this.cornerRadius = r; }
+    public HoverButton setCornerRadius(int r)           { this.cornerRadius = r; return this; }
     public int  getCornerRadius()                { return cornerRadius; }
     public boolean isHoveredState()              { return hovered; }
     public boolean isPressedState()              { return pressed; }
