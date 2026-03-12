@@ -26,6 +26,15 @@ public class ToggleModel {
         this("", initial);
     }
 
+    /**
+     * No-arg constructor — creates a ToggleModel with empty label, initially off.
+     *
+     * @since 1.14.0
+     */
+    public ToggleModel() {
+        this("", false);
+    }
+
     // ── Observables ──────────────────────────────────────────────────────
 
     public ObservableState<Boolean> toggledState() { return toggled; }

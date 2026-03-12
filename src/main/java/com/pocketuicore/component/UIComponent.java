@@ -68,6 +68,9 @@ public abstract class UIComponent {
     protected UIComponent parent;
     protected final List<UIComponent> children = new ArrayList<>();
 
+    // ── Component ID (for tree queries) ──────────────────────────────────
+    private String id;
+
     // =====================================================================
     //  Construction
     // =====================================================================
@@ -302,6 +305,82 @@ public abstract class UIComponent {
         return parent;
     }
 
+    // ── Component ID ─────────────────────────────────────────────────────
+
+    /**
+     * Set a string identifier on this component for later lookup via
+     * {@link #findById(String)}.
+     *
+     * @param id a unique identifier, or {@code null} to clear
+     * @return this component for chaining
+     * @since 1.14.0
+     */
+    public UIComponent setId(String id) { this.id = id; return this; }
+
+    /** @return the component ID, or {@code null} if not set. @since 1.14.0 */
+    public String getId() { return id; }
+
+    // ── Tree queries ─────────────────────────────────────────────────────
+
+    /**
+     * Search this subtree (depth-first) for a component with the given ID.
+     *
+     * @param id the ID to search for
+     * @return the first matching component, or {@code null}
+     * @since 1.14.0
+     */
+    public UIComponent findById(String id) {
+        if (id == null) return null;
+        if (id.equals(this.id)) return this;
+        for (UIComponent child : children) {
+            UIComponent found = child.findById(id);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    /**
+     * Search this subtree (depth-first) for the first component of the
+     * given type.
+     *
+     * @param type the class to match
+     * @param <C>  component type
+     * @return the first matching component, or {@code null}
+     * @since 1.14.0
+     */
+    @SuppressWarnings("unchecked")
+    public <C extends UIComponent> C findByType(Class<C> type) {
+        if (type.isInstance(this)) return (C) this;
+        for (UIComponent child : children) {
+            C found = child.findByType(type);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    /**
+     * Collect all components of the given type in this subtree.
+     *
+     * @param type the class to match
+     * @param <C>  component type
+     * @return list of matching components (may be empty)
+     * @since 1.14.0
+     */
+    @SuppressWarnings("unchecked")
+    public <C extends UIComponent> List<C> findAllByType(Class<C> type) {
+        List<C> result = new ArrayList<>();
+        collectByType(type, result);
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <C extends UIComponent> void collectByType(Class<C> type, List<C> out) {
+        if (type.isInstance(this)) out.add((C) this);
+        for (UIComponent child : children) {
+            child.collectByType(type, out);
+        }
+    }
+
     // =====================================================================
     //  Accessors
     // =====================================================================
@@ -315,6 +394,64 @@ public abstract class UIComponent {
     public UIComponent setSize(int w, int h)     { this.width = w; this.height = h; return this; }
     public UIComponent setBounds(int x, int y, int w, int h) {
         this.x = x; this.y = y; this.width = w; this.height = h;
+        return this;
+    }
+
+    /**
+     * Centre this component horizontally within the given screen width.
+     *
+     * @param screenWidth the total available width (e.g. from {@link net.minecraft.client.gui.screen.Screen#width})
+     * @return this component for chaining
+     * @since 1.14.0
+     */
+    public UIComponent centerHorizontally(int screenWidth) {
+        this.x = (screenWidth - this.width) / 2;
+        for (UIComponent child : children) child.resolveRelativePosition();
+        return this;
+    }
+
+    /**
+     * Centre this component vertically within the given screen height.
+     *
+     * @param screenHeight the total available height
+     * @return this component for chaining
+     * @since 1.14.0
+     */
+    public UIComponent centerVertically(int screenHeight) {
+        this.y = (screenHeight - this.height) / 2;
+        for (UIComponent child : children) child.resolveRelativePosition();
+        return this;
+    }
+
+    /**
+     * Centre this component both horizontally and vertically within the
+     * given screen dimensions.
+     *
+     * @param screenWidth  total available width
+     * @param screenHeight total available height
+     * @return this component for chaining
+     * @since 1.14.0
+     */
+    public UIComponent centerOnScreen(int screenWidth, int screenHeight) {
+        this.x = (screenWidth - this.width) / 2;
+        this.y = (screenHeight - this.height) / 2;
+        for (UIComponent child : children) child.resolveRelativePosition();
+        return this;
+    }
+
+    /**
+     * Set this component's size and resize it, triggering a
+     * re-layout if applicable.
+     *
+     * @param w new width
+     * @param h new height
+     * @return this component for chaining
+     * @since 1.14.0
+     */
+    public UIComponent resize(int w, int h) {
+        this.width = w;
+        this.height = h;
+        for (UIComponent child : children) child.resolveRelativePosition();
         return this;
     }
 
@@ -393,6 +530,38 @@ public abstract class UIComponent {
 
     /** @return the current click handler, or {@code null}. */
     public Runnable getOnClick() { return onClick; }
+
+    // ── Fluent with*() builders (v1.14.0) ────────────────────────────────
+
+    /**
+     * Fluent alias for {@link #setTooltip(String...)}.
+     * @since 1.14.0
+     */
+    public UIComponent withTooltip(String... lines) { return setTooltip(lines); }
+
+    /**
+     * Fluent alias for {@link #setEnabled(boolean)}.
+     * @since 1.14.0
+     */
+    public UIComponent withEnabled(boolean e) { return setEnabled(e); }
+
+    /**
+     * Fluent alias for {@link #setVisible(boolean)}.
+     * @since 1.14.0
+     */
+    public UIComponent withVisible(boolean v) { return setVisible(v); }
+
+    /**
+     * Fluent alias for {@link #setOpacity(float)}.
+     * @since 1.14.0
+     */
+    public UIComponent withOpacity(float o) { return setOpacity(o); }
+
+    /**
+     * Fluent alias for {@link #setOnClick(Runnable)}.
+     * @since 1.14.0
+     */
+    public UIComponent withOnClick(Runnable handler) { return setOnClick(handler); }
 
     // ── Opacity ──────────────────────────────────────────────────────────
 

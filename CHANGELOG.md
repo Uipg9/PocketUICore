@@ -5,6 +5,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.14.0] — 2025-07-14
+
+### Fixed — Bug Fixes
+- **Chunky mouse scrolling** — DarkPanel and SelectableList scroll handling now accumulates fractional scroll deltas instead of truncating to integers. High-resolution / smooth-scroll mice will see much smoother scrolling. Also fixed `scrollBy()` / `scrollByX()` for the same issue.
+- **Overlay z-ordering** — PocketScreen now renders layers in strict order: UI tree → notifications → tooltips, ensuring tooltips always appear above notifications and other overlays. Also flushes `TooltipRenderer` queue automatically.
+- **GUI left-offset positioning** — Added `centerHorizontally()`, `centerVertically()`, and `centerOnScreen()` helpers to UIComponent so screens can properly centre their root panels instead of positioning at x=0.
+
+### Added — API Enhancements
+- **UIComponent.centerHorizontally(int)** / **centerVertically(int)** / **centerOnScreen(int, int)** — Centering helpers for any component.
+- **UIComponent.resize(int, int)** — Set size and cascade relative child resolution.
+- **UIComponent.setId(String)** / **getId()** — Assign string IDs to components for tree queries.
+- **UIComponent.findById(String)** — Depth-first tree search by component ID.
+- **UIComponent.findByType(Class)** / **findAllByType(Class)** — Type-based tree queries.
+- **UIComponent.withTooltip()** / **withEnabled()** / **withVisible()** / **withOpacity()** / **withOnClick()** — Fluent builder aliases.
+- **Dropdown.setOnChange(Consumer)** — Standardised onChange alias for setOnSelect.
+- **RadioGroup.setOnChange(Consumer)** — Standardised onChange alias.
+- **SelectableList.setOnChange(Consumer)** — Standardised onChange alias.
+- **SliderComponent.setOnChange(Consumer)** — Standardised onChange alias for setOnValueChanged.
+- **ButtonModel()** — No-arg constructor (defaults to empty label).
+- **ToggleModel()** — No-arg constructor (defaults to empty label, off).
+- **Separator()** — No-arg constructor for use in layout panels.
+- **RadioGroup(List\<String\>)** — Simplified constructor with just options.
+- **PocketScreen.onBuildComplete(UIComponent)** — Lifecycle hook after buildUI completes.
+
+---
+
 ## [1.13.0] — 2025-07-14
 
 ### Added — New Components & Systems

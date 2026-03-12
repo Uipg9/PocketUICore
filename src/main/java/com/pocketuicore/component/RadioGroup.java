@@ -42,6 +42,18 @@ public class RadioGroup extends UIComponent {
         recalcHeight();
     }
 
+    /**
+     * Create a RadioGroup at (0,0) with the given options.
+     * Width defaults to 120; use inside a stretch-width layout panel
+     * to fill automatically.
+     *
+     * @param options list of option labels
+     * @since 1.14.0
+     */
+    public RadioGroup(List<String> options) {
+        this(0, 0, 120, options);
+    }
+
     // =====================================================================
     //  Rendering
     // =====================================================================
@@ -157,6 +169,12 @@ public class RadioGroup extends UIComponent {
 
     public RadioGroup setSelectedIndex(int idx)       { this.selectedIndex = Math.max(0, Math.min(idx, options.size() - 1)); return this; }
     public RadioGroup setOnSelect(Consumer<Integer> cb) { this.onSelect = cb; return this; }
+
+    /**
+     * Alias for {@link #setOnSelect(Consumer)} — standardised onChange callback.
+     * @since 1.14.0
+     */
+    public RadioGroup setOnChange(Consumer<Integer> cb) { return setOnSelect(cb); }
     public RadioGroup setRadioColor(int c)            { this.radioColor = c; return this; }
     public RadioGroup setSelectedColor(int c)         { this.selectedColor = c; return this; }
     public RadioGroup setTextColor(int c)             { this.textColor = c; return this; }

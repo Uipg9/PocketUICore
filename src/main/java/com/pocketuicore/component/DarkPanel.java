@@ -36,6 +36,10 @@ public class DarkPanel extends UIComponent {
     private int contentWidth = 0;
     private boolean scrollableH = false;
 
+    // ── Smooth scroll accumulators (fractional remainder) ────────────────
+    private double scrollAccumY = 0;
+    private double scrollAccumX = 0;
+
     // =====================================================================
     //  Builders
     // =====================================================================
@@ -161,13 +165,19 @@ public class DarkPanel extends UIComponent {
         if (isHovered(mouseX, mouseY)) {
             boolean consumed = false;
             if (scrollable && vAmount != 0) {
-                scrollOffset -= (int) (vAmount * 20);
+                scrollAccumY += vAmount * 20.0;
+                int delta = (int) scrollAccumY;
+                scrollAccumY -= delta;
+                scrollOffset -= delta;
                 int maxScroll = Math.max(0, contentHeight - height);
                 scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
                 consumed = true;
             }
             if (scrollableH && hAmount != 0) {
-                scrollOffsetX -= (int) (hAmount * 20);
+                scrollAccumX += hAmount * 20.0;
+                int deltaX = (int) scrollAccumX;
+                scrollAccumX -= deltaX;
+                scrollOffsetX -= deltaX;
                 int maxScrollX = Math.max(0, contentWidth - width);
                 scrollOffsetX = Math.max(0, Math.min(scrollOffsetX, maxScrollX));
                 consumed = true;
@@ -221,9 +231,12 @@ public class DarkPanel extends UIComponent {
      */
     public void scrollBy(double amount) {
         if (!scrollable) return;
+        scrollAccumY += amount;
+        int delta = (int) scrollAccumY;
+        scrollAccumY -= delta;
         int max = Math.max(0, contentHeight - height);
         this.scrollOffset = Math.max(0, Math.min(
-                this.scrollOffset + (int) amount, max));
+                this.scrollOffset + delta, max));
     }
 
     /** @return {@code true} if this panel is currently scrollable. */
@@ -264,9 +277,12 @@ public class DarkPanel extends UIComponent {
      */
     public void scrollByX(double amount) {
         if (!scrollableH) return;
+        scrollAccumX += amount;
+        int deltaX = (int) scrollAccumX;
+        scrollAccumX -= deltaX;
         int max = Math.max(0, contentWidth - width);
         this.scrollOffsetX = Math.max(0, Math.min(
-                this.scrollOffsetX + (int) amount, max));
+                this.scrollOffsetX + deltaX, max));
     }
 
     /** @return {@code true} if this panel has horizontal scrolling enabled. */

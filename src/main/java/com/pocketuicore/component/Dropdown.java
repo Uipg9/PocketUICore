@@ -222,6 +222,12 @@ public class Dropdown<T> extends UIComponent {
 
     public Dropdown<T> setLabelExtractor(Function<T, String> fn) { this.labelExtractor = fn; return this; }
     public Dropdown<T> setOnSelect(Consumer<T> cb)               { this.onSelect = cb; return this; }
+
+    /**
+     * Alias for {@link #setOnSelect(Consumer)} — standardised onChange callback.
+     * @since 1.14.0
+     */
+    public Dropdown<T> setOnChange(Consumer<T> cb)               { return setOnSelect(cb); }
     public Dropdown<T> setBackgroundColor(int c)                 { this.backgroundColor = c; return this; }
     public Dropdown<T> setBorderColor(int c)                     { this.borderColor = c; return this; }
     public Dropdown<T> setHoverColor(int c)                      { this.hoverColor = c; return this; }

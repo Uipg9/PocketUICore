@@ -36,6 +36,16 @@ public class Separator extends UIComponent {
         this.orientation = orientation;
     }
 
+    /**
+     * Create a horizontal separator with default length (stretches when
+     * placed inside a layout panel).
+     *
+     * @since 1.14.0
+     */
+    public Separator() {
+        this(0, 0, 1);
+    }
+
     @Override
     protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
         int w, h;

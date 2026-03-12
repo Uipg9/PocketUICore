@@ -98,6 +98,12 @@ public class SliderComponent extends UIComponent {
     /** Register a callback fired whenever the value changes. */
     public SliderComponent setOnValueChanged(Consumer<Float> cb) { this.onValueChanged = cb; return this; }
 
+    /**
+     * Alias for {@link #setOnValueChanged(Consumer)} — standardised onChange callback.
+     * @since 1.14.0
+     */
+    public SliderComponent setOnChange(Consumer<Float> cb) { return setOnValueChanged(cb); }
+
     // ── Appearance setters ───────────────────────────────────────────────────────
 
     public SliderComponent setTrackColor(int color)  { this.trackColor = color; return this; }

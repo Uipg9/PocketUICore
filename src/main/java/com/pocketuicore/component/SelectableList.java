@@ -66,6 +66,7 @@ public final class SelectableList<T> extends UIComponent {
 
     // ── Scroll state ─────────────────────────────────────────────────────
     private int scrollOffset = 0;
+    private double scrollAccum = 0;
 
     // ── Colours ──────────────────────────────────────────────────────────
     private int bgColor       = ProceduralRenderer.COL_BG_SURFACE;
@@ -91,6 +92,7 @@ public final class SelectableList<T> extends UIComponent {
         this.items.addAll(items);
         this.selectedIndex = -1;
         this.scrollOffset  = 0;
+        this.scrollAccum   = 0;
     }
 
     /** Add a single item at the end. */
@@ -239,7 +241,10 @@ public final class SelectableList<T> extends UIComponent {
                                  double horizontalAmount, double verticalAmount) {
         if (!visible || !enabled) return false;
         if (isHovered((int) mouseX, (int) mouseY)) {
-            scrollOffset -= (int) (verticalAmount * itemHeight);
+            scrollAccum += verticalAmount * itemHeight;
+            int delta = (int) scrollAccum;
+            scrollAccum -= delta;
+            scrollOffset -= delta;
             int maxScroll = Math.max(0, items.size() * itemHeight - height);
             scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
             return true;
@@ -315,6 +320,14 @@ public final class SelectableList<T> extends UIComponent {
     public SelectableList<T> setOnSelect(Consumer<T> callback) {
         this.onSelect = callback;
         return this;
+    }
+
+    /**
+     * Alias for {@link #setOnSelect(Consumer)} — standardised onChange callback.
+     * @since 1.14.0
+     */
+    public SelectableList<T> setOnChange(Consumer<T> callback) {
+        return setOnSelect(callback);
     }
 
     public SelectableList<T> setNumberShortcuts(boolean enabled) {

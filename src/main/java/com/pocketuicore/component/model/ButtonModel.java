@@ -23,6 +23,15 @@ public class ButtonModel {
         this.pressed = new ObservableState<>(false);
     }
 
+    /**
+     * No-arg constructor — creates a ButtonModel with an empty label.
+     *
+     * @since 1.14.0
+     */
+    public ButtonModel() {
+        this("");
+    }
+
     // ── Observables ──────────────────────────────────────────────────────
 
     public ObservableState<String>  labelState()   { return label; }
