@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 
 import java.util.ArrayList;
@@ -90,6 +91,10 @@ public abstract class UIComponent {
      * Draw this component and all visible children.
      * Implementations should call {@code super.render()} <b>after</b>
      * drawing themselves so children paint on top.
+     * <p>
+     * After all children are rendered, an overlay pass runs so that
+     * components like {@link Dropdown} can paint their expanded list
+     * above all siblings.
      */
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         if (!visible) return;
@@ -98,6 +103,10 @@ public abstract class UIComponent {
         for (UIComponent child : children) {
             child.render(ctx, mouseX, mouseY, delta);
         }
+        // Overlay pass — allows children to render content above siblings
+        for (UIComponent child : children) {
+            if (child.visible) child.renderOverlay(ctx, mouseX, mouseY, delta);
+        }
     }
 
     /**
@@ -105,6 +114,19 @@ public abstract class UIComponent {
      * component's visuals. Children are rendered automatically afterwards.
      */
     protected abstract void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta);
+
+    /**
+     * Render overlay content that must appear above all sibling components.
+     * Called in a second pass after all children have been rendered.
+     * <p>
+     * Override in subclasses that need overlay rendering (e.g. expanded
+     * dropdown lists). The default implementation does nothing.
+     *
+     * @since 1.15.0
+     */
+    public void renderOverlay(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        // Default: no overlay content
+    }
 
     // =====================================================================
     //  Input
@@ -260,6 +282,19 @@ public abstract class UIComponent {
         return keyPressed(input.key(), input.scancode(), input.modifiers());
     }
 
+    /**
+     * Bridge for MC 1.21.11's {@link CharInput} record.
+     * Decomposes the record and delegates to
+     * {@link #charTyped(char, int)}.
+     *
+     * @param input the CharInput record
+     * @return {@code true} if the character was consumed
+     * @since 1.14.0
+     */
+    public boolean charTyped(CharInput input) {
+        return charTyped((char) input.codepoint(), input.modifiers());
+    }
+
     // =====================================================================
     //  Hit-testing
     // =====================================================================
@@ -280,10 +315,17 @@ public abstract class UIComponent {
     //  Tree manipulation
     // =====================================================================
 
-    public void addChild(UIComponent child) {
+    /**
+     * Add a child component.
+     *
+     * @param child the child to add
+     * @return this component for chaining
+     */
+    public UIComponent addChild(UIComponent child) {
         child.parent = this;
         children.add(child);
         child.resolveRelativePosition();
+        return this;
     }
 
     public void removeChild(UIComponent child) {
@@ -319,6 +361,20 @@ public abstract class UIComponent {
 
     /** @return the component ID, or {@code null} if not set. @since 1.14.0 */
     public String getId() { return id; }
+
+    /**
+     * Request focus for this component via the {@link FocusManager}.
+     * Registers if not already registered, then sets focus.
+     *
+     * @return this component for chaining
+     * @since 1.15.0
+     */
+    public UIComponent requestFocus() {
+        FocusManager fm = FocusManager.getInstance();
+        fm.register(this);
+        fm.focus(this);
+        return this;
+    }
 
     // ── Tree queries ─────────────────────────────────────────────────────
 

@@ -26,6 +26,9 @@ public class DarkPanel extends UIComponent {
     private int shadowLayers;
     private int shadowAlpha;
 
+    /** Background opacity multiplier (0.0 = fully transparent, 1.0 = fully opaque). */
+    private float backgroundOpacity = 1.0f;
+
     // ── Scroll support ───────────────────────────────────────────────────
     private int scrollOffset = 0;
     private int contentHeight = 0;  // set externally if content exceeds panel
@@ -83,8 +86,13 @@ public class DarkPanel extends UIComponent {
                     cornerRadius, shadowLayers, shadowAlpha);
         }
         // Background
+        int bg = backgroundColor;
+        if (backgroundOpacity < 1.0f) {
+            int alpha = (int) (((bg >> 24) & 0xFF) * backgroundOpacity);
+            bg = (alpha << 24) | (bg & 0x00FFFFFF);
+        }
         ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height,
-                cornerRadius, backgroundColor);
+                cornerRadius, bg);
         // Border
         if (drawBorder) {
             ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height,
@@ -95,6 +103,9 @@ public class DarkPanel extends UIComponent {
     /**
      * Overridden to apply scissoring and scroll offset when the panel is
      * scrollable (vertically and/or horizontally).
+     * <p>
+     * Includes an overlay pass so that children (e.g. expanded Dropdowns)
+     * can render content above their siblings.
      */
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
@@ -113,11 +124,19 @@ public class DarkPanel extends UIComponent {
             for (UIComponent child : children) {
                 child.render(ctx, adjMX, adjMY, delta);
             }
+            // Overlay pass — above all siblings
+            for (UIComponent child : children) {
+                if (child.visible) child.renderOverlay(ctx, adjMX, adjMY, delta);
+            }
             ctx.getMatrices().popMatrix();
             ctx.disableScissor();
         } else {
             for (UIComponent child : children) {
                 child.render(ctx, mouseX, mouseY, delta);
+            }
+            // Overlay pass — above all siblings
+            for (UIComponent child : children) {
+                if (child.visible) child.renderOverlay(ctx, mouseX, mouseY, delta);
             }
         }
     }
@@ -201,6 +220,11 @@ public class DarkPanel extends UIComponent {
     public DarkPanel setDrawBorder(boolean b)  { this.drawBorder = b; return this; }
     public boolean isDrawShadow()         { return drawShadow; }
     public DarkPanel setDrawShadow(boolean b)  { this.drawShadow = b; return this; }
+    public float getBackgroundOpacity()         { return backgroundOpacity; }
+    public DarkPanel setBackgroundOpacity(float opacity) {
+        this.backgroundOpacity = Math.max(0f, Math.min(1f, opacity));
+        return this;
+    }
     public DarkPanel setShadow(int layers, int maxAlpha) {
         this.shadowLayers = layers;
         this.shadowAlpha  = maxAlpha;

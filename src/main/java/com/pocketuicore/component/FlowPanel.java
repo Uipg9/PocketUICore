@@ -22,9 +22,10 @@ public class FlowPanel extends DarkPanel {
     // ── Tree hooks ───────────────────────────────────────────────────────
 
     @Override
-    public void addChild(UIComponent child) {
+    public UIComponent addChild(UIComponent child) {
         super.addChild(child);
         layout();
+        return this;
     }
 
     @Override

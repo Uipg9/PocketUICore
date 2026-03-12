@@ -5,6 +5,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.15.0] — 2025-07-15
+
+### Fixed — Bug Fixes
+- **Dropdown overlay z-ordering (Bug 2.3)** — Expanded dropdown lists now render in a dedicated overlay pass, ensuring they always appear above sibling components. Two-pass rendering (normal + overlay) added to `UIComponent.render()` and `DarkPanel.render()`, with `PocketScreen` also rendering root overlays.
+- **Dropdown keyboard navigation** — Arrow keys now work when the dropdown is expanded regardless of `FocusManager` focus state. Escape key now closes the dropdown without selecting.
+- **SpinnerComponent click at limits** — Clicking +/− buttons at min/max no longer plays a spurious click sound.
+
+### Added — API Enhancements
+- **UIComponent.renderOverlay()** — New protected overlay render method for subclasses to draw content above siblings (e.g. expanded dropdowns).
+- **UIComponent.addChild() chaining** — `addChild()` now returns `this` for fluent builder patterns.
+- **UIComponent.requestFocus()** — Convenience method that registers with `FocusManager` and sets focus in one call.
+- **TextInputComponent — Numeric mode** — Built-in numeric input filtering via `setNumericMode(boolean, boolean)`, `setNumericRange(double, double)`, `getNumericValue()`, `setNumericValue(double)`. Supports integer-only and decimal modes with automatic validation.
+- **TextInputComponent.setSelectionColor()** — Configurable selection highlight colour with improved default contrast (alpha 120).
+- **VerticalListPanel — Scroll bar indicator** — Visual rounded scroll bar rendered when content overflows. Configurable via `setShowScrollBar()`, `setScrollBarWidth()`, `setScrollBarColor()`.
+- **DarkPanel.setBackgroundOpacity()** — Control background transparency (0.0–1.0) independently from the background colour alpha.
+- **SelectableList — Multi-select mode** — Optional multi-select with Ctrl+click toggle, Shift+click range selection. New API: `setMultiSelect()`, `getSelectedItems()`, `getSelectedIndices()`, `clearSelection()`.
+- **ConfirmationDialog.recenter()** — Reposition dialog to centre on new screen dimensions after window resize.
+- **PocketScreen — Screen-scoped notifications** — `close()` now calls `NotificationManager.clearAll()` to prevent stale notifications from persisting across screens.
+
+### Changed — Theme Awareness
+- **Separator** — Default colour now resolves from `Theme.current().border()` instead of hardcoded `ProceduralRenderer.COL_BORDER`. Explicit `setColor()` overrides theme.
+- **SpinnerComponent** — All colours (background, border, buttons, text, focus ring) now resolve from `Theme.current()` at render time. Explicit setters override individual colours.
+- **SpinnerComponent — Limit visual feedback** — +/− buttons are greyed out with muted text when the value is at min/max.
+- **RadioGroup** — All colours (radio circle, selected dot, text, hover) now resolve from `Theme.current()` at render time.
+- **PercentageBar** — Default constructor now uses `Theme.current()` for track, bar, and text colours instead of hardcoded constants.
+
+---
+
 ## [1.14.0] — 2025-07-14
 
 ### Fixed — Bug Fixes

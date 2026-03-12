@@ -1,6 +1,7 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
+import com.pocketuicore.render.Theme;
 import com.pocketuicore.sound.UISoundManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -15,6 +16,8 @@ import java.util.function.Consumer;
  * <p>
  * Each option is rendered as a circular indicator with a label.
  * Options are laid out vertically within the component bounds.
+ * <p>
+ * Respects the active {@link Theme} for its default colours.
  *
  * @since 1.12.0
  */
@@ -25,10 +28,11 @@ public class RadioGroup extends UIComponent {
     private Consumer<Integer> onSelect;
 
     // ── Appearance ───────────────────────────────────────────────────────
-    private int radioColor        = ProceduralRenderer.COL_BORDER;
-    private int selectedColor     = ProceduralRenderer.COL_ACCENT_TEAL;
-    private int textColor         = ProceduralRenderer.COL_TEXT_PRIMARY;
-    private int hoverColor        = ProceduralRenderer.COL_HOVER;
+    private static final int THEME_DEFAULT = Integer.MIN_VALUE;
+    private int radioColor        = THEME_DEFAULT;
+    private int selectedColor     = THEME_DEFAULT;
+    private int textColor         = THEME_DEFAULT;
+    private int hoverColor        = THEME_DEFAULT;
     private int radioSize         = 10;
     private int itemSpacing       = 4;
 
@@ -60,6 +64,12 @@ public class RadioGroup extends UIComponent {
 
     @Override
     protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        Theme theme = Theme.current();
+        int radio    = radioColor    == THEME_DEFAULT ? theme.border()      : radioColor;
+        int selected = selectedColor == THEME_DEFAULT ? theme.accentTeal()  : selectedColor;
+        int txt      = textColor     == THEME_DEFAULT ? theme.textPrimary() : textColor;
+        int hover    = hoverColor    == THEME_DEFAULT ? theme.hover()       : hoverColor;
+        int mutedTxt = theme.textMuted();
         TextRenderer tr = MinecraftClient.getInstance().textRenderer;
         int itemH = Math.max(radioSize, tr.fontHeight) + itemSpacing;
 
@@ -69,13 +79,13 @@ public class RadioGroup extends UIComponent {
                     && mouseY >= iy && mouseY < iy + itemH;
 
             if (hovered) {
-                ProceduralRenderer.fillRect(ctx, x, iy, width, itemH, hoverColor);
+                ProceduralRenderer.fillRect(ctx, x, iy, width, itemH, hover);
             }
 
             // Radio circle
             int circleX = x + 4;
             int circleY = iy + (itemH - radioSize) / 2;
-            int circleColor = (i == selectedIndex) ? selectedColor : radioColor;
+            int circleColor = (i == selectedIndex) ? selected : radio;
             if (!enabled) circleColor = ProceduralRenderer.darken(circleColor, 0.5f);
 
             // Outer ring
@@ -92,7 +102,7 @@ public class RadioGroup extends UIComponent {
             // Label
             int labelX = circleX + radioSize + 6;
             int labelY = iy + (itemH - tr.fontHeight) / 2;
-            int tc = enabled ? textColor : ProceduralRenderer.COL_TEXT_MUTED;
+            int tc = enabled ? txt : mutedTxt;
             ProceduralRenderer.drawText(ctx, tr, options.get(i), labelX, labelY, tc);
         }
     }

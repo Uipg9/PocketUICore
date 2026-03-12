@@ -9,6 +9,7 @@ import com.pocketuicore.render.TooltipRenderer;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
@@ -90,6 +91,7 @@ public abstract class PocketScreen extends Screen {
 
     @Override
     public void close() {
+        NotificationManager.clearAll();
         ControllerHandler.getInstance().disable();
         FocusManager.getInstance().popContext(focusContext);
         super.close();
@@ -105,6 +107,9 @@ public abstract class PocketScreen extends Screen {
         if (root != null) {
             // Layer 1 — Main UI tree
             root.render(ctx, mouseX, mouseY, delta);
+
+            // Layer 1.5 — Overlay pass (e.g. expanded dropdowns above siblings)
+            root.renderOverlay(ctx, mouseX, mouseY, delta);
 
             // Layer 2 — Notifications (above UI, below tooltips)
             NotificationManager.renderAll(ctx, width, height, delta);
@@ -157,5 +162,11 @@ public abstract class PocketScreen extends Screen {
     public boolean keyPressed(KeyInput input) {
         if (root != null && root.keyPressed(input)) return true;
         return super.keyPressed(input);
+    }
+
+    @Override
+    public boolean charTyped(CharInput input) {
+        if (root != null && root.charTyped(input)) return true;
+        return super.charTyped(input);
     }
 }

@@ -1,6 +1,7 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
+import com.pocketuicore.render.Theme;
 import com.pocketuicore.sound.UISoundManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -13,6 +14,8 @@ import java.util.function.Consumer;
  * <p>
  * Combines a text display with clickable +/− buttons on either side.
  * Supports keyboard arrow keys when focused.
+ * <p>
+ * Respects the active {@link Theme} for its default colours.
  *
  * @since 1.12.0
  */
@@ -27,13 +30,14 @@ public class SpinnerComponent extends UIComponent {
     private Consumer<Float> onValueChanged;
 
     // ── Appearance ───────────────────────────────────────────────────────
-    private int backgroundColor = ProceduralRenderer.COL_BG_SURFACE;
-    private int borderColor     = ProceduralRenderer.COL_BORDER;
-    private int buttonColor     = ProceduralRenderer.COL_BG_ELEVATED;
-    private int buttonHoverColor = ProceduralRenderer.COL_HOVER;
-    private int textColor       = ProceduralRenderer.COL_TEXT_PRIMARY;
-    private int cornerRadius    = 4;
-    private int buttonWidth     = 18;
+    private static final int THEME_DEFAULT = Integer.MIN_VALUE;
+    private int backgroundColor  = THEME_DEFAULT;
+    private int borderColor      = THEME_DEFAULT;
+    private int buttonColor      = THEME_DEFAULT;
+    private int buttonHoverColor = THEME_DEFAULT;
+    private int textColor        = THEME_DEFAULT;
+    private int cornerRadius     = 4;
+    private int buttonWidth      = 18;
 
     // ── State ────────────────────────────────────────────────────────────
     private boolean hoveredMinus;
@@ -53,42 +57,54 @@ public class SpinnerComponent extends UIComponent {
 
     @Override
     protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        Theme theme = Theme.current();
+        int bg       = backgroundColor  == THEME_DEFAULT ? theme.bgSurface()   : backgroundColor;
+        int border   = borderColor      == THEME_DEFAULT ? theme.border()      : borderColor;
+        int btnColor = buttonColor       == THEME_DEFAULT ? theme.bgElevated()  : buttonColor;
+        int btnHover = buttonHoverColor  == THEME_DEFAULT ? theme.hover()       : buttonHoverColor;
+        int txt      = textColor         == THEME_DEFAULT ? theme.textPrimary() : textColor;
+        int mutedTxt = theme.textMuted();
         TextRenderer tr = MinecraftClient.getInstance().textRenderer;
 
-        // Background
-        ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, backgroundColor);
-        ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height, cornerRadius, borderColor);
+        boolean atMin = value <= minValue;
+        boolean atMax = value >= maxValue;
 
-        // Minus button
-        hoveredMinus = enabled && mouseX >= x && mouseX < x + buttonWidth
+        // Background
+        ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, bg);
+        ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height, cornerRadius, border);
+
+        // Minus button (greyed out at min)
+        hoveredMinus = enabled && !atMin && mouseX >= x && mouseX < x + buttonWidth
                 && mouseY >= y && mouseY < y + height;
-        int minusBg = hoveredMinus ? buttonHoverColor : buttonColor;
-        if (!enabled) minusBg = ProceduralRenderer.darken(buttonColor, 0.5f);
+        int minusBg;
+        if (!enabled || atMin) minusBg = ProceduralRenderer.darken(btnColor, 0.5f);
+        else minusBg = hoveredMinus ? btnHover : btnColor;
         ProceduralRenderer.fillRoundedRect(ctx, x, y, buttonWidth, height, cornerRadius, minusBg);
         int minusTextY = y + (height - tr.fontHeight) / 2;
         ProceduralRenderer.drawCenteredText(ctx, tr, "-", x + buttonWidth / 2, minusTextY,
-                enabled ? textColor : ProceduralRenderer.COL_TEXT_MUTED);
+                (enabled && !atMin) ? txt : mutedTxt);
 
-        // Plus button
+        // Plus button (greyed out at max)
         int plusX = x + width - buttonWidth;
-        hoveredPlus = enabled && mouseX >= plusX && mouseX < plusX + buttonWidth
+        hoveredPlus = enabled && !atMax && mouseX >= plusX && mouseX < plusX + buttonWidth
                 && mouseY >= y && mouseY < y + height;
-        int plusBg = hoveredPlus ? buttonHoverColor : buttonColor;
-        if (!enabled) plusBg = ProceduralRenderer.darken(buttonColor, 0.5f);
+        int plusBg;
+        if (!enabled || atMax) plusBg = ProceduralRenderer.darken(btnColor, 0.5f);
+        else plusBg = hoveredPlus ? btnHover : btnColor;
         ProceduralRenderer.fillRoundedRect(ctx, plusX, y, buttonWidth, height, cornerRadius, plusBg);
         ProceduralRenderer.drawCenteredText(ctx, tr, "+", plusX + buttonWidth / 2, minusTextY,
-                enabled ? textColor : ProceduralRenderer.COL_TEXT_MUTED);
+                (enabled && !atMax) ? txt : mutedTxt);
 
         // Value text
         String display = integerMode ? String.valueOf((int) value) : String.format("%.1f", value);
         ProceduralRenderer.drawCenteredText(ctx, tr, display, x + width / 2, minusTextY,
-                enabled ? textColor : ProceduralRenderer.COL_TEXT_MUTED);
+                enabled ? txt : mutedTxt);
 
         // Focus ring
         if (FocusManager.getInstance().isFocused(this)) {
             float pulse = (float) (Math.sin(System.nanoTime() / 200_000_000.0) * 0.3 + 0.7);
             int alpha = (int) (pulse * 200);
-            int focusColor = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_ACCENT_TEAL, alpha);
+            int focusColor = ProceduralRenderer.withAlpha(theme.accentTeal(), alpha);
             ProceduralRenderer.drawRoundedBorder(ctx,
                     x - 1, y - 1, width + 2, height + 2, cornerRadius + 1, focusColor);
         }
@@ -104,12 +120,16 @@ public class SpinnerComponent extends UIComponent {
         if (!isHovered(mouseX, mouseY)) return super.mouseClicked(mouseX, mouseY, button);
 
         if (mouseX < x + buttonWidth) {
-            setValue(value - step);
-            UISoundManager.playClick();
+            if (value > minValue) {
+                setValue(value - step);
+                UISoundManager.playClick();
+            }
             return true;
         } else if (mouseX >= x + width - buttonWidth) {
-            setValue(value + step);
-            UISoundManager.playClick();
+            if (value < maxValue) {
+                setValue(value + step);
+                UISoundManager.playClick();
+            }
             return true;
         }
         return true; // consume click on the value area

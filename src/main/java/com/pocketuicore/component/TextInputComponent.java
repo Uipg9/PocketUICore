@@ -41,6 +41,7 @@ public class TextInputComponent extends UIComponent {
     private int placeholderColor = ProceduralRenderer.COL_TEXT_MUTED;
     private int cursorColor      = ProceduralRenderer.COL_TEXT_PRIMARY;
     private int cornerRadius     = 4;
+    private int selectionColor   = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_ACCENT_TEAL, 120);
 
     // ── Cursor blink ─────────────────────────────────────────────────────
     private long lastCursorToggle = 0;
@@ -54,6 +55,18 @@ public class TextInputComponent extends UIComponent {
     private Consumer<String> onSubmit;
     private Consumer<String> onChanged;
     private Predicate<Character> charFilter;
+
+    // ── Numeric mode ─────────────────────────────────────────────────────
+    private boolean numericMode = false;
+    private double numericMin = -Double.MAX_VALUE;
+    private double numericMax = Double.MAX_VALUE;
+    private boolean integerOnly = false;
+
+    /** Built-in numeric character filter. */
+    private static final Predicate<Character> NUMERIC_FILTER = c ->
+            Character.isDigit(c) || c == '.' || c == '-';
+    private static final Predicate<Character> INTEGER_FILTER = c ->
+            Character.isDigit(c) || c == '-';
 
     // =====================================================================
     //  Construction
@@ -107,7 +120,7 @@ public class TextInputComponent extends UIComponent {
                 int selX1 = innerX + tr.getWidth(displayText.substring(0, selMin)) - scrollOffset;
                 int selX2 = innerX + tr.getWidth(displayText.substring(0, selMax)) - scrollOffset;
                 ProceduralRenderer.fillRect(ctx, selX1, y + 2, selX2 - selX1, height - 4,
-                        ProceduralRenderer.withAlpha(ProceduralRenderer.COL_ACCENT_TEAL, 80));
+                        selectionColor);
             }
 
             // Text
@@ -262,6 +275,12 @@ public class TextInputComponent extends UIComponent {
     public boolean charTyped(char chr, int modifiers) {
         if (!visible || !enabled || !focused) return false;
         if (chr < 32) return false; // control chars
+
+        // Numeric mode filter
+        if (numericMode) {
+            Predicate<Character> nf = integerOnly ? INTEGER_FILTER : NUMERIC_FILTER;
+            if (!nf.test(chr)) return false;
+        }
         if (charFilter != null && !charFilter.test(chr)) return false;
 
         deleteSelection();
@@ -378,4 +397,93 @@ public class TextInputComponent extends UIComponent {
     public TextInputComponent setPlaceholderColor(int c)      { this.placeholderColor = c; return this; }
     public TextInputComponent setCursorColor(int c)           { this.cursorColor = c; return this; }
     public TextInputComponent setCornerRadius(int r)          { this.cornerRadius = r; return this; }
+    public TextInputComponent setSelectionColor(int c)        { this.selectionColor = c; return this; }
+
+    // ── Numeric mode ─────────────────────────────────────────────────────
+
+    /**
+     * Enable numeric-only input mode. Only digits, minus sign, and
+     * decimal point (if not integer-only) are accepted.
+     *
+     * @param numeric    whether numeric mode is enabled
+     * @param integerOnly if true, only integers (no decimal point)
+     * @return this component for chaining
+     * @since 1.15.0
+     */
+    public TextInputComponent setNumericMode(boolean numeric, boolean integerOnly) {
+        this.numericMode = numeric;
+        this.integerOnly = integerOnly;
+        return this;
+    }
+
+    /**
+     * Set the numeric range for validation.
+     * When numeric mode is active, {@link #getNumericValue()} clamps to this range.
+     *
+     * @param min minimum value
+     * @param max maximum value
+     * @return this component for chaining
+     * @since 1.15.0
+     */
+    public TextInputComponent setNumericRange(double min, double max) {
+        this.numericMin = min;
+        this.numericMax = max;
+        return this;
+    }
+
+    /**
+     * Parse the text content as a numeric value, clamped to the configured range.
+     *
+     * @return the numeric value, or 0 if parsing fails
+     * @since 1.15.0
+     */
+    public double getNumericValue() {
+        try {
+            double val = Double.parseDouble(text.toString());
+            return Math.max(numericMin, Math.min(numericMax, val));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Set the numeric value (sets the text to the string representation).
+     *
+     * @param value the value to set
+     * @return this component for chaining
+     * @since 1.15.0
+     */
+    public TextInputComponent setNumericValue(double value) {
+        value = Math.max(numericMin, Math.min(numericMax, value));
+        if (integerOnly) {
+            setText(String.valueOf((int) value));
+        } else {
+            setText(String.valueOf(value));
+        }
+        return this;
+    }
+
+    public boolean isNumericMode()  { return numericMode; }
+    public boolean isIntegerOnly()  { return integerOnly; }
+    public double getNumericMin()   { return numericMin; }
+    public double getNumericMax()   { return numericMax; }
+
+    // ── Focus integration ────────────────────────────────────────────────
+
+    /**
+     * Programmatically focus this text input.
+     * Sets the internal focus flag and registers with the FocusManager.
+     *
+     * @return this component for chaining
+     * @since 1.15.0
+     */
+    @Override
+    public TextInputComponent requestFocus() {
+        this.focused = true;
+        resetBlink();
+        FocusManager fm = FocusManager.getInstance();
+        fm.register(this);
+        fm.focus(this);
+        return this;
+    }
 }

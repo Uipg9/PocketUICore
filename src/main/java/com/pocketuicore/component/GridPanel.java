@@ -52,9 +52,10 @@ public class GridPanel extends DarkPanel {
     // =====================================================================
 
     @Override
-    public void addChild(UIComponent child) {
+    public UIComponent addChild(UIComponent child) {
         super.addChild(child);
         layout();
+        return this;
     }
 
     @Override

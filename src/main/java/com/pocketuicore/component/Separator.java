@@ -1,6 +1,7 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
+import com.pocketuicore.render.Theme;
 import net.minecraft.client.gui.DrawContext;
 
 /**
@@ -8,6 +9,8 @@ import net.minecraft.client.gui.DrawContext;
  * <p>
  * Use in panels between groups of components to visually divide
  * sections. Defaults to a horizontal line 1 px thick.
+ * <p>
+ * Respects the active {@link Theme} for its default colour.
  *
  * @since 1.12.0
  */
@@ -16,7 +19,8 @@ public class Separator extends UIComponent {
     public enum Orientation { HORIZONTAL, VERTICAL }
 
     private Orientation orientation = Orientation.HORIZONTAL;
-    private int color = ProceduralRenderer.COL_BORDER;
+    private int color = -1; // -1 = use theme
+    private boolean useThemeColor = true;
     private int thickness = 1;
 
     /**
@@ -56,14 +60,15 @@ public class Separator extends UIComponent {
             w = thickness;
             h = height;
         }
-        ProceduralRenderer.fillRect(ctx, x, y, w, h, color);
+        int renderColor = useThemeColor ? Theme.current().border() : color;
+        ProceduralRenderer.fillRect(ctx, x, y, w, h, renderColor);
     }
 
     // =====================================================================
     //  Accessors
     // =====================================================================
 
-    public Separator setColor(int c)             { this.color = c; return this; }
+    public Separator setColor(int c)             { this.color = c; this.useThemeColor = false; return this; }
     public int getColor()                        { return color; }
     public Separator setThickness(int t)         { this.thickness = Math.max(1, t); return this; }
     public int getThickness()                    { return thickness; }

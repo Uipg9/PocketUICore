@@ -7,7 +7,9 @@ import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -59,6 +61,11 @@ public final class SelectableList<T> extends UIComponent {
     private int selectedIndex = -1;
     private int hoveredIndex  = -1;
     private boolean numberShortcuts = false; // 1-9 key shortcuts
+
+    // ── Multi-select ─────────────────────────────────────────────────────
+    private boolean multiSelect = false;
+    private final Set<Integer> selectedIndices = new LinkedHashSet<>();
+    private int selectionAnchor = -1;
 
     // ── Callbacks ────────────────────────────────────────────────────────
     private Consumer<T> onSelect;
@@ -176,7 +183,7 @@ public final class SelectableList<T> extends UIComponent {
             if (iy + itemHeight < y || iy > y + height) continue;
 
             boolean hov = (i == hoveredIndex);
-            boolean sel = (i == selectedIndex);
+            boolean sel = multiSelect ? selectedIndices.contains(i) : (i == selectedIndex);
 
             // Row background
             if (sel) {
@@ -228,9 +235,37 @@ public final class SelectableList<T> extends UIComponent {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
         if (button == 0 && hoveredIndex >= 0 && hoveredIndex < items.size()) {
-            selectedIndex = hoveredIndex;
+            if (multiSelect) {
+                boolean ctrl  = (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS)
+                             || (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS);
+                boolean shift = (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS)
+                             || (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS);
+                if (ctrl) {
+                    // Toggle individual item
+                    if (selectedIndices.contains(hoveredIndex)) {
+                        selectedIndices.remove(hoveredIndex);
+                    } else {
+                        selectedIndices.add(hoveredIndex);
+                    }
+                    selectionAnchor = hoveredIndex;
+                } else if (shift && selectionAnchor >= 0) {
+                    // Range select from anchor to hovered
+                    int lo = Math.min(selectionAnchor, hoveredIndex);
+                    int hi = Math.max(selectionAnchor, hoveredIndex);
+                    selectedIndices.clear();
+                    for (int i = lo; i <= hi; i++) selectedIndices.add(i);
+                } else {
+                    // Plain click — single item
+                    selectedIndices.clear();
+                    selectedIndices.add(hoveredIndex);
+                    selectionAnchor = hoveredIndex;
+                }
+                selectedIndex = hoveredIndex;
+            } else {
+                selectedIndex = hoveredIndex;
+            }
             UISoundManager.playClick();
-            if (onSelect != null) onSelect.accept(items.get(selectedIndex));
+            if (onSelect != null) onSelect.accept(items.get(hoveredIndex));
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -353,6 +388,41 @@ public final class SelectableList<T> extends UIComponent {
     public SelectableList<T> setSelectColor(int color) {
         this.selectColor = color;
         return this;
+    }
+
+    // ── Multi-select API ─────────────────────────────────────────────────
+
+    /** Enable or disable multi-select mode (Ctrl+click toggle, Shift+click range). */
+    public SelectableList<T> setMultiSelect(boolean multi) {
+        this.multiSelect = multi;
+        if (!multi) { selectedIndices.clear(); selectionAnchor = -1; }
+        return this;
+    }
+
+    /** @return true if multi-select mode is enabled. */
+    public boolean isMultiSelect() { return multiSelect; }
+
+    /** @return the set of selected indices (empty in single-select mode). */
+    public Set<Integer> getSelectedIndices() { return Set.copyOf(selectedIndices); }
+
+    /** @return all selected items in selection order. */
+    public List<T> getSelectedItems() {
+        if (!multiSelect) {
+            return selectedIndex >= 0 && selectedIndex < items.size()
+                    ? List.of(items.get(selectedIndex)) : List.of();
+        }
+        List<T> result = new ArrayList<>(selectedIndices.size());
+        for (int idx : selectedIndices) {
+            if (idx >= 0 && idx < items.size()) result.add(items.get(idx));
+        }
+        return result;
+    }
+
+    /** Clear all selections. */
+    public void clearSelection() {
+        selectedIndex = -1;
+        selectedIndices.clear();
+        selectionAnchor = -1;
     }
 
     public int getItemHeight() { return itemHeight; }

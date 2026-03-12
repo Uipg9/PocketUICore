@@ -259,4 +259,37 @@ public final class ConfirmationDialog extends UIComponent {
 
     /** Change the cancel button label. */
     public void setCancelLabel(String label) { cancelButton.setLabel(label); }
+
+    /**
+     * Reposition the dialog to be centred on the given screen dimensions.
+     * Call from a resize callback or before rendering after a window resize.
+     *
+     * @param screenW new screen width
+     * @param screenH new screen height
+     * @since 1.15.0
+     */
+    public void recenter(int screenW, int screenH) {
+        this.width  = screenW;
+        this.height = screenH;
+
+        int px = (screenW - DIALOG_WIDTH) / 2;
+        int py = (screenH - DIALOG_HEIGHT) / 2;
+
+        panel.x = px;
+        panel.y = py;
+
+        titleLabel.x   = px + PAD;
+        titleLabel.y   = py + PAD;
+        messageLabel.x = px + PAD;
+        messageLabel.y = py + PAD + 22;
+
+        int btnY   = py + DIALOG_HEIGHT - BUTTON_H - PAD;
+        int gap    = 12;
+        int totalW = BUTTON_W * 2 + gap;
+        int bx     = px + (DIALOG_WIDTH - totalW) / 2;
+        confirmButton.x = bx;
+        confirmButton.y = btnY;
+        cancelButton.x  = bx + BUTTON_W + gap;
+        cancelButton.y  = btnY;
+    }
 }

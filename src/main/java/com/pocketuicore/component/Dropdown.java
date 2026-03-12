@@ -78,32 +78,46 @@ public class Dropdown<T> extends UIComponent {
                     x - 1, y - 1, width + 2, height + 2, cornerRadius + 1, focusColor);
         }
 
-        // ── Expanded list ────────────────────────────────────────────────
-        if (expanded && !items.isEmpty()) {
-            int visibleCount = Math.min(items.size(), maxVisibleItems);
-            int listH = visibleCount * itemHeight;
-            int listY = y + height + 1;
+        // Expanded list arrow hint (the actual list is rendered in renderOverlay)
+    }
 
-            // Background
-            ProceduralRenderer.fillRoundedRect(ctx, x, listY, width, listH, cornerRadius, backgroundColor);
-            ProceduralRenderer.drawRoundedBorder(ctx, x, listY, width, listH, cornerRadius, borderColor);
+    /**
+     * Render the expanded dropdown list above all sibling components.
+     * This overlay pass ensures the dropdown items are never painted
+     * over by siblings rendered after this component.
+     *
+     * @since 1.15.0
+     */
+    @Override
+    public void renderOverlay(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        if (!expanded || items.isEmpty()) return;
 
-            // Items
-            for (int i = 0; i < visibleCount; i++) {
-                int iy = listY + i * itemHeight;
-                boolean hovered = mouseX >= x && mouseX < x + width
-                        && mouseY >= iy && mouseY < iy + itemHeight;
-                if (hovered) {
-                    ProceduralRenderer.fillRect(ctx, x + 1, iy, width - 2, itemHeight, hoverColor);
-                }
-                if (i == selectedIndex) {
-                    ProceduralRenderer.fillRect(ctx, x + 1, iy, 2, itemHeight,
-                            ProceduralRenderer.COL_ACCENT);
-                }
-                String itemLabel = labelExtractor.apply(items.get(i));
-                int itemTextY = iy + (itemHeight - tr.fontHeight) / 2;
-                ProceduralRenderer.drawText(ctx, tr, itemLabel, x + 6, itemTextY, textColor);
+        MinecraftClient client = MinecraftClient.getInstance();
+        TextRenderer tr = client.textRenderer;
+
+        int visibleCount = Math.min(items.size(), maxVisibleItems);
+        int listH = visibleCount * itemHeight;
+        int listY = y + height + 1;
+
+        // Background
+        ProceduralRenderer.fillRoundedRect(ctx, x, listY, width, listH, cornerRadius, backgroundColor);
+        ProceduralRenderer.drawRoundedBorder(ctx, x, listY, width, listH, cornerRadius, borderColor);
+
+        // Items
+        for (int i = 0; i < visibleCount; i++) {
+            int iy = listY + i * itemHeight;
+            boolean hovered = mouseX >= x && mouseX < x + width
+                    && mouseY >= iy && mouseY < iy + itemHeight;
+            if (hovered) {
+                ProceduralRenderer.fillRect(ctx, x + 1, iy, width - 2, itemHeight, hoverColor);
             }
+            if (i == selectedIndex) {
+                ProceduralRenderer.fillRect(ctx, x + 1, iy, 2, itemHeight,
+                        ProceduralRenderer.COL_ACCENT);
+            }
+            String itemLabel = labelExtractor.apply(items.get(i));
+            int itemTextY = iy + (itemHeight - tr.fontHeight) / 2;
+            ProceduralRenderer.drawText(ctx, tr, itemLabel, x + 6, itemTextY, textColor);
         }
     }
 
@@ -135,9 +149,9 @@ public class Dropdown<T> extends UIComponent {
                 UISoundManager.playClick();
                 return true;
             }
-            // Click outside — collapse
+            // Click outside — collapse and consume event to prevent click-through
             expanded = false;
-            return false;
+            return true;
         } else if (isHovered(mouseX, mouseY)) {
             expanded = true;
             UISoundManager.playClick();
@@ -149,15 +163,8 @@ public class Dropdown<T> extends UIComponent {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!visible || !enabled) return false;
-        if (!FocusManager.getInstance().isFocused(this)) return false;
 
-        // Enter/Space to toggle expansion
-        if (keyCode == 257 || keyCode == 32) {
-            expanded = !expanded;
-            UISoundManager.playClick();
-            return true;
-        }
-        // Arrow keys when expanded
+        // When expanded, arrow keys work regardless of FocusManager focus
         if (expanded) {
             if (keyCode == 264) { // Down
                 int next = Math.min(selectedIndex + 1, items.size() - 1);
@@ -167,7 +174,23 @@ public class Dropdown<T> extends UIComponent {
                 int prev = Math.max(selectedIndex - 1, 0);
                 selectItem(prev);
                 return true;
+            } else if (keyCode == 257 || keyCode == 32) { // Enter/Space — collapse
+                expanded = false;
+                UISoundManager.playClick();
+                return true;
+            } else if (keyCode == 256) { // Escape — collapse without selecting
+                expanded = false;
+                return true;
             }
+        }
+
+        if (!FocusManager.getInstance().isFocused(this)) return false;
+
+        // Enter/Space to toggle expansion
+        if (keyCode == 257 || keyCode == 32) {
+            expanded = !expanded;
+            UISoundManager.playClick();
+            return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }

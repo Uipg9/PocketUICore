@@ -1,6 +1,7 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
+import com.pocketuicore.render.Theme;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -27,6 +28,7 @@ public class PercentageBar extends UIComponent {
     private float easingSpeed = 6f; // higher = faster convergence
 
     // ── Appearance ───────────────────────────────────────────────────────
+    private static final int THEME_DEFAULT = Integer.MIN_VALUE;
     private int trackColor;
     private int barColor;
     private int textColor;
@@ -78,10 +80,8 @@ public class PercentageBar extends UIComponent {
      */
     public PercentageBar(int x, int y, int width, int height, float initialProgress) {
         this(x, y, width, height, initialProgress,
-             ProceduralRenderer.COL_BG_PRIMARY,
-             ProceduralRenderer.COL_ACCENT_TEAL,
-             ProceduralRenderer.COL_TEXT_PRIMARY,
-             height / 2, // fully rounded ends by default
+             THEME_DEFAULT, THEME_DEFAULT, THEME_DEFAULT,
+             height / 2,
              null, true);
     }
 
@@ -123,7 +123,10 @@ public class PercentageBar extends UIComponent {
         }
 
         // ── Track (background) ───────────────────────────────────────────
-        ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, trackColor);
+        int resolvedTrack = trackColor == THEME_DEFAULT ? Theme.current().bgPrimary()   : trackColor;
+        int resolvedBar   = barColor   == THEME_DEFAULT ? Theme.current().accentTeal()  : barColor;
+        int resolvedText  = textColor  == THEME_DEFAULT ? Theme.current().textPrimary() : textColor;
+        ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, resolvedTrack);
 
         // ── Fill bar ─────────────────────────────────────────────────────
         int fillW = Math.round(width * displayProgress);
@@ -133,7 +136,7 @@ public class PercentageBar extends UIComponent {
             // Use scissor to ensure the bar doesn't bleed past the track bounds
             ctx.enableScissor(x, y, x + width, y + height);
 
-            int renderColor = barColor;
+            int renderColor = resolvedBar;
             // Gradient fill: red → yellow → green based on progress
             if (useGradientColors) {
                 renderColor = getGradientColor(displayProgress);
@@ -163,7 +166,7 @@ public class PercentageBar extends UIComponent {
             TextRenderer tr = client.textRenderer;
             int textY = y + (height - tr.fontHeight) / 2;
             ProceduralRenderer.drawCenteredText(ctx, tr, displayText,
-                    x + width / 2, textY, textColor);
+                    x + width / 2, textY, resolvedText);
         }
     }
 
