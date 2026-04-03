@@ -1,9 +1,11 @@
 package com.pocketuicore.component;
 
+import com.pocketcanvascore.render.PocketCanvas;
 import com.pocketuicore.render.ProceduralRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import com.pocketuicore.render.RenderContext;
+import com.pocketuicore.render.RenderContexts;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -91,6 +93,13 @@ public class HudOverlayComponent extends UIComponent {
     // =====================================================================
     //  Static renderer — PocketUICoreClient registers via HudCompat
     // =====================================================================
+
+    /**
+     * PocketCanvas-driven 26.1 HUD render entrypoint.
+     */
+    public static void renderAll(PocketCanvas canvas) {
+        renderAll(RenderContexts.from(canvas), canvas.delta());
+    }
 
     /**
      * Renders all registered HUD overlays.  Automatically skipped when a

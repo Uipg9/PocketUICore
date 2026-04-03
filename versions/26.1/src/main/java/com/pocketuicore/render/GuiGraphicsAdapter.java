@@ -1,14 +1,23 @@
 package com.pocketuicore.render;
 
+import com.pocketcanvascore.render.PocketRenderContext;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 
-public final class GuiGraphicsAdapter implements RenderContext {
+public final class GuiGraphicsAdapter implements RenderContext, PocketRenderContext {
     private final GuiGraphicsExtractor ctx;
+    private final float delta;
 
-    public GuiGraphicsAdapter(GuiGraphicsExtractor ctx) { this.ctx = ctx; }
+    public GuiGraphicsAdapter(GuiGraphicsExtractor ctx) {
+        this(ctx, 0f);
+    }
+
+    public GuiGraphicsAdapter(GuiGraphicsExtractor ctx, float delta) {
+        this.ctx = ctx;
+        this.delta = delta;
+    }
 
     @Override public void fill(int x1, int y1, int x2, int y2, int color) {
         ctx.fill(x1, y1, x2, y2, color);
@@ -37,6 +46,9 @@ public final class GuiGraphicsAdapter implements RenderContext {
     }
     @Override public void enableScissor(int x1, int y1, int x2, int y2) { ctx.enableScissor(x1, y1, x2, y2); }
     @Override public void disableScissor() { ctx.disableScissor(); }
+
+    @Override public GuiGraphicsExtractor graphics() { return ctx; }
+    @Override public float delta() { return delta; }
 
     @Override public Object unwrapNative() { return ctx; }
     public GuiGraphicsExtractor unwrap() { return ctx; }

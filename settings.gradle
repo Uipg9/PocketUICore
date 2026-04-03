@@ -26,6 +26,6 @@ stonecutter.create(project(':')) {
 // PocketCanvasCore is a composite build shared across all versions.
 includeBuild('../PocketCanvasCore') {
     dependencySubstitution {
-        substitute(module('com.pocketcanvascore:pocketcanvascore')).using(project(':1.21.11'))
+        substitute(module('com.pocketcanvascore:pocketcanvascore')).using(project(':26.1'))
     }
 }

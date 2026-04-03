@@ -54,6 +54,26 @@ processResources {
     }
 }
 
+tasks.named("processResources").configure {
+    dependsOn tasks.named("stonecutterMerge")
+}
+
+def stonecutterMergeTask = tasks.named("stonecutterMerge")
+["compileJava", "sourcesJar", "javadoc"].each { taskName ->
+    tasks.matching { it.name == taskName }.configureEach {
+        dependsOn stonecutterMergeTask
+    }
+}
+
+def stonecutterMergeTestTask = tasks.findByName("stonecutterMergeTest")
+if (stonecutterMergeTestTask != null) {
+    ["compileTestJava", "processTestResources", "testClasses"].each { taskName ->
+        tasks.matching { it.name == taskName }.configureEach {
+            dependsOn stonecutterMergeTestTask
+        }
+    }
+}
+
 def javaVersion = 25
 
 tasks.withType(JavaCompile).configureEach {

@@ -1,11 +1,13 @@
 package com.pocketuicore.component;
 
+import com.pocketcanvascore.render.PocketCanvas;
 import com.pocketcanvascore.render.PocketTheme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.input.MouseButtonEvent;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.render.RenderContext;
+import com.pocketuicore.render.RenderContexts;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
@@ -88,6 +90,20 @@ public abstract class UIComponent {
     // =====================================================================
     //  Rendering
     // =====================================================================
+
+    /**
+     * Primary 26.1 render entrypoint using PocketCanvas as the rendering engine.
+     */
+    public void render(PocketCanvas canvas, int mouseX, int mouseY, float delta) {
+        render(RenderContexts.from(canvas), mouseX, mouseY, delta);
+    }
+
+    /**
+     * Convenience overload using {@link PocketCanvas#delta()}.
+     */
+    public void render(PocketCanvas canvas, int mouseX, int mouseY) {
+        render(canvas, mouseX, mouseY, canvas.delta());
+    }
 
     /**
      * Draw this component and all visible children.

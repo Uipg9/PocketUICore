@@ -1,5 +1,6 @@
 package com.pocketuicore.screen;
 
+import com.pocketcanvascore.render.PocketCanvas;
 import com.pocketuicore.component.DarkPanel;
 import com.pocketuicore.component.FocusManager;
 import com.pocketuicore.component.NotificationManager;
@@ -7,6 +8,7 @@ import com.pocketuicore.component.UIComponent;
 import com.pocketuicore.controller.ControllerHandler;
 import com.pocketuicore.render.GuiGraphicsAdapter;
 import com.pocketuicore.render.RenderContext;
+import com.pocketuicore.render.RenderContexts;
 import com.pocketuicore.render.TooltipRenderer;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -106,17 +108,18 @@ public abstract class PocketScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         super.extractRenderState(ctx, mouseX, mouseY, delta);
-        // Wrap at the Minecraft API boundary - all internal rendering uses RenderContext
-        RenderContext rc = new GuiGraphicsAdapter(ctx);
+        GuiGraphicsAdapter nativeCtx = new GuiGraphicsAdapter(ctx, delta);
+        PocketCanvas canvas = new PocketCanvas(nativeCtx);
+        RenderContext rc = RenderContexts.from(canvas);
         if (root != null) {
             // Layer 1 - Main UI tree
-            root.render(rc, mouseX, mouseY, delta);
+            root.render(canvas, mouseX, mouseY, canvas.delta());
 
             // Layer 1.5 - Overlay pass (e.g. expanded dropdowns above siblings)
-            root.renderOverlay(rc, mouseX, mouseY, delta);
+            root.renderOverlay(rc, mouseX, mouseY, canvas.delta());
 
             // Layer 2 - Notifications (above UI, below tooltips)
-            NotificationManager.renderAll(rc, width, height, delta);
+            NotificationManager.renderAll(rc, width, height, canvas.delta());
 
             // Layer 3 - Tooltips (always on top of everything)
             if (root instanceof DarkPanel panel) {

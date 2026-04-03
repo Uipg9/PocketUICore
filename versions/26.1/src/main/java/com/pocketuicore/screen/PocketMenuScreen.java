@@ -1,5 +1,6 @@
 package com.pocketuicore.screen;
 
+import com.pocketcanvascore.render.PocketCanvas;
 import com.pocketuicore.component.FocusManager;
 import com.pocketuicore.component.HoverButton;
 import com.pocketuicore.component.ItemDisplayComponent;
@@ -12,7 +13,6 @@ import com.pocketuicore.data.ObservableState;
 import com.pocketuicore.economy.ClientNetworkHandler;
 import com.pocketuicore.render.GuiGraphicsAdapter;
 import com.pocketuicore.render.ProceduralRenderer;
-import com.pocketuicore.render.RenderContext;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
@@ -140,15 +140,15 @@ public class PocketMenuScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         super.extractRenderState(ctx, mouseX, mouseY, delta);
-        // Wrap at the Minecraft API boundary - all internal rendering uses RenderContext
-        RenderContext rc = new GuiGraphicsAdapter(ctx);
+        GuiGraphicsAdapter rc = new GuiGraphicsAdapter(ctx, delta);
+        PocketCanvas canvas = new PocketCanvas(rc);
 
         // Dark overlay behind everything
         ProceduralRenderer.drawFullScreenOverlay(rc, this.width, this.height,
                 ProceduralRenderer.COL_OVERLAY);
 
         // Panel + all children
-        mainPanel.render(rc, mouseX, mouseY, delta);
+        mainPanel.render(canvas, mouseX, mouseY, canvas.delta());
 
         // Tooltips - must be last so they paint on top of everything
         UIComponent.renderTooltip(rc, mainPanel, mouseX, mouseY);
