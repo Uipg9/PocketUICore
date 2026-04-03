@@ -2,7 +2,7 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -155,7 +155,7 @@ public final class PaginatedContainer extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY,
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY,
                               float delta) {
         if (pages.isEmpty()) return;
 
@@ -217,7 +217,7 @@ public final class PaginatedContainer extends UIComponent {
 
     // ── Arrow drawing helpers ────────────────────────────────────────────
 
-    private void drawArrowLeft(DrawContext ctx, int x, int y, int size, int color) {
+    private void drawArrowLeft(RenderContext ctx, int x, int y, int size, int color) {
         int cx = x + size / 2;
         int cy = y + size / 2;
         int half = size / 3;
@@ -227,7 +227,7 @@ public final class PaginatedContainer extends UIComponent {
         }
     }
 
-    private void drawArrowRight(DrawContext ctx, int x, int y, int size, int color) {
+    private void drawArrowRight(RenderContext ctx, int x, int y, int size, int color) {
         int cx = x + size / 2;
         int cy = y + size / 2;
         int half = size / 3;

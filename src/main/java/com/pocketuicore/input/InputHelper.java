@@ -1,12 +1,12 @@
 package com.pocketuicore.input;
 
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
 
 /**
  * Input Helper — Centralised decomposition of MC 1.21.11 input records.
  * <p>
- * Minecraft 1.21.11 introduced the {@link Click} and {@link KeyInput} records
+ * Minecraft 1.21.11 introduced the {@link MouseButtonEvent} and {@link KeyEvent} records
  * which bundle mouse/keyboard data. This utility provides clean extraction
  * methods so downstream code does not couple to the internal record layout.
  * <p>
@@ -28,48 +28,48 @@ public final class InputHelper {
     private static InputMode currentMode = InputMode.KEYBOARD_MOUSE;
 
     // =====================================================================
-    //  Click record decomposition
+    //  MouseButtonEvent record decomposition
     // =====================================================================
 
-    /** @return the X coordinate from a Click record. */
-    public static double mouseX(Click click) { return click.x(); }
+    /** @return the X coordinate from a MouseButtonEvent record. */
+    public static double mouseX(MouseButtonEvent MouseButtonEvent) { return MouseButtonEvent.x(); }
 
-    /** @return the Y coordinate from a Click record. */
-    public static double mouseY(Click click) { return click.y(); }
+    /** @return the Y coordinate from a MouseButtonEvent record. */
+    public static double mouseY(MouseButtonEvent MouseButtonEvent) { return MouseButtonEvent.y(); }
 
-    /** @return the mouse button index from a Click record. */
-    public static int mouseButton(Click click) { return click.buttonInfo().button(); }
+    /** @return the mouse button index from a MouseButtonEvent record. */
+    public static int mouseButton(MouseButtonEvent MouseButtonEvent) { return MouseButtonEvent.buttonInfo().button(); }
 
-    /** @return {@code true} if the Click represents a left-click (button 0). */
-    public static boolean isLeftClick(Click click) { return mouseButton(click) == 0; }
+    /** @return {@code true} if the MouseButtonEvent represents a left-MouseButtonEvent (button 0). */
+    public static boolean isLeftClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == 0; }
 
-    /** @return {@code true} if the Click represents a right-click (button 1). */
-    public static boolean isRightClick(Click click) { return mouseButton(click) == 1; }
+    /** @return {@code true} if the MouseButtonEvent represents a right-MouseButtonEvent (button 1). */
+    public static boolean isRightClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == 1; }
 
-    /** @return {@code true} if the Click represents a middle-click (button 2). */
-    public static boolean isMiddleClick(Click click) { return mouseButton(click) == 2; }
+    /** @return {@code true} if the MouseButtonEvent represents a middle-MouseButtonEvent (button 2). */
+    public static boolean isMiddleClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == 2; }
 
     // =====================================================================
-    //  KeyInput record decomposition
+    //  KeyEvent record decomposition
     // =====================================================================
 
-    /** @return the GLFW key code from a KeyInput record. */
-    public static int keyCode(KeyInput input) { return input.key(); }
+    /** @return the GLFW key code from a KeyEvent record. */
+    public static int keyCode(KeyEvent input) { return input.key(); }
 
-    /** @return the scancode from a KeyInput record. */
-    public static int scanCode(KeyInput input) { return input.scancode(); }
+    /** @return the scancode from a KeyEvent record. */
+    public static int scanCode(KeyEvent input) { return input.scancode(); }
 
-    /** @return the modifier bitmask from a KeyInput record. */
-    public static int modifiers(KeyInput input) { return input.modifiers(); }
+    /** @return the modifier bitmask from a KeyEvent record. */
+    public static int modifiers(KeyEvent input) { return input.modifiers(); }
 
-    /** @return {@code true} if Shift is held in the given KeyInput. */
-    public static boolean isShiftDown(KeyInput input) { return (input.modifiers() & 0x01) != 0; }
+    /** @return {@code true} if Shift is held in the given KeyEvent. */
+    public static boolean isShiftDown(KeyEvent input) { return (input.modifiers() & 0x01) != 0; }
 
-    /** @return {@code true} if Ctrl is held in the given KeyInput. */
-    public static boolean isCtrlDown(KeyInput input) { return (input.modifiers() & 0x02) != 0; }
+    /** @return {@code true} if Ctrl is held in the given KeyEvent. */
+    public static boolean isCtrlDown(KeyEvent input) { return (input.modifiers() & 0x02) != 0; }
 
-    /** @return {@code true} if Alt is held in the given KeyInput. */
-    public static boolean isAltDown(KeyInput input) { return (input.modifiers() & 0x04) != 0; }
+    /** @return {@code true} if Alt is held in the given KeyEvent. */
+    public static boolean isAltDown(KeyEvent input) { return (input.modifiers() & 0x04) != 0; }
 
     // =====================================================================
     //  Input mode tracking

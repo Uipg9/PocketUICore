@@ -1,16 +1,16 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Floating Text / Toast Notification Component
+ * Floating Component / Toast Notification Component
  * <p>
  * Renders temporary on-screen messages that fade in, hold, and fade out.
  * Useful for "+50 coins", "Estate payout!", "Item crafted", etc.
@@ -74,7 +74,7 @@ public final class FloatingText {
     /**
      * Show a toast notification with default colour.
      *
-     * @param message    the text to display
+     * @param message    the Component to display
      * @param anchor     screen anchor position
      * @param durationMs how long the toast stays visible (incl. fade)
      */
@@ -85,9 +85,9 @@ public final class FloatingText {
     /**
      * Show a toast notification with a custom colour.
      *
-     * @param message    the text to display
+     * @param message    the Component to display
      * @param anchor     screen anchor position
-     * @param color      ARGB text colour
+     * @param color      ARGB Component colour
      * @param durationMs how long the toast stays visible (incl. fade)
      */
     public static void show(String message, Anchor anchor, int color, long durationMs) {
@@ -119,11 +119,11 @@ public final class FloatingText {
      * @param screenH screen height in GUI-scaled pixels
      * @param delta   frame delta time
      */
-    public static void renderAll(DrawContext ctx, int screenW, int screenH, float delta) {
+    public static void renderAll(RenderContext ctx, int screenW, int screenH, float delta) {
         if (toasts.isEmpty()) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
         long now = System.currentTimeMillis();
 
         Iterator<Toast> it = toasts.iterator();
@@ -152,8 +152,8 @@ public final class FloatingText {
             // Float upward over time
             float floatOffset = -(elapsed * 0.01f);
 
-            int textW = tr.getWidth(toast.message);
-            int textH = tr.fontHeight;
+            int textW = tr.width(toast.message);
+            int textH = tr.lineHeight;
             int pad   = 6;
 
             // Compute anchor position
@@ -190,7 +190,7 @@ public final class FloatingText {
 
             ProceduralRenderer.fillRoundedRect(ctx, bx, by, boxW, boxH, 4, bgColor);
             ProceduralRenderer.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, border);
-            ctx.drawTextWithShadow(tr, net.minecraft.text.Text.literal(toast.message),
+            ctx.drawTextWithShadow(tr, net.minecraft.network.chat.Component.literal(toast.message),
                     bx + pad, by + pad, txtCol);
         }
     }

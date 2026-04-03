@@ -1,8 +1,8 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import com.pocketuicore.render.RenderContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -208,10 +208,10 @@ public final class KeyShortcutManager {
      * Render the help overlay (semi-transparent background with a list
      * of all active shortcuts).
      */
-    public void renderHelp(DrawContext ctx, int screenW, int screenH) {
+    public void renderHelp(RenderContext ctx, int screenW, int screenH) {
         if (!helpVisible) return;
 
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
+        var font = Minecraft.getInstance().font;
 
         // ── Gather all active shortcuts ──────────────────────────────────
         List<String[]> entries = new ArrayList<>();  // [key, description]
@@ -233,7 +233,7 @@ public final class KeyShortcutManager {
         int pad   = 10;
         int keyColW = 0;
         for (String[] e : entries) {
-            int w = textRenderer.getWidth(e[0]);
+            int w = font.width(e[0]);
             if (w > keyColW) keyColW = w;
         }
         int panelW = keyColW + 20 + 160 + pad * 2;
@@ -250,7 +250,7 @@ public final class KeyShortcutManager {
 
         // ── Title ────────────────────────────────────────────────────────
         ProceduralRenderer.drawCenteredText(
-                ctx, textRenderer, "Keyboard Shortcuts",
+                ctx, font, "Keyboard Shortcuts",
                 px + panelW / 2, py + pad,
                 ProceduralRenderer.COL_ACCENT
         );
@@ -263,12 +263,12 @@ public final class KeyShortcutManager {
         int ey = py + pad + 24;
         for (String[] e : entries) {
             // Key badge
-            int kw = textRenderer.getWidth(e[0]);
+            int kw = font.width(e[0]);
             int bx = px + pad + keyColW - kw;
             ctx.fill(bx - 3, ey - 2, bx + kw + 3, ey + 11, ProceduralRenderer.COL_BG_ELEVATED);
-            ProceduralRenderer.drawText(ctx, textRenderer, e[0], bx, ey, ProceduralRenderer.COL_ACCENT);
+            ProceduralRenderer.drawText(ctx, font, e[0], bx, ey, ProceduralRenderer.COL_ACCENT);
             // Description
-            ProceduralRenderer.drawText(ctx, textRenderer, e[1],
+            ProceduralRenderer.drawText(ctx, font, e[1],
                     px + pad + keyColW + 20, ey,
                     ProceduralRenderer.COL_TEXT_PRIMARY);
             ey += lineH;

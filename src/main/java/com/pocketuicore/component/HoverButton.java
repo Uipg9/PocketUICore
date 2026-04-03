@@ -1,12 +1,13 @@
 package com.pocketuicore.component;
 
+import com.pocketcanvascore.render.PocketTheme;
 import com.pocketuicore.animation.AnimationTicker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
+import com.pocketuicore.render.RenderContext;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 
 /**
  * Module 2 — HoverButton
@@ -15,8 +16,8 @@ import net.minecraft.sound.SoundEvents;
  * <ul>
  *   <li>Colour smoothly blends between <em>normal → hover → pressed</em>
  *       states via the {@link AnimationTicker}.</li>
- *   <li>Plays the vanilla UI click sound on press.</li>
- *   <li>Label text is centred and shadow-drawn.</li>
+ *   <li>Plays the vanilla UI MouseButtonEvent sound on press.</li>
+ *   <li>Label Component is centred and shadow-drawn.</li>
  * </ul>
  */
 public class HoverButton extends UIComponent {
@@ -46,15 +47,15 @@ public class HoverButton extends UIComponent {
      * Create a HoverButton with the library's default palette.
      *
      * @param label   button label
-     * @param onClick action fired on left-click release
+     * @param onClick action fired on left-MouseButtonEvent release
      */
     public HoverButton(int x, int y, int width, int height,
                        String label, Runnable onClick) {
         this(x, y, width, height, label, onClick,
-             ProceduralRenderer.COL_BG_ELEVATED,
-             ProceduralRenderer.COL_HOVER,
-             ProceduralRenderer.COL_ACCENT,
-             ProceduralRenderer.COL_TEXT_PRIMARY,
+             PocketTheme.BACKGROUND_ELEVATED,
+             PocketTheme.BACKGROUND_INPUT,
+             PocketTheme.ACCENT_PRIMARY,
+             PocketTheme.TEXT_MAIN,
              4);
     }
 
@@ -80,7 +81,7 @@ public class HoverButton extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         hovered = isHovered(mouseX, mouseY) && enabled;
 
         // ── Transition smoothing ─────────────────────────────────────────
@@ -91,30 +92,30 @@ public class HoverButton extends UIComponent {
         // ── Colour blending ──────────────────────────────────────────────
         int bgColor;
         if (!enabled) {
-            // Disabled state: fully desaturated then darkened via ProceduralRenderer
-            int gray = ProceduralRenderer.saturate(normalColor, 0f);
-            bgColor = ProceduralRenderer.darken(gray, 0.5f);
+            // Disabled state: darken the normal color
+            bgColor = ProceduralRenderer.darken(normalColor, 0.5f);
         } else if (pressed && hovered) {
             bgColor = pressedColor;
         } else {
             bgColor = ProceduralRenderer.lerpColor(normalColor, hoverColor, hoverTransition);
         }
 
-        // ── Draw ─────────────────────────────────────────────────────────
+        // ── Draw button body ─────────────────────────────────────────────
         ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, bgColor);
 
-        // Label
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
-        int textY = y + (height - tr.fontHeight) / 2;
+        // ── Draw label ───────────────────────────────────────────────────
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
+        int textY = y + (height - tr.lineHeight) / 2;
         int tc;
         if (!enabled) {
-            // Disabled text: 50% alpha for clear visual distinction
-            tc = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_TEXT_MUTED, 128);
+            // Disabled Component: use muted color
+            tc = ProceduralRenderer.withAlpha(PocketTheme.TEXT_MUTED, 128);
         } else {
             tc = textColor;
         }
-        ProceduralRenderer.drawCenteredText(ctx, tr, label, x + width / 2, textY, tc);
+        ctx.drawCenteredTextWithShadow(tr, net.minecraft.network.chat.Component.literal(label),
+                x + width / 2, textY, tc);
 
         // ── Focus ring (controller / keyboard navigation) ────────────────
         if (FocusManager.getInstance().isFocused(this)) {
@@ -122,14 +123,14 @@ public class HoverButton extends UIComponent {
             float pulse = (float) (Math.sin(System.nanoTime() / 200_000_000.0) * 0.3 + 0.7);
             int innerAlpha = (int) (pulse * 200);
             int outerAlpha = innerAlpha / 2;
-            int innerColor = ProceduralRenderer.withAlpha(
-                    ProceduralRenderer.COL_ACCENT_TEAL, innerAlpha);
-            int outerColor = ProceduralRenderer.withAlpha(
-                    ProceduralRenderer.COL_ACCENT_TEAL, outerAlpha);
-            ProceduralRenderer.drawRoundedBorder(ctx,
+                int innerColor = ProceduralRenderer.withAlpha(
+                    PocketTheme.ACCENT_PRIMARY, innerAlpha);
+                int outerColor = ProceduralRenderer.withAlpha(
+                    PocketTheme.ACCENT_PRIMARY, outerAlpha);
+                ProceduralRenderer.drawRoundedBorder(ctx,
                     x - 1, y - 1, width + 2, height + 2,
                     cornerRadius + 1, innerColor);
-            ProceduralRenderer.drawRoundedBorder(ctx,
+                ProceduralRenderer.drawRoundedBorder(ctx,
                     x - 2, y - 2, width + 4, height + 4,
                     cornerRadius + 2, outerColor);
         }
@@ -164,9 +165,9 @@ public class HoverButton extends UIComponent {
     }
 
     private void playClickSound() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         client.getSoundManager().play(
-                PositionedSoundInstance.ui(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
+                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
     }
 
     // =====================================================================

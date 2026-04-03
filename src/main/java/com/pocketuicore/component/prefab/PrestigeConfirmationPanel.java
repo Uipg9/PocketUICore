@@ -4,9 +4,9 @@ import com.pocketuicore.component.DarkPanel;
 import com.pocketuicore.component.HoverButton;
 import com.pocketuicore.component.UIComponent;
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 /**
  * Prefab: Prestige Confirmation Panel
@@ -109,16 +109,16 @@ public class PrestigeConfirmationPanel extends DarkPanel {
     }
 
     // =====================================================================
-    //  Rendering — text labels drawn procedurally; buttons are children
+    //  Rendering — Component labels drawn procedurally; buttons are children
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         // Draw panel background (shadow, fill, border) via DarkPanel
         super.renderSelf(ctx, mouseX, mouseY, delta);
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
         int cx = x + width / 2;
         int py = y + PAD;
 
@@ -163,7 +163,7 @@ public class PrestigeConfirmationPanel extends DarkPanel {
                 beaconLabel, x + PAD, py,
                 ProceduralRenderer.COL_ACCENT_TEAL);
         ProceduralRenderer.drawText(ctx, tr,
-                " Reveals traces of your", x + PAD + tr.getWidth(beaconLabel), py,
+                " Reveals traces of your", x + PAD + tr.width(beaconLabel), py,
                 ProceduralRenderer.COL_TEXT_MUTED);
         py += LINE_H;
 

@@ -1,7 +1,8 @@
 package com.pocketuicore.component;
 
+import com.pocketcanvascore.render.PocketTheme;
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 
 /**
  * Module 2 — DarkPanel container
@@ -52,8 +53,8 @@ public class DarkPanel extends UIComponent {
      */
     public DarkPanel(int x, int y, int width, int height) {
         this(x, y, width, height,
-             ProceduralRenderer.COL_BG_SURFACE,
-             ProceduralRenderer.COL_BORDER,
+             PocketTheme.BACKGROUND_PANEL,
+             PocketTheme.BORDER_DEFAULT,
              6, true, true);
     }
 
@@ -79,24 +80,22 @@ public class DarkPanel extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        // Shadow
-        if (drawShadow) {
-            ProceduralRenderer.drawDropShadow(ctx, x, y, width, height,
-                    cornerRadius, shadowLayers, shadowAlpha);
-        }
-        // Background
-        int bg = backgroundColor;
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
+        // Use PocketComponents.drawPanel() for rendering
+        // Apply background opacity if needed
+        int bgColor = backgroundColor;
         if (backgroundOpacity < 1.0f) {
-            int alpha = (int) (((bg >> 24) & 0xFF) * backgroundOpacity);
-            bg = (alpha << 24) | (bg & 0x00FFFFFF);
+            int alpha = (int) (((bgColor >> 24) & 0xFF) * backgroundOpacity);
+            bgColor = (alpha << 24) | (bgColor & 0x00FFFFFF);
         }
-        ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height,
-                cornerRadius, bg);
-        // Border
+
+        // Draw with the version-neutral renderer so both DrawContext and GuiGraphics work.
+        if (drawShadow) {
+            ProceduralRenderer.drawDropShadow(ctx, x, y, width, height, cornerRadius, shadowLayers, shadowAlpha);
+        }
+        ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, bgColor);
         if (drawBorder) {
-            ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height,
-                    cornerRadius, borderColor);
+            ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height, cornerRadius, borderColor);
         }
     }
 
@@ -108,17 +107,17 @@ public class DarkPanel extends UIComponent {
      * can render content above their siblings.
      */
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void render(RenderContext ctx, int mouseX, int mouseY, float delta) {
         if (!visible) return;
         renderSelf(ctx, mouseX, mouseY, delta);
 
         boolean anyScroll = scrollable || scrollableH;
         if (anyScroll) {
             ctx.enableScissor(x, y, x + width, y + height);
-            ctx.getMatrices().pushMatrix();
+            ctx.matPush();
             float tx = scrollableH ? -scrollOffsetX : 0;
             float ty = scrollable  ? -scrollOffset  : 0;
-            ctx.getMatrices().translate(tx, ty);
+            ctx.matTranslate(tx, ty);
             int adjMX = scrollableH ? mouseX + scrollOffsetX : mouseX;
             int adjMY = scrollable  ? mouseY + scrollOffset  : mouseY;
             for (UIComponent child : children) {
@@ -128,7 +127,7 @@ public class DarkPanel extends UIComponent {
             for (UIComponent child : children) {
                 if (child.visible) child.renderOverlay(ctx, adjMX, adjMY, delta);
             }
-            ctx.getMatrices().popMatrix();
+            ctx.matPop();
             ctx.disableScissor();
         } else {
             for (UIComponent child : children) {
@@ -147,7 +146,7 @@ public class DarkPanel extends UIComponent {
 
     /**
      * Forwards to children with scroll-adjusted coordinates, then blocks
-     * input within panel bounds to prevent click-through.
+     * input within panel bounds to prevent MouseButtonEvent-through.
      */
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -342,7 +341,7 @@ public class DarkPanel extends UIComponent {
      * @param mouseY current mouse Y
      * @since 1.10.0
      */
-    public void renderTooltipPass(DrawContext ctx, int mouseX, int mouseY) {
+    public void renderTooltipPass(RenderContext ctx, int mouseX, int mouseY) {
         if (!visible) return;
         // Adjust mouse coordinates for scroll offset
         int adjMX = scrollableH ? mouseX + scrollOffsetX : mouseX;

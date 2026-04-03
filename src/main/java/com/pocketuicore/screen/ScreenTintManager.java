@@ -1,7 +1,7 @@
 package com.pocketuicore.screen;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -199,7 +199,7 @@ public final class ScreenTintManager {
      * @param screenW screen width in GUI-scaled pixels
      * @param screenH screen height in GUI-scaled pixels
      */
-    public void render(DrawContext ctx, int screenW, int screenH) {
+    public void render(RenderContext ctx, int screenW, int screenH) {
         long now = System.currentTimeMillis();
 
         // ── Main fade tint ───────────────────────────────────────────────

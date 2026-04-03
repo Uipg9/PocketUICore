@@ -109,7 +109,7 @@ public final class ClientNetworkHandler {
      */
     public static void register() {
         ClientPlayNetworking.registerGlobalReceiver(
-                SyncBalancePayload.ID,
+            SyncBalancePayload.TYPE,
                 (payload, context) -> {
                     int newBalance = payload.balance();
                     // Schedule UI update on the render thread
@@ -124,7 +124,7 @@ public final class ClientNetworkHandler {
 
         // Estate growth percentage receiver
         ClientPlayNetworking.registerGlobalReceiver(
-                SyncEstatePayload.ID,
+            SyncEstatePayload.TYPE,
                 (payload, context) -> {
                     float pct = payload.percentage();
                     context.client().execute(() -> {

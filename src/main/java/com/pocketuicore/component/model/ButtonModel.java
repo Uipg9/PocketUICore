@@ -3,7 +3,7 @@ package com.pocketuicore.component.model;
 import com.pocketuicore.data.ObservableState;
 
 /**
- * Model for button components — separates click/enable/label state from rendering.
+ * Model for button components — separates MouseButtonEvent/enable/label state from rendering.
  * <p>
  * Bind a {@code ButtonModel} to a button view and the view will react to
  * state changes automatically via {@link ObservableState}.

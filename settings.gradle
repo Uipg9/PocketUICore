@@ -7,6 +7,25 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+    plugins {
+        id 'dev.kikugie.stonecutter' version '0.9'
+    }
+}
+
+plugins {
+    id 'dev.kikugie.stonecutter'
 }
 
 rootProject.name = 'pocketuicore'
+
+stonecutter.create(project(':')) {
+    versions '26.1'
+    vcsVersion = '26.1'
+}
+
+// PocketCanvasCore is a composite build shared across all versions.
+includeBuild('../PocketCanvasCore') {
+    dependencySubstitution {
+        substitute(module('com.pocketcanvascore:pocketcanvascore')).using(project(':1.21.11'))
+    }
+}

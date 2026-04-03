@@ -3,7 +3,7 @@ package com.pocketuicore.economy;
 import com.pocketuicore.PocketUICore;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
 
@@ -35,10 +35,10 @@ public final class EconomyManager {
      * @param player the server-side player
      * @return current balance (0 if unset)
      */
-    public static int getBalance(ServerPlayerEntity player) {
-        MinecraftServer server = player.getEntityWorld().getServer();
+    public static int getBalance(ServerPlayer player) {
+        MinecraftServer server = player.level().getServer();
         PlayerVaultState vault = PlayerVaultState.getServerState(server);
-        return vault.getBalance(player.getUuid());
+        return vault.getBalance(player.getUUID());
     }
 
     // =====================================================================
@@ -51,18 +51,18 @@ public final class EconomyManager {
      * @param player the server-side player
      * @param amount positive amount to add
      */
-    public static void addMoney(ServerPlayerEntity player, int amount) {
+    public static void addMoney(ServerPlayer player, int amount) {
         if (amount <= 0) return;
 
-        MinecraftServer server = player.getEntityWorld().getServer();
+        MinecraftServer server = player.level().getServer();
         PlayerVaultState vault = PlayerVaultState.getServerState(server);
 
-        vault.addBalance(player.getUuid(), amount);
-        syncToClient(player, vault.getBalance(player.getUuid()));
+        vault.addBalance(player.getUUID(), amount);
+        syncToClient(player, vault.getBalance(player.getUUID()));
 
         PocketUICore.LOGGER.debug("[Economy] +{} → {} (total: {})",
                 amount, player.getName().getString(),
-                vault.getBalance(player.getUuid()));
+                vault.getBalance(player.getUUID()));
     }
 
     /**
@@ -75,18 +75,18 @@ public final class EconomyManager {
      * @param amount positive amount to remove
      * @return {@code true} if funds were sufficient and removed
      */
-    public static boolean removeMoney(ServerPlayerEntity player, int amount) {
+    public static boolean removeMoney(ServerPlayer player, int amount) {
         if (amount <= 0) return false;
 
-        MinecraftServer server = player.getEntityWorld().getServer();
+        MinecraftServer server = player.level().getServer();
         PlayerVaultState vault = PlayerVaultState.getServerState(server);
 
-        boolean success = vault.removeBalance(player.getUuid(), amount);
+        boolean success = vault.removeBalance(player.getUUID(), amount);
         if (success) {
-            syncToClient(player, vault.getBalance(player.getUuid()));
+            syncToClient(player, vault.getBalance(player.getUUID()));
             PocketUICore.LOGGER.debug("[Economy] -{} → {} (total: {})",
                     amount, player.getName().getString(),
-                    vault.getBalance(player.getUuid()));
+                    vault.getBalance(player.getUUID()));
         }
         return success;
     }
@@ -97,12 +97,12 @@ public final class EconomyManager {
      * @param player  the server-side player
      * @param balance the new balance (clamped to >= 0)
      */
-    public static void setBalance(ServerPlayerEntity player, int balance) {
-        MinecraftServer server = player.getEntityWorld().getServer();
+    public static void setBalance(ServerPlayer player, int balance) {
+        MinecraftServer server = player.level().getServer();
         PlayerVaultState vault = PlayerVaultState.getServerState(server);
 
-        vault.setBalance(player.getUuid(), Math.max(0, balance));
-        syncToClient(player, vault.getBalance(player.getUuid()));
+        vault.setBalance(player.getUUID(), Math.max(0, balance));
+        syncToClient(player, vault.getBalance(player.getUUID()));
     }
 
     // =====================================================================
@@ -115,7 +115,7 @@ public final class EconomyManager {
      * @param player  the target player
      * @param balance the balance to send
      */
-    public static void syncToClient(ServerPlayerEntity player, int balance) {
+    public static void syncToClient(ServerPlayer player, int balance) {
         ServerPlayNetworking.send(player, new SyncBalancePayload(balance));
     }
 
@@ -124,7 +124,7 @@ public final class EconomyManager {
      *
      * @param player the server-side player
      */
-    public static void syncOnJoin(ServerPlayerEntity player) {
+    public static void syncOnJoin(ServerPlayer player) {
         syncToClient(player, getBalance(player));
     }
 }

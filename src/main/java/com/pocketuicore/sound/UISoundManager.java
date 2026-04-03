@@ -1,10 +1,10 @@
 package com.pocketuicore.sound;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.Holder;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,7 +22,7 @@ import java.util.List;
  * <p>
  * <b>Usage:</b>
  * <pre>{@code
- *     UISoundManager.playClick();                // default click
+ *     UISoundManager.playClick();                // default MouseButtonEvent
  *     UISoundManager.playClick(1.4f, 0.5f);     // custom pitch + volume
  *     UISoundManager.playSuccess();              // bright ding
  *     UISoundManager.playError();                // low warning
@@ -79,13 +79,13 @@ public final class UISoundManager {
      */
     public static void playCustom(SoundEvent event, float pitch, float volume) {
         if (muted || masterVolume <= 0f) return;
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
-        client.getSoundManager().play(PositionedSoundInstance.ui(event, pitch, volume * masterVolume));
+        client.getSoundManager().play(SimpleSoundInstance.forUI(event, pitch, volume * masterVolume));
     }
 
     /**
-     * Play a {@link RegistryEntry}{@code <SoundEvent>} at the given pitch
+    * Play a {@link Holder}{@code <SoundEvent>} at the given pitch
      * and volume.  Unwraps the entry via {@code .value()} automatically,
      * so callers can pass vanilla sounds like
      * {@code SoundEvents.UI_BUTTON_CLICK} directly.
@@ -94,24 +94,24 @@ public final class UISoundManager {
      * @param pitch  pitch multiplier (1.0 = normal)
      * @param volume volume multiplier (1.0 = full)
      */
-    public static void playCustom(RegistryEntry<SoundEvent> entry,
+    public static void playCustom(Holder<SoundEvent> entry,
                                    float pitch, float volume) {
         playCustom(entry.value(), pitch, volume);
     }
 
     // =====================================================================
-    //  Preset sounds — UI Button Click (RegistryEntry → .value())
+    //  Preset sounds — UI Button MouseButtonEvent (RegistryEntry → .value())
     // =====================================================================
 
     /**
-     * Standard UI button click (default pitch 1.0, volume 0.4).
+     * Standard UI button MouseButtonEvent (default pitch 1.0, volume 0.4).
      */
     public static void playClick() {
         playClick(1.0f, 0.4f);
     }
 
     /**
-     * UI button click with custom pitch and volume.
+     * UI button MouseButtonEvent with custom pitch and volume.
      */
     public static void playClick(float pitch, float volume) {
         playCustom(SoundEvents.UI_BUTTON_CLICK.value(), pitch, volume);
@@ -122,7 +122,7 @@ public final class UISoundManager {
     // =====================================================================
 
     /**
-     * Bright "success" ding (high-pitched click).
+     * Bright "success" ding (high-pitched MouseButtonEvent).
      * Suitable for confirmations, completed actions, rewards.
      */
     public static void playSuccess() {
@@ -130,7 +130,7 @@ public final class UISoundManager {
     }
 
     /**
-     * Deep "error" thud (low-pitched click).
+     * Deep "error" thud (low-pitched MouseButtonEvent).
      * Suitable for invalid actions, insufficient resources.
      */
     public static void playError() {
@@ -283,8 +283,8 @@ public final class UISoundManager {
                 System.currentTimeMillis() + delayMs));
     }
 
-    /** Overload accepting a {@link RegistryEntry}. @since 1.13.0 */
-    public static void schedulePlay(RegistryEntry<SoundEvent> entry,
+    /** Overload accepting a {@link Holder}. @since 1.13.0 */
+    public static void schedulePlay(Holder<SoundEvent> entry,
                                      float pitch, float volume, long delayMs) {
         schedulePlay(entry.value(), pitch, volume, delayMs);
     }

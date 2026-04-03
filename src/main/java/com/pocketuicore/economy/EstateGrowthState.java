@@ -1,10 +1,11 @@
 package com.pocketuicore.economy;
 
 import com.mojang.serialization.Codec;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Uuids;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateType;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,26 +16,26 @@ import java.util.UUID;
  * <p>
  * Stores a {@code UUID → Float} map so that partially-completed estate
  * growth is preserved across player disconnects and server restarts.
- * Uses the modern 1.21.11 {@link PersistentStateType} with a DFU
+ * Uses {@link SavedDataType} with a DFU
  * {@link Codec} for serialisation (no manual NBT).
  *
  * @see EstateManager
  */
-public class EstateGrowthState extends PersistentState {
+public class EstateGrowthState extends SavedData {
 
     // ── Codec-based serialisation ────────────────────────────────────────
 
     private static final Codec<EstateGrowthState> CODEC =
-            Codec.unboundedMap(Uuids.STRING_CODEC, Codec.FLOAT)
+            Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.FLOAT)
                  .xmap(EstateGrowthState::new, state -> state.growthMap);
 
-    /** The PersistentStateType used by the state manager. */
-    public static final PersistentStateType<EstateGrowthState> STATE_TYPE =
-            new PersistentStateType<>(
-                    "pocketuicore_estate_growth",   // → data/pocketuicore_estate_growth.dat
-                    EstateGrowthState::new,         // Supplier<T>
-                    CODEC,                          // Codec<T>
-                    null                            // no DataFixTypes
+        /** The SavedDataType used by the state manager. */
+        public static final SavedDataType<EstateGrowthState> STATE_TYPE =
+            new SavedDataType<>(
+                Identifier.fromNamespaceAndPath("pocketuicore", "estate_growth"),
+                EstateGrowthState::new,
+                CODEC,
+                null
             );
 
     // ── Data ─────────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ public class EstateGrowthState extends PersistentState {
      */
     public void setGrowth(UUID uuid, float growth) {
         growthMap.put(uuid, growth);
-        markDirty();
+        setDirty();
     }
 
     /**
@@ -81,7 +82,7 @@ public class EstateGrowthState extends PersistentState {
      */
     public void removeGrowth(UUID uuid) {
         growthMap.remove(uuid);
-        markDirty();
+        setDirty();
     }
 
     // ── Server state helper ──────────────────────────────────────────────
@@ -94,8 +95,8 @@ public class EstateGrowthState extends PersistentState {
      * @return the singleton EstateGrowthState
      */
     public static EstateGrowthState getServerState(MinecraftServer server) {
-        return server.getOverworld()
-                     .getPersistentStateManager()
-                     .getOrCreate(STATE_TYPE);
+        return server.overworld()
+                     .getDataStorage()
+                     .computeIfAbsent(STATE_TYPE);
     }
 }

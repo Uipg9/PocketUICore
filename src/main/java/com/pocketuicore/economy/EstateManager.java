@@ -3,7 +3,7 @@ package com.pocketuicore.economy;
 import com.pocketuicore.PocketUICore;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 import java.util.UUID;
@@ -66,8 +66,8 @@ public final class EstateManager {
     public static void tick(MinecraftServer server) {
         tickCounter++;
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID uuid = player.getUuid();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID uuid = player.getUUID();
             float current = growthMap.getOrDefault(uuid, 0.0f);
             current += EconomyConfig.ESTATE_GROWTH_PER_TICK;
 
@@ -138,11 +138,11 @@ public final class EstateManager {
      * @param player the joining player
      * @param server the MinecraftServer
      */
-    public static void loadGrowth(ServerPlayerEntity player, MinecraftServer server) {
+    public static void loadGrowth(ServerPlayer player, MinecraftServer server) {
         EstateGrowthState state = EstateGrowthState.getServerState(server);
-        float saved = state.getGrowth(player.getUuid());
+        float saved = state.getGrowth(player.getUUID());
         if (saved > 0.0f) {
-            growthMap.put(player.getUuid(), saved);
+            growthMap.put(player.getUUID(), saved);
         }
     }
 
@@ -153,8 +153,8 @@ public final class EstateManager {
      * @param player the disconnecting player
      * @param server the MinecraftServer
      */
-    public static void saveGrowth(ServerPlayerEntity player, MinecraftServer server) {
-        UUID uuid = player.getUuid();
+    public static void saveGrowth(ServerPlayer player, MinecraftServer server) {
+        UUID uuid = player.getUUID();
         float current = growthMap.getOrDefault(uuid, 0.0f);
         EstateGrowthState state = EstateGrowthState.getServerState(server);
         state.setGrowth(uuid, current);
@@ -171,7 +171,7 @@ public final class EstateManager {
      * @param player     the target player
      * @param percentage current growth (0.0–100.0)
      */
-    public static void syncToClient(ServerPlayerEntity player, float percentage) {
+    public static void syncToClient(ServerPlayer player, float percentage) {
         ServerPlayNetworking.send(player, new SyncEstatePayload(percentage));
     }
 
@@ -180,8 +180,8 @@ public final class EstateManager {
      *
      * @param player the target player
      */
-    public static void syncOnJoin(ServerPlayerEntity player) {
-        float pct = growthMap.getOrDefault(player.getUuid(), 0.0f);
+    public static void syncOnJoin(ServerPlayer player) {
+        float pct = growthMap.getOrDefault(player.getUUID(), 0.0f);
         syncToClient(player, pct);
     }
 }

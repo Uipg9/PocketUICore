@@ -1,5 +1,7 @@
 package com.pocketuicore.screen;
 
+import com.pocketuicore.render.RenderContext;
+
 /**
  * Screen Shake Helper — Adds camera-shake effects to UI screens.
  * <p>
@@ -127,7 +129,7 @@ public final class ScreenShakeHelper {
      *
      * @param ctx the DrawContext
      */
-    public void apply(net.minecraft.client.gui.DrawContext ctx) {
+    public void apply(RenderContext ctx) {
         if (!active) return;
 
         long elapsed = System.currentTimeMillis() - startTimeMs;
@@ -155,8 +157,8 @@ public final class ScreenShakeHelper {
             lastOffsetY = (float) (Math.sin(directionAngle) * oscillation);
         }
 
-        ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate(lastOffsetX, lastOffsetY);
+        ctx.matPush();
+        ctx.matTranslate(lastOffsetX, lastOffsetY);
     }
 
     /**
@@ -165,9 +167,9 @@ public final class ScreenShakeHelper {
      *
      * @param ctx the DrawContext
      */
-    public void restore(net.minecraft.client.gui.DrawContext ctx) {
+    public void restore(RenderContext ctx) {
         if (!active && lastOffsetX == 0 && lastOffsetY == 0) return;
-        ctx.getMatrices().popMatrix();
+        ctx.matPop();
     }
 
     // =====================================================================
@@ -205,7 +207,7 @@ public final class ScreenShakeHelper {
      * @param render the rendering code to execute while the shake is applied
      * @since 1.12.0
      */
-    public void withShake(net.minecraft.client.gui.DrawContext ctx, Runnable render) {
+    public void withShake(RenderContext ctx, Runnable render) {
         apply(ctx);
         try {
             render.run();
@@ -229,7 +231,7 @@ public final class ScreenShakeHelper {
      * @param ctx the DrawContext
      * @since 1.10.0
      */
-    public void applyShake(net.minecraft.client.gui.DrawContext ctx) { apply(ctx); }
+    public void applyShake(RenderContext ctx) { apply(ctx); }
 
     /**
      * Alias for {@link #restore(net.minecraft.client.gui.DrawContext)}.
@@ -238,7 +240,7 @@ public final class ScreenShakeHelper {
      * @param ctx the DrawContext
      * @since 1.10.0
      */
-    public void restoreShake(net.minecraft.client.gui.DrawContext ctx) { restore(ctx); }
+    public void restoreShake(RenderContext ctx) { restore(ctx); }
 
     // =====================================================================
     //  Additive shake stacking  (v1.13.0)

@@ -3,8 +3,8 @@ package com.pocketuicore.component;
 import com.pocketuicore.animation.AnimationTicker;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import com.pocketuicore.render.RenderContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -157,7 +157,7 @@ public final class TabbedPanel extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY,
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY,
                               float delta) {
         if (tabs.isEmpty()) return;
 
@@ -166,16 +166,16 @@ public final class TabbedPanel extends UIComponent {
             transitionAlpha = AnimationTicker.getInstance().get(animKey, 1f);
         }
 
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
+        var font = Minecraft.getInstance().font;
 
         // ── Tab bar background ───────────────────────────────────────────
         ctx.fill(x, y, x + width, y + TAB_BAR_HEIGHT, tabBarBg);
 
-        // ── Compute tab widths (auto-size to text) ───────────────────────
+        // ── Compute tab widths (auto-size to Component) ───────────────────────
         int totalW = 0;
         int[] tabWidths = new int[tabs.size()];
         for (int i = 0; i < tabs.size(); i++) {
-            tabWidths[i] = textRenderer.getWidth(tabs.get(i).label()) + TAB_PAD_H * 2;
+            tabWidths[i] = font.width(tabs.get(i).label()) + TAB_PAD_H * 2;
             totalW += tabWidths[i];
         }
 
@@ -192,9 +192,9 @@ public final class TabbedPanel extends UIComponent {
             ctx.fill(tx, y, tx + tw, y + TAB_BAR_HEIGHT, bg);
 
             // Tab label
-            int textX = tx + (tw - textRenderer.getWidth(tabs.get(i).label())) / 2;
+            int textX = tx + (tw - font.width(tabs.get(i).label())) / 2;
             int textY = y + (TAB_BAR_HEIGHT - 8) / 2;
-            ProceduralRenderer.drawText(ctx, textRenderer, tabs.get(i).label(), textX, textY,
+            ProceduralRenderer.drawText(ctx, font, tabs.get(i).label(), textX, textY,
                     active ? accentColor : tabTextColor);
 
             // Active underline
@@ -221,12 +221,12 @@ public final class TabbedPanel extends UIComponent {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
 
-        // Check if click is in tab bar
+        // Check if MouseButtonEvent is in tab bar
         if (button == 0 && mouseY >= y && mouseY < y + TAB_BAR_HEIGHT) {
-            var textRenderer = MinecraftClient.getInstance().textRenderer;
+            var font = Minecraft.getInstance().font;
             int tx = x;
             for (int i = 0; i < tabs.size(); i++) {
-                int tw = textRenderer.getWidth(tabs.get(i).label()) + TAB_PAD_H * 2;
+                int tw = font.width(tabs.get(i).label()) + TAB_PAD_H * 2;
                 if (mouseX >= tx && mouseX < tx + tw) {
                     if (i != activeIndex) {
                         setActiveTab(i);

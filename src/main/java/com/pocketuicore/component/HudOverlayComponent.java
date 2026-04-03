@@ -1,10 +1,9 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -16,8 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * independent of any GUI screen.  Typical uses: custom tool durability
  * bars, performance tier indicators, buff timers.
  * <p>
- * Automatically registered with Fabric's {@code HudRenderCallback} via
- * the client entrypoint.  Creating an overlay adds it to the global list;
+ * Automatically registered via {@code HudCompat} in the client entrypoint.  Creating an overlay adds it to the global list;
  * call {@link #remove()} to unregister.
  * <p>
  * <b>Usage:</b>
@@ -91,20 +89,19 @@ public class HudOverlayComponent extends UIComponent {
     }
 
     // =====================================================================
-    //  Static renderer — PocketUICoreClient registers via HudRenderCallback
+    //  Static renderer — PocketUICoreClient registers via HudCompat
     // =====================================================================
 
     /**
      * Renders all registered HUD overlays.  Automatically skipped when a
      * GUI screen is open so overlays never obstruct menus.
      */
-    public static void renderAll(DrawContext ctx, RenderTickCounter tickCounter) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.currentScreen != null) return;
+    public static void renderAll(RenderContext ctx, float delta) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.screen != null) return;
 
-        int screenW = client.getWindow().getScaledWidth();
-        int screenH = client.getWindow().getScaledHeight();
-        float delta = tickCounter.getTickProgress(false);
+        int screenW = client.getWindow().getGuiScaledWidth();
+        int screenH = client.getWindow().getGuiScaledHeight();
 
         for (HudOverlayComponent overlay : REGISTERED) {
             if (overlay.visible) {
@@ -121,15 +118,15 @@ public class HudOverlayComponent extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         // Panel background
         ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height,
                 4, ProceduralRenderer.withAlpha(ProceduralRenderer.COL_BG_SURFACE, 200));
         ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height,
                 4, ProceduralRenderer.COL_BORDER);
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
         int textX = x + PADDING;
         int textY = y + PADDING;
 
@@ -141,9 +138,9 @@ public class HudOverlayComponent extends UIComponent {
         ProceduralRenderer.drawText(ctx, tr, info, textX, textY,
                 ProceduralRenderer.COL_TEXT_PRIMARY);
 
-        // Durability bar (positioned below text)
+        // Durability bar (positioned below Component)
         int barX = x + (width - BAR_WIDTH) / 2;
-        int barY = textY + tr.fontHeight + INNER_PAD;
+        int barY = textY + tr.lineHeight + INNER_PAD;
         durabilityBar.setPosition(barX, barY);
         durabilityBar.applyHealthColors();
         durabilityBar.render(ctx, mouseX, mouseY, delta);
@@ -208,7 +205,7 @@ public class HudOverlayComponent extends UIComponent {
      * Show a performance tier label below the durability bar.
      *
      * @param tier  display string (e.g. "Tier 3 — Efficiency V")
-     * @param color text colour for the tier label
+     * @param color Component colour for the tier label
      */
     public void setTier(String tier, int color) {
         this.tierLabel = tier != null ? tier : "";

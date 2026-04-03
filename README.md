@@ -1,6 +1,6 @@
 # PocketUICore
 
-A dark-mode procedural UI framework for Minecraft 1.21.11 (Fabric). Zero textures — every shape, shadow, gradient, and button is drawn with code.
+A dark-mode procedural UI framework for Minecraft 26.1.1 (Fabric). Zero textures - every shape, shadow, gradient, and button is drawn with code.
 
 ## Features
 
@@ -29,10 +29,10 @@ A dark-mode procedural UI framework for Minecraft 1.21.11 (Fabric). Zero texture
 
 | Dependency | Version |
 |-----------|---------|
-| Minecraft | 1.21.11 |
-| Fabric Loader | ≥ 0.18.4 |
-| Fabric API | 0.141.3+1.21.11 |
-| Java | 21 |
+| Minecraft | 26.1.1 |
+| Fabric Loader | >= 0.18.6 |
+| Fabric API | 0.145.3+26.1.1 |
+| Java | 25 |
 
 ## Installation
 
@@ -40,7 +40,7 @@ Add PocketUICore as a dependency in your mod's `build.gradle`:
 
 ```groovy
 dependencies {
-    modImplementation "com.pocketuicore:pocketuicore:1.13.0"
+    modImplementation "com.pocketuicore:pocketuicore:1.16.0"
 }
 ```
 
@@ -95,7 +95,7 @@ PocketUICore.setEconomyEnabled(false);
 ## Building
 
 ```bash
-./gradlew build
+./gradlew :26.1:build
 ```
 
 Output JAR is in `build/libs/`.

@@ -2,7 +2,7 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -188,7 +188,7 @@ public final class ConfirmationDialog extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY,
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY,
                               float delta) {
         if (!active) return;
 
@@ -248,10 +248,10 @@ public final class ConfirmationDialog extends UIComponent {
     //  Accessors
     // =====================================================================
 
-    /** Change the title text. */
+    /** Change the title Component. */
     public void setTitle(String title) { titleLabel.setText(title); }
 
-    /** Change the message text. */
+    /** Change the message Component. */
     public void setMessage(String message) { messageLabel.setText(message); }
 
     /** Change the confirm button label. */

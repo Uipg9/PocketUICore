@@ -2,9 +2,9 @@ package com.pocketuicore.controller;
 
 import com.pocketuicore.input.InputHelper;
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -222,44 +222,44 @@ public final class ControllerGlyphs {
      * @param y      top edge of the badge
      * @return the width of the rendered badge (for layout chaining)
      */
-    public static int renderPrompt(DrawContext ctx, Action action, int x, int y) {
+    public static int renderPrompt(RenderContext ctx, Action action, int x, int y) {
         String label = getActionLabel(action);
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
-        int textW = tr.getWidth(label);
+        Font tr = Minecraft.getInstance().font;
+        int textW = tr.width(label);
         int padH = 4;
         int padV = 2;
         int badgeW = textW + padH * 2;
-        int badgeH = tr.fontHeight + padV * 2;
+        int badgeH = tr.lineHeight + padV * 2;
 
         ProceduralRenderer.fillRoundedRect(ctx, x, y, badgeW, badgeH, 3, BADGE_BG);
         ProceduralRenderer.drawRoundedBorder(ctx, x, y, badgeW, badgeH, 3, BADGE_BORDER);
-        ctx.drawTextWithShadow(tr, net.minecraft.text.Text.literal(label),
+        ctx.drawTextWithShadow(tr, net.minecraft.network.chat.Component.literal(label),
                 x + padH, y + padV, BADGE_TEXT);
 
         return badgeW;
     }
 
     /**
-     * Render an action prompt with label text after the badge.
+     * Render an action prompt with label Component after the badge.
      * Example output: {@code [A] Confirm}
      *
      * @param ctx         the DrawContext
      * @param action      the action to show
-     * @param description the description text after the badge
+     * @param description the description Component after the badge
      * @param x           left edge
      * @param y           top edge
-     * @param textColor   colour for the description text
+     * @param textColor   colour for the description Component
      * @return the total width of the rendered prompt
      */
-    public static int renderPromptWithLabel(DrawContext ctx, Action action,
+    public static int renderPromptWithLabel(RenderContext ctx, Action action,
                                              String description, int x, int y,
                                              int textColor) {
         int badgeW = renderPrompt(ctx, action, x, y);
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
+        Font tr = Minecraft.getInstance().font;
         int gap = 4;
-        ctx.drawTextWithShadow(tr, net.minecraft.text.Text.literal(description),
+        ctx.drawTextWithShadow(tr, net.minecraft.network.chat.Component.literal(description),
                 x + badgeW + gap, y + 2, textColor);
-        return badgeW + gap + tr.getWidth(description);
+        return badgeW + gap + tr.width(description);
     }
 
     /**
@@ -270,7 +270,7 @@ public final class ControllerGlyphs {
      * @param screenW screen width
      * @param screenH screen height
      */
-    public static void renderActionBar(DrawContext ctx, int screenW, int screenH) {
+    public static void renderActionBar(RenderContext ctx, int screenW, int screenH) {
         int y = screenH - 16;
         int x = 8;
         int gap = 12;

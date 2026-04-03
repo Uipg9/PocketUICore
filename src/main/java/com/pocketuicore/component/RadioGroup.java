@@ -3,9 +3,9 @@ package com.pocketuicore.component;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.render.Theme;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,15 +63,15 @@ public class RadioGroup extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         Theme theme = Theme.current();
         int radio    = radioColor    == THEME_DEFAULT ? theme.border()      : radioColor;
         int selected = selectedColor == THEME_DEFAULT ? theme.accentTeal()  : selectedColor;
         int txt      = textColor     == THEME_DEFAULT ? theme.textPrimary() : textColor;
         int hover    = hoverColor    == THEME_DEFAULT ? theme.hover()       : hoverColor;
         int mutedTxt = theme.textMuted();
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
-        int itemH = Math.max(radioSize, tr.fontHeight) + itemSpacing;
+        Font tr = Minecraft.getInstance().font;
+        int itemH = Math.max(radioSize, tr.lineHeight) + itemSpacing;
 
         for (int i = 0; i < options.size(); i++) {
             int iy = y + i * itemH;
@@ -101,7 +101,7 @@ public class RadioGroup extends UIComponent {
 
             // Label
             int labelX = circleX + radioSize + 6;
-            int labelY = iy + (itemH - tr.fontHeight) / 2;
+            int labelY = iy + (itemH - tr.lineHeight) / 2;
             int tc = enabled ? txt : mutedTxt;
             ProceduralRenderer.drawText(ctx, tr, options.get(i), labelX, labelY, tc);
         }
@@ -116,8 +116,8 @@ public class RadioGroup extends UIComponent {
         if (!visible || !enabled || button != 0) return false;
         if (!isHovered(mouseX, mouseY)) return super.mouseClicked(mouseX, mouseY, button);
 
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
-        int itemH = Math.max(radioSize, tr.fontHeight) + itemSpacing;
+        Font tr = Minecraft.getInstance().font;
+        int itemH = Math.max(radioSize, tr.lineHeight) + itemSpacing;
 
         int idx = (int) ((mouseY - y) / itemH);
         if (idx >= 0 && idx < options.size() && idx != selectedIndex) {
@@ -152,8 +152,8 @@ public class RadioGroup extends UIComponent {
     // =====================================================================
 
     private void recalcHeight() {
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
-        int itemH = Math.max(radioSize, tr.fontHeight) + itemSpacing;
+        Font tr = Minecraft.getInstance().font;
+        int itemH = Math.max(radioSize, tr.lineHeight) + itemSpacing;
         this.height = options.size() * itemH;
     }
 

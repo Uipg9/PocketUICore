@@ -337,7 +337,7 @@ public final class FocusManager {
     // =====================================================================
 
     /**
-     * Simulate a click on the focused component (controller A / Enter).
+     * Simulate a MouseButtonEvent on the focused component (controller A / Enter).
      * Dispatches {@link UIComponent#mouseClicked} then
      * {@link UIComponent#mouseReleased} at the component's centre.
      *

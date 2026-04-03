@@ -1,9 +1,9 @@
 package com.pocketuicore.economy;
 
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /**
  * SyncEstatePayload — S2C network payload for estate growth sync.
@@ -13,27 +13,26 @@ import net.minecraft.util.Identifier;
  * client can display a smoothly-filling progress bar in the
  * {@code /pocket} menu without desyncing.
  * <p>
- * Uses the modern 1.21.11 {@link CustomPayload} + {@link PacketCodec}
- * pattern (no raw PacketByteBuf registration).
+ * Uses {@link CustomPacketPayload.Type} + {@link StreamCodec}.
  *
- * @param percentage the player's current estate growth (0.0–100.0)
+ * @param percentage the player's current estate growth (0.0-100.0)
  */
-public record SyncEstatePayload(float percentage) implements CustomPayload {
+public record SyncEstatePayload(float percentage) implements CustomPacketPayload {
 
-    // ── Payload ID ───────────────────────────────────────────────────────
-    public static final CustomPayload.Id<SyncEstatePayload> ID =
-            new CustomPayload.Id<>(Identifier.of("pocketuicore", "sync_estate"));
+    // ── Payload type ─────────────────────────────────────────────────────
+    public static final CustomPacketPayload.Type<SyncEstatePayload> TYPE =
+            CustomPacketPayload.createType("pocketuicore:sync_estate");
 
-    // ── Packet Codec ─────────────────────────────────────────────────────
-    public static final PacketCodec<io.netty.buffer.ByteBuf, SyncEstatePayload> CODEC =
-            PacketCodec.tuple(
-                    PacketCodecs.FLOAT, SyncEstatePayload::percentage,
+    // ── Stream codec ─────────────────────────────────────────────────────
+    public static final StreamCodec<ByteBuf, SyncEstatePayload> STREAM_CODEC =
+            StreamCodec.composite(
+                    ByteBufCodecs.FLOAT, SyncEstatePayload::percentage,
                     SyncEstatePayload::new
             );
 
-    // ── CustomPayload implementation ─────────────────────────────────────
+    // ── CustomPacketPayload implementation ───────────────────────────────
     @Override
-    public CustomPayload.Id<? extends CustomPayload> getId() {
-        return ID;
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

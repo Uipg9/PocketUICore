@@ -1,10 +1,10 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Item Display Component — Native ItemStack Rendering
@@ -74,7 +74,7 @@ public class ItemDisplayComponent extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         if (itemStack.isEmpty()) return;
 
         // Optional background highlight
@@ -92,8 +92,8 @@ public class ItemDisplayComponent extends UIComponent {
 
         // Draw decorations (count number, durability bar)
         if (showDecorations) {
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer tr = client.textRenderer;
+            Minecraft client = Minecraft.getInstance();
+            Font tr = client.font;
             if (countOverride != null) {
                 ctx.drawStackOverlay(tr, itemStack, ix, iy, countOverride);
             } else if (showCount) {

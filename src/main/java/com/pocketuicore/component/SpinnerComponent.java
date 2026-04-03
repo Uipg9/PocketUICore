@@ -3,16 +3,16 @@ package com.pocketuicore.component;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.render.Theme;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.function.Consumer;
 
 /**
  * A numeric spinner / number input with increment and decrement buttons.
  * <p>
- * Combines a text display with clickable +/− buttons on either side.
+ * Combines a Component display with clickable +/− buttons on either side.
  * Supports keyboard arrow keys when focused.
  * <p>
  * Respects the active {@link Theme} for its default colours.
@@ -56,7 +56,7 @@ public class SpinnerComponent extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         Theme theme = Theme.current();
         int bg       = backgroundColor  == THEME_DEFAULT ? theme.bgSurface()   : backgroundColor;
         int border   = borderColor      == THEME_DEFAULT ? theme.border()      : borderColor;
@@ -64,7 +64,7 @@ public class SpinnerComponent extends UIComponent {
         int btnHover = buttonHoverColor  == THEME_DEFAULT ? theme.hover()       : buttonHoverColor;
         int txt      = textColor         == THEME_DEFAULT ? theme.textPrimary() : textColor;
         int mutedTxt = theme.textMuted();
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
+        Font tr = Minecraft.getInstance().font;
 
         boolean atMin = value <= minValue;
         boolean atMax = value >= maxValue;
@@ -80,7 +80,7 @@ public class SpinnerComponent extends UIComponent {
         if (!enabled || atMin) minusBg = ProceduralRenderer.darken(btnColor, 0.5f);
         else minusBg = hoveredMinus ? btnHover : btnColor;
         ProceduralRenderer.fillRoundedRect(ctx, x, y, buttonWidth, height, cornerRadius, minusBg);
-        int minusTextY = y + (height - tr.fontHeight) / 2;
+        int minusTextY = y + (height - tr.lineHeight) / 2;
         ProceduralRenderer.drawCenteredText(ctx, tr, "-", x + buttonWidth / 2, minusTextY,
                 (enabled && !atMin) ? txt : mutedTxt);
 
@@ -95,7 +95,7 @@ public class SpinnerComponent extends UIComponent {
         ProceduralRenderer.drawCenteredText(ctx, tr, "+", plusX + buttonWidth / 2, minusTextY,
                 (enabled && !atMax) ? txt : mutedTxt);
 
-        // Value text
+        // Value Component
         String display = integerMode ? String.valueOf((int) value) : String.format("%.1f", value);
         ProceduralRenderer.drawCenteredText(ctx, tr, display, x + width / 2, minusTextY,
                 enabled ? txt : mutedTxt);
@@ -132,7 +132,7 @@ public class SpinnerComponent extends UIComponent {
             }
             return true;
         }
-        return true; // consume click on the value area
+        return true; // consume MouseButtonEvent on the value area
     }
 
     @Override

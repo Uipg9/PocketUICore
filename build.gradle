@@ -1,7 +1,9 @@
 plugins {
-    id 'fabric-loom' version "${loom_version}"
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
     id 'maven-publish'
+    id 'dev.kikugie.stonecutter'
 }
+
 
 version = project.mod_version
 group = project.maven_group
@@ -28,12 +30,21 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // PocketCanvasCore dependency (local composite build)
+    implementation "com.pocketcanvascore:pocketcanvascore:1.0.0"
 
     // Controlify — optional controller integration (compile-only, not bundled)
-    modCompileOnly "dev.isxander:controlify:${project.controlify_version}"
+    if (project.hasProperty('controlify_version') && project.controlify_version?.toString()?.trim()) {
+        compileOnly "dev.isxander:controlify:${project.controlify_version}"
+    } else {
+        sourceSets.main.java.exclude(
+                "com/pocketuicore/controller/PocketControlifyCompat.java",
+                "com/pocketuicore/controller/PocketMenuScreenProcessor.java"
+        )
+    }
 }
 
 processResources {
@@ -43,15 +54,22 @@ processResources {
     }
 }
 
+def javaVersion = 25
+
 tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
-    it.options.release = 21
+    it.options.encoding = 'UTF-8'
+    it.options.release = javaVersion
 }
 
 java {
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(javaVersion)
+    }
+}
+
+tasks.named("sourcesJar", Jar).configure {
+    duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 }
 
 jar {

@@ -1,7 +1,7 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 
 /**
  * Auto-Layout: Vertical List Panel
@@ -135,7 +135,7 @@ public class VerticalListPanel extends DarkPanel {
     // =====================================================================
 
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void render(RenderContext ctx, int mouseX, int mouseY, float delta) {
         super.render(ctx, mouseX, mouseY, delta);
         // Render scroll bar on top, outside scissor region
         if (showScrollBar && isScrollable() && getContentHeight() > getHeight()) {

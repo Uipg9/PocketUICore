@@ -2,9 +2,9 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,9 +47,9 @@ public class Dropdown<T> extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
 
         // ── Collapsed header ─────────────────────────────────────────────
         int bgColor = enabled ? backgroundColor : ProceduralRenderer.darken(backgroundColor, 0.5f);
@@ -61,12 +61,12 @@ public class Dropdown<T> extends UIComponent {
                 ? labelExtractor.apply(items.get(selectedIndex))
                 : "";
         int tc = enabled ? textColor : ProceduralRenderer.withAlpha(ProceduralRenderer.COL_TEXT_MUTED, 128);
-        int textY = y + (height - tr.fontHeight) / 2;
+        int textY = y + (height - tr.lineHeight) / 2;
         ProceduralRenderer.drawText(ctx, tr, label, x + 6, textY, tc);
 
         // Arrow indicator
         String arrow = expanded ? "▲" : "▼";
-        int arrowX = x + width - tr.getWidth(arrow) - 6;
+        int arrowX = x + width - tr.width(arrow) - 6;
         ProceduralRenderer.drawText(ctx, tr, arrow, arrowX, textY, tc);
 
         // Focus ring
@@ -89,11 +89,11 @@ public class Dropdown<T> extends UIComponent {
      * @since 1.15.0
      */
     @Override
-    public void renderOverlay(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void renderOverlay(RenderContext ctx, int mouseX, int mouseY, float delta) {
         if (!expanded || items.isEmpty()) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
 
         int visibleCount = Math.min(items.size(), maxVisibleItems);
         int listH = visibleCount * itemHeight;
@@ -116,7 +116,7 @@ public class Dropdown<T> extends UIComponent {
                         ProceduralRenderer.COL_ACCENT);
             }
             String itemLabel = labelExtractor.apply(items.get(i));
-            int itemTextY = iy + (itemHeight - tr.fontHeight) / 2;
+            int itemTextY = iy + (itemHeight - tr.lineHeight) / 2;
             ProceduralRenderer.drawText(ctx, tr, itemLabel, x + 6, itemTextY, textColor);
         }
     }
@@ -143,13 +143,13 @@ public class Dropdown<T> extends UIComponent {
                 expanded = false;
                 return true;
             }
-            // Click on header while expanded — collapse
+            // MouseButtonEvent on header while expanded — collapse
             if (isHovered(mouseX, mouseY)) {
                 expanded = false;
                 UISoundManager.playClick();
                 return true;
             }
-            // Click outside — collapse and consume event to prevent click-through
+            // MouseButtonEvent outside — collapse and consume event to prevent MouseButtonEvent-through
             expanded = false;
             return true;
         } else if (isHovered(mouseX, mouseY)) {

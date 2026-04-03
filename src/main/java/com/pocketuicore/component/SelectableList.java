@@ -2,8 +2,8 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import com.pocketuicore.render.RenderContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Generic typed selectable list — click, keyboard, or numbered-shortcut
+ * Generic typed selectable list — MouseButtonEvent, keyboard, or numbered-shortcut
  * selection with hover highlight, active selection state, and per-item
  * custom rendering.
  * <p>
@@ -50,7 +50,7 @@ public final class SelectableList<T> extends UIComponent {
          * @param hovered  true if the mouse is over this row
          * @param selected true if this item is the active selection
          */
-        void render(DrawContext ctx, T item,
+        void render(RenderContext ctx, T item,
                     int x, int y, int width, int height,
                     boolean hovered, boolean selected);
     }
@@ -153,9 +153,9 @@ public final class SelectableList<T> extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY,
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY,
                               float delta) {
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
+        var font = Minecraft.getInstance().font;
 
         // ── Background ──────────────────────────────────────────────────
         ProceduralRenderer.fillRoundedRectWithBorder(
@@ -201,14 +201,14 @@ public final class SelectableList<T> extends UIComponent {
                 String text = items.get(i).toString();
                 int color = sel ? ProceduralRenderer.COL_ACCENT
                         : ProceduralRenderer.COL_TEXT_PRIMARY;
-                ProceduralRenderer.drawText(ctx, textRenderer, text,
+                ProceduralRenderer.drawText(ctx, font, text,
                         x + 6, iy + (itemHeight - 8) / 2, color);
             }
 
             // Number shortcut badge (1-9)
             if (numberShortcuts && i < 9) {
                 String num = String.valueOf(i + 1);
-                ProceduralRenderer.drawText(ctx, textRenderer, num,
+                ProceduralRenderer.drawText(ctx, font, num,
                         x + width - 14, iy + (itemHeight - 8) / 2,
                         ProceduralRenderer.COL_TEXT_MUTED);
             }
@@ -236,10 +236,10 @@ public final class SelectableList<T> extends UIComponent {
         if (!visible || !enabled) return false;
         if (button == 0 && hoveredIndex >= 0 && hoveredIndex < items.size()) {
             if (multiSelect) {
-                boolean ctrl  = (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS)
-                             || (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS);
-                boolean shift = (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS)
-                             || (GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS);
+                boolean ctrl  = (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS)
+                             || (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS);
+                boolean shift = (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS)
+                             || (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS);
                 if (ctrl) {
                     // Toggle individual item
                     if (selectedIndices.contains(hoveredIndex)) {
@@ -255,7 +255,7 @@ public final class SelectableList<T> extends UIComponent {
                     selectedIndices.clear();
                     for (int i = lo; i <= hi; i++) selectedIndices.add(i);
                 } else {
-                    // Plain click — single item
+                    // Plain MouseButtonEvent — single item
                     selectedIndices.clear();
                     selectedIndices.add(hoveredIndex);
                     selectionAnchor = hoveredIndex;
@@ -392,7 +392,7 @@ public final class SelectableList<T> extends UIComponent {
 
     // ── Multi-select API ─────────────────────────────────────────────────
 
-    /** Enable or disable multi-select mode (Ctrl+click toggle, Shift+click range). */
+    /** Enable or disable multi-select mode (Ctrl+MouseButtonEvent toggle, Shift+MouseButtonEvent range). */
     public SelectableList<T> setMultiSelect(boolean multi) {
         this.multiSelect = multi;
         if (!multi) { selectedIndices.clear(); selectionAnchor = -1; }

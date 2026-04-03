@@ -1,10 +1,10 @@
 package com.pocketuicore.economy;
 
 import com.pocketuicore.PocketUICore;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -70,7 +70,7 @@ public final class CaravanManager {
      * @param player the server-side player attempting to dispatch
      * @return a {@link CaravanResult} indicating success/failure with details
      */
-    public static CaravanResult dispatchCaravan(ServerPlayerEntity player) {
+    public static CaravanResult dispatchCaravan(ServerPlayer player) {
         // ── Phase 1: Verify all materials are available ──────────────────
         for (Map.Entry<Item, Integer> entry : CARAVAN_COST.entrySet()) {
             int available = countItem(player, entry.getKey());
@@ -79,10 +79,10 @@ public final class CaravanManager {
                         "[Caravan] {} missing materials: need {}x {} but has {}",
                         player.getName().getString(),
                         entry.getValue(),
-                        entry.getKey().getName().getString(),
+                    entry.getKey().getName(entry.getKey().getDefaultInstance()).getString(),
                         available);
                 return new CaravanResult(false, 0, 0,
-                        "Not enough " + entry.getKey().getName().getString()
+                    "Not enough " + entry.getKey().getName(entry.getKey().getDefaultInstance()).getString()
                                 + " (need " + entry.getValue()
                                 + ", have " + available + ")");
             }
@@ -95,7 +95,7 @@ public final class CaravanManager {
 
         // ── Phase 3: Grant rewards ──────────────────────────────────────
         EconomyManager.addMoney(player, PAYOUT_AMOUNT);
-        player.addExperience(XP_REWARD);
+        player.giveExperiencePoints(XP_REWARD);
 
         PocketUICore.LOGGER.info("[Caravan] {} dispatched a caravan → +${}, +{} XP",
                 player.getName().getString(), PAYOUT_AMOUNT, XP_REWARD);
@@ -123,7 +123,7 @@ public final class CaravanManager {
      * @param player the player to check
      * @return {@code true} if all materials are present in sufficient quantity
      */
-    public static boolean canDispatch(ServerPlayerEntity player) {
+    public static boolean canDispatch(ServerPlayer player) {
         for (Map.Entry<Item, Integer> entry : CARAVAN_COST.entrySet()) {
             if (countItem(player, entry.getKey()) < entry.getValue()) {
                 return false;
@@ -144,10 +144,10 @@ public final class CaravanManager {
      * @param item   the item type to count
      * @return total count across all inventory slots
      */
-    private static int countItem(ServerPlayerEntity player, Item item) {
+    private static int countItem(ServerPlayer player, Item item) {
         int count = 0;
-        for (int i = 0; i < player.getInventory().size(); i++) {
-            ItemStack stack = player.getInventory().getStack(i);
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
             if (!stack.isEmpty() && stack.getItem() == item) {
                 count += stack.getCount();
             }
@@ -163,13 +163,13 @@ public final class CaravanManager {
      * @param item   the item type to remove
      * @param amount total quantity to remove
      */
-    private static void removeItem(ServerPlayerEntity player, Item item, int amount) {
+    private static void removeItem(ServerPlayer player, Item item, int amount) {
         int remaining = amount;
-        for (int i = 0; i < player.getInventory().size() && remaining > 0; i++) {
-            ItemStack stack = player.getInventory().getStack(i);
+        for (int i = 0; i < player.getInventory().getContainerSize() && remaining > 0; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
             if (!stack.isEmpty() && stack.getItem() == item) {
                 int take = Math.min(remaining, stack.getCount());
-                stack.decrement(take);
+                stack.shrink(take);
                 remaining -= take;
             }
         }

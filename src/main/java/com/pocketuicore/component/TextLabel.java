@@ -1,30 +1,30 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Text Label Component
+ * Component Label Component
  * <p>
- * A text-rendering component with left / centre / right alignment,
+ * A Component-rendering component with left / centre / right alignment,
  * optional scaling, shadow rendering, and word-wrapping support.
  * <p>
- * Supports both plain {@link String} and Minecraft {@link Text} values.
- * When a {@code Text} is set, its formatted string representation is
- * used for rendering with the {@code Text} variant overloads.
+ * Supports both plain {@link String} and Minecraft {@link Component} values.
+ * When a {@code Component} is set, its formatted string representation is
+ * used for rendering with the {@code Component} variant overloads.
  * <p>
  * <b>Wrapping:</b> Set {@link #setWrapWidth(int)} to a positive pixel
- * width and the label will automatically break text into multiple lines.
+ * width and the label will automatically break Component into multiple lines.
  * The component's {@code height} is updated to fit all wrapped lines.
  * <p>
  * Pairs naturally with {@link com.pocketuicore.data.ObservableState}
- * for reactive text updates:
+ * for reactive Component updates:
  * <pre>{@code
  *     ObservableState<String> name = new ObservableState<>("Steve");
  *     TextLabel label = new TextLabel(10, 10, 100, 12, "Steve");
@@ -33,19 +33,19 @@ import java.util.List;
  */
 public class TextLabel extends UIComponent {
 
-    /** Text alignment within the label bounds. */
+    /** Component alignment within the label bounds. */
     public enum Align { LEFT, CENTER, RIGHT }
 
     // ── State ────────────────────────────────────────────────────────────
-    private String text;
-    private Text richText;
+    private String Component;
+    private Component richText;
     private int color;
     private Align align;
     private float scale;
 
     /** Wrap width in pixels. 0 = no wrapping (single line). */
     private int wrapWidth = 0;
-    /** Cached wrapped lines (invalidated when text or wrapWidth changes). */
+    /** Cached wrapped lines (invalidated when Component or wrapWidth changes). */
     private List<String> wrappedLines;
     private boolean linesDirty = true;
 
@@ -53,47 +53,47 @@ public class TextLabel extends UIComponent {
     //  Construction
     // =====================================================================
 
-    public TextLabel(int x, int y, int width, int height, String text) {
-        this(x, y, width, height, text,
+    public TextLabel(int x, int y, int width, int height, String Component) {
+        this(x, y, width, height, Component,
              ProceduralRenderer.COL_TEXT_PRIMARY, Align.LEFT, 1.0f);
     }
 
-    public TextLabel(int x, int y, int width, int height, String text, int color) {
-        this(x, y, width, height, text, color, Align.LEFT, 1.0f);
+    public TextLabel(int x, int y, int width, int height, String Component, int color) {
+        this(x, y, width, height, Component, color, Align.LEFT, 1.0f);
     }
 
-    public TextLabel(int x, int y, int width, int height, String text,
+    public TextLabel(int x, int y, int width, int height, String Component,
                      int color, Align align, float scale) {
         super(x, y, width, height);
-        this.text  = text != null ? text : "";
+        this.Component  = Component != null ? Component : "";
         this.color = color;
         this.align = align;
         this.scale = scale;
     }
 
     /**
-     * Create a TextLabel from a Minecraft {@link Text} object.
-     * This preserves formatting and uses the text's string value internally.
+     * Create a TextLabel from a Minecraft {@link Component} object.
+     * This preserves formatting and uses the Component's string value internally.
      *
      * @param x      absolute X
      * @param y      absolute Y
      * @param width  label width
      * @param height label height
-     * @param richText the Minecraft Text
+     * @param richText the Minecraft Component
      */
-    public TextLabel(int x, int y, int width, int height, Text richText) {
+    public TextLabel(int x, int y, int width, int height, Component richText) {
         this(x, y, width, height, richText,
              ProceduralRenderer.COL_TEXT_PRIMARY, Align.LEFT, 1.0f);
     }
 
     /**
-     * Create a TextLabel from a Minecraft {@link Text} with appearance options.
+     * Create a TextLabel from a Minecraft {@link Component} with appearance options.
      */
-    public TextLabel(int x, int y, int width, int height, Text richText,
+    public TextLabel(int x, int y, int width, int height, Component richText,
                      int color, Align align, float scale) {
         super(x, y, width, height);
         this.richText = richText;
-        this.text = richText != null ? richText.getString() : "";
+        this.Component = richText != null ? richText.getString() : "";
         this.color = color;
         this.align = align;
         this.scale = scale;
@@ -104,11 +104,11 @@ public class TextLabel extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        if (text.isEmpty()) return;
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
+        if (Component.isEmpty()) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
 
         // Multi-line / wrapped rendering
         if (wrapWidth > 0) {
@@ -118,30 +118,30 @@ public class TextLabel extends UIComponent {
         }
 
         // Single-line rendering
-        int textY = y + (height - Math.round(tr.fontHeight * scale)) / 2;
+        int textY = y + (height - Math.round(tr.lineHeight * scale)) / 2;
 
         if (scale != 1.0f) {
             switch (align) {
                 case LEFT   -> ProceduralRenderer.drawScaledText(
-                        ctx, tr, text, x, textY, color, scale);
+                        ctx, tr, Component, x, textY, color, scale);
                 case CENTER -> ProceduralRenderer.drawScaledCenteredText(
-                        ctx, tr, text, x + width / 2, textY, color, scale);
+                        ctx, tr, Component, x + width / 2, textY, color, scale);
                 case RIGHT  -> {
-                    int textW = Math.round(tr.getWidth(text) * scale);
+                    int textW = Math.round(tr.width(Component) * scale);
                     ProceduralRenderer.drawScaledText(
-                            ctx, tr, text, x + width - textW, textY, color, scale);
+                            ctx, tr, Component, x + width - textW, textY, color, scale);
                 }
             }
         } else {
             switch (align) {
                 case LEFT   -> ProceduralRenderer.drawText(
-                        ctx, tr, text, x, textY, color);
+                        ctx, tr, Component, x, textY, color);
                 case CENTER -> ProceduralRenderer.drawCenteredText(
-                        ctx, tr, text, x + width / 2, textY, color);
+                        ctx, tr, Component, x + width / 2, textY, color);
                 case RIGHT  -> {
-                    int textW = tr.getWidth(text);
+                    int textW = tr.width(Component);
                     ProceduralRenderer.drawText(
-                            ctx, tr, text, x + width - textW, textY, color);
+                            ctx, tr, Component, x + width - textW, textY, color);
                 }
             }
         }
@@ -152,14 +152,14 @@ public class TextLabel extends UIComponent {
     // =====================================================================
 
     /**
-     * Rebuild the cached wrapped-line list when text or wrapWidth changed.
+     * Rebuild the cached wrapped-line list when Component or wrapWidth changed.
      */
-    private void rebuildWrappedLines(TextRenderer tr) {
+    private void rebuildWrappedLines(Font tr) {
         if (!linesDirty && wrappedLines != null) return;
         int effectiveWrap = (int) (wrapWidth / scale);
-        wrappedLines = wrapText(text, tr, effectiveWrap);
+        wrappedLines = wrapText(Component, tr, effectiveWrap);
         // Auto-adjust height to fit all lines
-        int lineH = Math.round(tr.fontHeight * scale);
+        int lineH = Math.round(tr.lineHeight * scale);
         this.height = Math.max(lineH, wrappedLines.size() * (lineH + 1));
         linesDirty = false;
     }
@@ -168,23 +168,23 @@ public class TextLabel extends UIComponent {
      * Simple word-wrap: splits at spaces, falls back to character-level
      * breaking for words wider than the wrap width.
      */
-    private static List<String> wrapText(String text, TextRenderer tr, int maxWidth) {
+    private static List<String> wrapText(String Component, Font tr, int maxWidth) {
         List<String> lines = new ArrayList<>();
-        if (maxWidth <= 0 || text.isEmpty()) {
-            lines.add(text);
+        if (maxWidth <= 0 || Component.isEmpty()) {
+            lines.add(Component);
             return lines;
         }
 
-        String[] words = text.split(" ", -1);
+        String[] words = Component.split(" ", -1);
         StringBuilder current = new StringBuilder();
 
         for (String word : words) {
             if (current.isEmpty()) {
                 // First word on the line
-                if (tr.getWidth(word) > maxWidth) {
+                if (tr.width(word) > maxWidth) {
                     // Char-level break for oversized words
                     for (char c : word.toCharArray()) {
-                        if (tr.getWidth(current.toString() + c) > maxWidth && !current.isEmpty()) {
+                        if (tr.width(current.toString() + c) > maxWidth && !current.isEmpty()) {
                             lines.add(current.toString());
                             current = new StringBuilder();
                         }
@@ -195,7 +195,7 @@ public class TextLabel extends UIComponent {
                 }
             } else {
                 String test = current + " " + word;
-                if (tr.getWidth(test) > maxWidth) {
+                if (tr.width(test) > maxWidth) {
                     lines.add(current.toString());
                     current = new StringBuilder(word);
                 } else {
@@ -212,8 +212,8 @@ public class TextLabel extends UIComponent {
     /**
      * Render pre-wrapped lines with proper alignment and vertical spacing.
      */
-    private void renderWrappedLines(DrawContext ctx, TextRenderer tr) {
-        int lineH = Math.round(tr.fontHeight * scale) + 1;
+    private void renderWrappedLines(RenderContext ctx, Font tr) {
+        int lineH = Math.round(tr.lineHeight * scale) + 1;
         int lineY = y;
 
         for (String line : wrappedLines) {
@@ -224,7 +224,7 @@ public class TextLabel extends UIComponent {
                     case CENTER -> ProceduralRenderer.drawScaledCenteredText(
                             ctx, tr, line, x + width / 2, lineY, color, scale);
                     case RIGHT  -> {
-                        int textW = Math.round(tr.getWidth(line) * scale);
+                        int textW = Math.round(tr.width(line) * scale);
                         ProceduralRenderer.drawScaledText(
                                 ctx, tr, line, x + width - textW, lineY, color, scale);
                     }
@@ -236,7 +236,7 @@ public class TextLabel extends UIComponent {
                     case CENTER -> ProceduralRenderer.drawCenteredText(
                             ctx, tr, line, x + width / 2, lineY, color);
                     case RIGHT  -> {
-                        int textW = tr.getWidth(line);
+                        int textW = tr.width(line);
                         ProceduralRenderer.drawText(
                                 ctx, tr, line, x + width - textW, lineY, color);
                     }
@@ -250,27 +250,27 @@ public class TextLabel extends UIComponent {
     //  Accessors
     // =====================================================================
 
-    public String getText()           { return text; }
+    public String getText()           { return Component; }
 
     public TextLabel setText(String t) {
-        this.text = t != null ? t : "";
+        this.Component = t != null ? t : "";
         this.richText = null;
         this.linesDirty = true;
         return this;
     }
 
     /**
-     * Set the label text from a Minecraft {@link Text} object.
+     * Set the label Component from a Minecraft {@link Component} object.
      */
-    public TextLabel setText(Text t) {
+    public TextLabel setText(Component t) {
         this.richText = t;
-        this.text = t != null ? t.getString() : "";
+        this.Component = t != null ? t.getString() : "";
         this.linesDirty = true;
         return this;
     }
 
-    /** Get the Minecraft Text, or null if set via String. */
-    public Text getRichText()         { return richText; }
+    /** Get the Minecraft Component, or null if set via String. */
+    public Component getRichText()         { return richText; }
 
     public int  getColor()            { return color; }
     public TextLabel setColor(int c)       { this.color = c; return this; }
@@ -285,7 +285,7 @@ public class TextLabel extends UIComponent {
     }
 
     /**
-     * Set the wrapping width in pixels. When positive, text wraps at
+     * Set the wrapping width in pixels. When positive, Component wraps at
      * word boundaries. Set to 0 to disable wrapping.
      */
     public TextLabel setWrapWidth(int wrapWidth) {
@@ -301,7 +301,7 @@ public class TextLabel extends UIComponent {
     public int getLineCount() {
         if (wrapWidth <= 0) return 1;
         if (linesDirty) {
-            TextRenderer tr = MinecraftClient.getInstance().textRenderer;
+            Font tr = Minecraft.getInstance().font;
             rebuildWrappedLines(tr);
         }
         return wrappedLines != null ? wrappedLines.size() : 1;

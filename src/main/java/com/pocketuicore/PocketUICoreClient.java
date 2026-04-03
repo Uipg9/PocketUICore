@@ -2,13 +2,12 @@ package com.pocketuicore;
 
 import com.pocketuicore.animation.AnimationTicker;
 import com.pocketuicore.command.PocketCommandRegister;
-import com.pocketuicore.component.HudOverlayComponent;
+import com.pocketuicore.compat.HudCompat;
 import com.pocketuicore.controller.ControllerHandler;
 import com.pocketuicore.sound.UISoundManager;
 import com.pocketuicore.economy.ClientNetworkHandler;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 
 /**
  * PocketUICore — Client-side entrypoint.
@@ -31,8 +30,8 @@ public class PocketUICoreClient implements ClientModInitializer {
             UISoundManager.tickScheduled();
         });
 
-        // Register HUD overlay rendering
-        HudRenderCallback.EVENT.register(HudOverlayComponent::renderAll);
+        // Register HUD overlay rendering (version-specific via HudCompat)
+        HudCompat.register();
 
         // Register /pocket and /p client commands
         PocketCommandRegister.register();

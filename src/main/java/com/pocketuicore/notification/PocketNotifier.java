@@ -1,9 +1,9 @@
 package com.pocketuicore.notification;
 
 import com.pocketuicore.component.NotificationManager;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 
 /**
  * Module 3 — Notification Manager
@@ -28,8 +28,8 @@ public final class PocketNotifier {
     // ── Branding ─────────────────────────────────────────────────────────
     private static final String PREFIX  = "[Pocket] ";
     /** Gold-coloured prefix prepended to chat reminders. */
-    private static final Text PREFIX_TEXT = Text.literal(PREFIX)
-            .formatted(Formatting.GOLD, Formatting.BOLD);
+    private static final Component PREFIX_TEXT = Component.literal(PREFIX)
+            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
 
     // =====================================================================
     //  Action-bar (overlay) messages
@@ -43,34 +43,34 @@ public final class PocketNotifier {
      * @param player  target player (no-op if null)
      * @param message the message to display
      */
-    public static void sendActionBar(ServerPlayerEntity player, Text message) {
+    public static void sendActionBar(ServerPlayer player, Component message) {
         if (player == null) return;
-        player.sendMessage(message, true); // overlay = true → action bar
+        player.sendOverlayMessage(message);
     }
 
     /**
      * Convenience overload accepting a plain string.
      */
-    public static void sendActionBar(ServerPlayerEntity player, String message) {
-        sendActionBar(player, Text.literal(message));
+    public static void sendActionBar(ServerPlayer player, String message) {
+        sendActionBar(player, Component.literal(message));
     }
 
     /**
      * Formatted action-bar message with a colour.
      */
-    public static void sendActionBar(ServerPlayerEntity player, String message, Formatting color) {
-        sendActionBar(player, Text.literal(message).formatted(color));
+    public static void sendActionBar(ServerPlayer player, String message, ChatFormatting color) {
+        sendActionBar(player, Component.literal(message).withStyle(color));
     }
 
     /**
      * Action-bar message showing a numeric progress.
      * Output example: {@code "Growing… 73 %"}
      */
-    public static void sendActionBarProgress(ServerPlayerEntity player,
+    public static void sendActionBarProgress(ServerPlayer player,
                                               String prefix, float progress01) {
         int pct = Math.round(Math.clamp(progress01, 0f, 1f) * 100);
-        Text msg = Text.literal(prefix + " " + pct + "%")
-                .formatted(Formatting.AQUA);
+        Component msg = Component.literal(prefix + " " + pct + "%")
+            .withStyle(ChatFormatting.AQUA);
         sendActionBar(player, msg);
     }
 
@@ -83,29 +83,29 @@ public final class PocketNotifier {
      * Automatically prepends the golden {@code [Pocket]} prefix.
      *
      * @param player  target player (no-op if null)
-     * @param message body text (will be appended after the prefix)
+     * @param message body Component (will be appended after the prefix)
      */
-    public static void sendChatReminder(ServerPlayerEntity player, Text message) {
+    public static void sendChatReminder(ServerPlayer player, Component message) {
         if (player == null) return;
-        Text full = Text.empty()
+        Component full = Component.empty()
                 .append(PREFIX_TEXT)
                 .append(message);
-        player.sendMessage(full, false); // overlay = false → normal chat
+        player.sendSystemMessage(full);
     }
 
     /**
      * Convenience overload accepting a plain string.
      */
-    public static void sendChatReminder(ServerPlayerEntity player, String message) {
-        sendChatReminder(player, Text.literal(message).formatted(Formatting.YELLOW));
+    public static void sendChatReminder(ServerPlayer player, String message) {
+        sendChatReminder(player, Component.literal(message).withStyle(ChatFormatting.YELLOW));
     }
 
     /**
      * Chat reminder with explicit formatting.
      */
-    public static void sendChatReminder(ServerPlayerEntity player, String message,
-                                         Formatting... formats) {
-        sendChatReminder(player, Text.literal(message).formatted(formats));
+    public static void sendChatReminder(ServerPlayer player, String message,
+                                         ChatFormatting... formats) {
+        sendChatReminder(player, Component.literal(message).withStyle(formats));
     }
 
     // =====================================================================
@@ -119,12 +119,12 @@ public final class PocketNotifier {
      * @param max       maximum durability
      * @param itemName  display name of the item
      */
-    public static void sendDurabilityAlert(ServerPlayerEntity player,
+    public static void sendDurabilityAlert(ServerPlayer player,
                                             int remaining, int max, String itemName) {
         float ratio = (max > 0) ? (float) remaining / max : 0f;
-        Formatting colour = ratio <= 0.1f ? Formatting.RED : Formatting.YELLOW;
-        Text body = Text.literal("⚠ " + itemName + " durability: " + remaining + "/" + max)
-                .formatted(colour);
+        ChatFormatting colour = ratio <= 0.1f ? ChatFormatting.RED : ChatFormatting.YELLOW;
+        Component body = Component.literal("⚠ " + itemName + " durability: " + remaining + "/" + max)
+            .withStyle(colour);
         sendChatReminder(player, body);
     }
 
@@ -132,27 +132,27 @@ public final class PocketNotifier {
      * Tier upgrade notification (e.g. tool upgraded to Diamond tier).
      * Sent as both an action-bar flash and a chat reminder.
      */
-    public static void sendTierUpgrade(ServerPlayerEntity player,
+        public static void sendTierUpgrade(ServerPlayer player,
                                         String itemName, String newTier) {
-        Text actionBar = Text.literal("⬆ " + itemName + " → " + newTier)
-                .formatted(Formatting.GREEN);
+        Component actionBar = Component.literal("⬆ " + itemName + " → " + newTier)
+                .withStyle(ChatFormatting.GREEN);
         sendActionBar(player, actionBar);
 
-        Text chat = Text.literal(itemName + " upgraded to ")
-                .formatted(Formatting.WHITE)
-                .append(Text.literal(newTier).formatted(Formatting.GREEN, Formatting.BOLD));
+        Component chat = Component.literal(itemName + " upgraded to ")
+                .withStyle(ChatFormatting.WHITE)
+                .append(Component.literal(newTier).withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
         sendChatReminder(player, chat);
     }
 
     /**
      * Generic milestone celebration.
      */
-    public static void sendMilestone(ServerPlayerEntity player, String milestone) {
-        Text body = Text.literal("✦ " + milestone)
-                .formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD);
+        public static void sendMilestone(ServerPlayer player, String milestone) {
+        Component body = Component.literal("✦ " + milestone)
+                .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD);
         sendChatReminder(player, body);
-        sendActionBar(player, Text.literal("✦ " + milestone)
-                .formatted(Formatting.LIGHT_PURPLE));
+        sendActionBar(player, Component.literal("✦ " + milestone)
+                .withStyle(ChatFormatting.LIGHT_PURPLE));
     }
 
     // =====================================================================

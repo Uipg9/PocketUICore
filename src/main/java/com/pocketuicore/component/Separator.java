@@ -2,7 +2,7 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.render.Theme;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 
 /**
  * A simple horizontal or vertical line separator.
@@ -51,7 +51,7 @@ public class Separator extends UIComponent {
     }
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         int w, h;
         if (orientation == Orientation.HORIZONTAL) {
             w = width;

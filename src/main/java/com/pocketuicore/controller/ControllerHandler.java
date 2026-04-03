@@ -4,7 +4,7 @@ import com.pocketuicore.component.DarkPanel;
 import com.pocketuicore.component.FocusManager;
 import com.pocketuicore.component.UIComponent;
 import com.pocketuicore.input.InputHelper;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWGamepadState;
 
@@ -230,9 +230,9 @@ public final class ControllerHandler {
 
             // ── B / Circle — close screen ────────────────────────────────
             if (btnB && !prevB) {
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.currentScreen != null) {
-                    client.currentScreen.close();
+                Minecraft client = Minecraft.getInstance();
+                if (client.screen != null) {
+                    client.screen.onClose();
                 }
             }
 
@@ -416,16 +416,16 @@ public final class ControllerHandler {
     private void snapCursorIfChanged(UIComponent before, UIComponent after) {
         if (after == null || after == before) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.getWindow() == null) return;
 
         // Component coords are in GUI-scaled pixels; GLFW cursor is in
         // window pixels, so we must multiply by the GUI scale factor.
-        double scale = client.getWindow().getScaleFactor();
+        double scale = client.getWindow().getGuiScale();
         double cx = (after.getX() + after.getWidth()  / 2.0) * scale;
         double cy = (after.getY() + after.getHeight() / 2.0) * scale;
 
-        GLFW.glfwSetCursorPos(client.getWindow().getHandle(), cx, cy);
+        GLFW.glfwSetCursorPos(client.getWindow().handle(), cx, cy);
     }
 
     // =====================================================================

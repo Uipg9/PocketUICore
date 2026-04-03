@@ -266,7 +266,7 @@ public class ObservableState<T> {
     }
 
     /**
-     * Bind a String observable to a {@link TextLabel}'s text.
+     * Bind a String observable to a {@link TextLabel}'s Component.
      * The label updates automatically whenever the observable changes.
      *
      * @param state the observable string

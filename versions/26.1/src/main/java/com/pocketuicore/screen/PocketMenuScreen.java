@@ -1,23 +1,31 @@
 package com.pocketuicore.screen;
 
-import com.pocketuicore.component.*;
+import com.pocketuicore.component.FocusManager;
+import com.pocketuicore.component.HoverButton;
+import com.pocketuicore.component.ItemDisplayComponent;
+import com.pocketuicore.component.PercentageBar;
+import com.pocketuicore.component.TextLabel;
+import com.pocketuicore.component.UIComponent;
+import com.pocketuicore.component.VerticalListPanel;
 import com.pocketuicore.controller.ControllerHandler;
 import com.pocketuicore.data.ObservableState;
 import com.pocketuicore.economy.ClientNetworkHandler;
+import com.pocketuicore.render.GuiGraphicsAdapter;
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.text.Text;
+import com.pocketuicore.render.RenderContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Pocket Menu Screen — Main GUI for the All-in-One mod.
+ * Pocket Menu Screen - Main GUI for the All-in-One mod.
  * <p>
- * Opens via {@code /p} or {@code /pocket}.  Uses PocketUICore's
+ * Opens via {@code /p} or {@code /pocket}. Uses PocketUICore's
  * {@link VerticalListPanel} for zero-manual-math layout, reactive
  * {@link ObservableState} bound to the server-synced
  * {@link ClientNetworkHandler#CLIENT_BALANCE} for the wallet display, and
@@ -32,7 +40,7 @@ public class PocketMenuScreen extends Screen {
     private ObservableState<Integer> walletState;
 
     public PocketMenuScreen() {
-        super(Text.literal("Pocket Menu"));
+        super(Component.literal("Pocket Menu"));
     }
 
     // =====================================================================
@@ -46,10 +54,10 @@ public class PocketMenuScreen extends Screen {
         FocusManager fm = FocusManager.getInstance();
         fm.clear();
 
-        // ── Reactive wallet state (bound to server-synced balance) ────
+        // Reactive wallet state (bound to server-synced balance)
         walletState = ClientNetworkHandler.CLIENT_BALANCE;
 
-        // ── Main panel — centred on screen ───────────────────────────────
+        // Main panel - centred on screen
         int px = (this.width - PANEL_W) / 2;
         int py = (this.height - PANEL_H) / 2;
         mainPanel = new VerticalListPanel(px, py, PANEL_W, PANEL_H, 14, 8);
@@ -57,12 +65,12 @@ public class PocketMenuScreen extends Screen {
         mainPanel.setBackgroundColor(ProceduralRenderer.COL_BG_PRIMARY);
         mainPanel.setBorderColor(ProceduralRenderer.COL_ACCENT);
 
-        // ── Title label ──────────────────────────────────────────────────
+        // Title label
         TextLabel titleLabel = new TextLabel(0, 0, 0, 18, "Pocket Menu",
                 ProceduralRenderer.COL_ACCENT_TEAL, TextLabel.Align.CENTER, 1.3f);
         mainPanel.addChild(titleLabel);
 
-        // ── Wallet balance (auto-updates via ObservableState binding) ────
+        // Wallet balance (auto-updates via ObservableState binding)
         TextLabel walletLabel = new TextLabel(0, 0, 0, 14, "");
         walletLabel.setAlign(TextLabel.Align.CENTER);
         walletLabel.setColor(ProceduralRenderer.COL_SUCCESS);
@@ -70,7 +78,7 @@ public class PocketMenuScreen extends Screen {
         ObservableState.bindText(walletText, walletLabel);
         mainPanel.addChild(walletLabel);
 
-        // ── Estate Growth Progress Bar (live server-synced) ───────────────
+        // Estate Growth Progress Bar (live server-synced)
         TextLabel estateLabel = new TextLabel(0, 0, 0, 14, "");
         estateLabel.setAlign(TextLabel.Align.CENTER);
         estateLabel.setColor(ProceduralRenderer.COL_ACCENT_TEAL);
@@ -87,7 +95,7 @@ public class PocketMenuScreen extends Screen {
                 estateBar);
         mainPanel.addChild(estateBar);
 
-        // ── Estate item display (Diamond) ────────────────────────────────
+        // Estate item display (Diamond)
         ItemDisplayComponent estateItem = new ItemDisplayComponent(
                 0, 0, new ItemStack(Items.DIAMOND));
         estateItem.setDrawBackground(true);
@@ -98,7 +106,7 @@ public class PocketMenuScreen extends Screen {
                 "Tier: Diamond", "Cost: $100");
         mainPanel.addChild(estateItem);
 
-        // ── Upgrade button ───────────────────────────────────────────────
+        // Upgrade button
         HoverButton upgradeBtn = new HoverButton(0, 0, 0, 26,
                 "Upgrade Estate", () -> {
             Integer bal = walletState.get();
@@ -110,16 +118,16 @@ public class PocketMenuScreen extends Screen {
                 "Costs $100 per upgrade");
         mainPanel.addChild(upgradeBtn);
 
-        // ── Auto-layout ──────────────────────────────────────────────────
+        // Auto-layout
         mainPanel.layout();
 
-        // ── Focus registration (controller / keyboard nav) ───────────────
+        // Focus registration (controller / keyboard nav)
         fm.register(upgradeBtn);
         fm.register(estateItem);
         fm.register(estateBar);
         fm.focusFirst();
 
-        // ── Controller support — enable gamepad polling + scroll ─────────
+        // Controller support - enable gamepad polling + scroll
         ControllerHandler ch = ControllerHandler.getInstance();
         ch.setScrollTarget(mainPanel);
         ch.enable();
@@ -130,16 +138,20 @@ public class PocketMenuScreen extends Screen {
     // =====================================================================
 
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(ctx, mouseX, mouseY, delta);
+        // Wrap at the Minecraft API boundary - all internal rendering uses RenderContext
+        RenderContext rc = new GuiGraphicsAdapter(ctx);
+
         // Dark overlay behind everything
-        ProceduralRenderer.drawFullScreenOverlay(ctx, this.width, this.height,
+        ProceduralRenderer.drawFullScreenOverlay(rc, this.width, this.height,
                 ProceduralRenderer.COL_OVERLAY);
 
         // Panel + all children
-        mainPanel.render(ctx, mouseX, mouseY, delta);
+        mainPanel.render(rc, mouseX, mouseY, delta);
 
-        // Tooltips — must be last so they paint on top of everything
-        UIComponent.renderTooltip(ctx, mainPanel, mouseX, mouseY);
+        // Tooltips - must be last so they paint on top of everything
+        UIComponent.renderTooltip(rc, mainPanel, mouseX, mouseY);
     }
 
     // =====================================================================
@@ -147,15 +159,15 @@ public class PocketMenuScreen extends Screen {
     // =====================================================================
 
     @Override
-    public boolean mouseClicked(Click click, boolean bl) {
-        if (mainPanel.mouseClicked(click.x(), click.y(), click.button())) return true;
-        return super.mouseClicked(click, bl);
+    public boolean mouseClicked(MouseButtonEvent MouseButtonEvent, boolean bl) {
+        if (mainPanel.mouseClicked(MouseButtonEvent.x(), MouseButtonEvent.y(), MouseButtonEvent.button())) return true;
+        return super.mouseClicked(MouseButtonEvent, bl);
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
-        if (mainPanel.mouseReleased(click.x(), click.y(), click.button())) return true;
-        return super.mouseReleased(click);
+    public boolean mouseReleased(MouseButtonEvent MouseButtonEvent) {
+        if (mainPanel.mouseReleased(MouseButtonEvent.x(), MouseButtonEvent.y(), MouseButtonEvent.button())) return true;
+        return super.mouseReleased(MouseButtonEvent);
     }
 
     @Override
@@ -166,15 +178,15 @@ public class PocketMenuScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(Click click, double deltaX, double deltaY) {
-        if (mainPanel.mouseDragged(click.x(), click.y(), click.button(), deltaX, deltaY)) return true;
-        return super.mouseDragged(click, deltaX, deltaY);
+    public boolean mouseDragged(MouseButtonEvent MouseButtonEvent, double deltaX, double deltaY) {
+        if (mainPanel.mouseDragged(MouseButtonEvent.x(), MouseButtonEvent.y(), MouseButtonEvent.button(), deltaX, deltaY)) return true;
+        return super.mouseDragged(MouseButtonEvent, deltaX, deltaY);
     }
 
     @Override
-    public boolean keyPressed(KeyInput keyInput) {
-        int keyCode = keyInput.key();
-        int modifiers = keyInput.modifiers();
+    public boolean keyPressed(KeyEvent KeyEvent) {
+        int keyCode = KeyEvent.key();
+        int modifiers = KeyEvent.modifiers();
         FocusManager fm = FocusManager.getInstance();
 
         switch (keyCode) {
@@ -192,7 +204,7 @@ public class PocketMenuScreen extends Screen {
                 return true;
             }
         }
-        return super.keyPressed(keyInput);
+        return super.keyPressed(KeyEvent);
     }
 
     // =====================================================================
@@ -207,7 +219,7 @@ public class PocketMenuScreen extends Screen {
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 }

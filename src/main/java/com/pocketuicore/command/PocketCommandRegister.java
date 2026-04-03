@@ -1,9 +1,9 @@
 package com.pocketuicore.command;
 
 import com.pocketuicore.screen.PocketMenuScreen;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 /**
  * Client-side command registration for the Pocket menu.
@@ -23,14 +23,14 @@ public final class PocketCommandRegister {
     public static void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             // /pocket
-            dispatcher.register(ClientCommandManager.literal("pocket")
+            dispatcher.register(ClientCommands.literal("pocket")
                     .executes(context -> {
                         openPocketScreen();
                         return 1;
                     }));
 
             // /p  (alias)
-            dispatcher.register(ClientCommandManager.literal("p")
+            dispatcher.register(ClientCommands.literal("p")
                     .executes(context -> {
                         openPocketScreen();
                         return 1;
@@ -43,7 +43,7 @@ public final class PocketCommandRegister {
      * safe to call from the network-thread command dispatcher.
      */
     private static void openPocketScreen() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         client.execute(() -> client.setScreen(new PocketMenuScreen()));
     }
 }

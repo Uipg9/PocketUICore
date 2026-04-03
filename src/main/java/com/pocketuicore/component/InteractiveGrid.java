@@ -2,7 +2,7 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.function.BiConsumer;
 
 /**
  * Interactive grid — generic 2D grid with per-cell rendering callback,
- * click detection, selection state (single or multi-select),
+ * MouseButtonEvent detection, selection state (single or multi-select),
  * keyboard shortcuts, and hover highlight.
  * <p>
  * Unlike the existing auto-layout {@code GridPanel} (which just arranges
@@ -47,7 +47,7 @@ public final class InteractiveGrid<T> extends UIComponent {
          * @param hovered  true if mouse is over this cell
          * @param selected true if this cell is selected
          */
-        void render(DrawContext ctx, T item,
+        void render(RenderContext ctx, T item,
                     int x, int y, int width, int height,
                     boolean hovered, boolean selected);
     }
@@ -178,7 +178,7 @@ public final class InteractiveGrid<T> extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY,
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY,
                               float delta) {
         // ── Background ──────────────────────────────────────────────────
         ctx.fill(x, y, x + width, y + height, bgColor);

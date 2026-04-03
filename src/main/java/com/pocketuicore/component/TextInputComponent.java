@@ -1,18 +1,18 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Text Input Component — Single-line editable text field.
+ * Component Input Component — Single-line editable Component field.
  * <p>
- * Supports cursor navigation, text selection via keyboard, character
+ * Supports cursor navigation, Component selection via keyboard, character
  * filtering, a placeholder string, and a submit callback.
  * <p>
  * <b>Usage:</b>
@@ -20,13 +20,13 @@ import java.util.function.Predicate;
  *     TextInputComponent input = new TextInputComponent(10, 10, 200, 20);
  *     input.setPlaceholder("Enter name...");
  *     input.setMaxLength(32);
- *     input.setOnSubmit(text -> System.out.println("Submitted: " + text));
+ *     input.setOnSubmit(Component -> System.out.println("Submitted: " + Component));
  * }</pre>
  */
 public class TextInputComponent extends UIComponent {
 
     // ── State ────────────────────────────────────────────────────────────
-    private StringBuilder text = new StringBuilder();
+    private StringBuilder Component = new StringBuilder();
     private int cursorPos = 0;
     private int selectionStart = -1;
     private boolean focused = false;
@@ -48,7 +48,7 @@ public class TextInputComponent extends UIComponent {
     private boolean cursorVisible = true;
     private static final long CURSOR_BLINK_MS = 530;
 
-    // ── Scroll offset for long text ──────────────────────────────────────
+    // ── Scroll offset for long Component ──────────────────────────────────────
     private int scrollOffset = 0;
 
     // ── Callbacks ────────────────────────────────────────────────────────
@@ -81,9 +81,9 @@ public class TextInputComponent extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
 
         // Background + border
         int border = focused ? focusBorderColor : borderColor;
@@ -93,19 +93,19 @@ public class TextInputComponent extends UIComponent {
         int pad = 4;
         int innerX = x + pad;
         int innerW = width - pad * 2;
-        int textY  = y + (height - tr.fontHeight) / 2;
+        int textY  = y + (height - tr.lineHeight) / 2;
 
-        // Enable scissor to clip text within bounds
+        // Enable scissor to clip Component within bounds
         ctx.enableScissor(innerX, y, x + width - pad, y + height);
 
-        String displayText = text.toString();
+        String displayText = Component.toString();
 
         if (displayText.isEmpty() && !focused) {
             // Placeholder
             ProceduralRenderer.drawText(ctx, tr, placeholder, innerX, textY, placeholderColor);
         } else {
             // Compute scroll offset so cursor is always visible
-            int cursorPixel = tr.getWidth(displayText.substring(0, cursorPos));
+            int cursorPixel = tr.width(displayText.substring(0, cursorPos));
             if (cursorPixel - scrollOffset > innerW - 2) {
                 scrollOffset = cursorPixel - innerW + 2;
             }
@@ -117,13 +117,13 @@ public class TextInputComponent extends UIComponent {
             if (selectionStart >= 0 && selectionStart != cursorPos) {
                 int selMin = Math.min(selectionStart, cursorPos);
                 int selMax = Math.max(selectionStart, cursorPos);
-                int selX1 = innerX + tr.getWidth(displayText.substring(0, selMin)) - scrollOffset;
-                int selX2 = innerX + tr.getWidth(displayText.substring(0, selMax)) - scrollOffset;
+                int selX1 = innerX + tr.width(displayText.substring(0, selMin)) - scrollOffset;
+                int selX2 = innerX + tr.width(displayText.substring(0, selMax)) - scrollOffset;
                 ProceduralRenderer.fillRect(ctx, selX1, y + 2, selX2 - selX1, height - 4,
                         selectionColor);
             }
 
-            // Text
+            // Component
             ProceduralRenderer.drawText(ctx, tr, displayText, innerX - scrollOffset, textY, textColor);
 
             // Cursor
@@ -135,7 +135,7 @@ public class TextInputComponent extends UIComponent {
                 }
                 if (cursorVisible) {
                     int cursorX = innerX + cursorPixel - scrollOffset;
-                    ProceduralRenderer.fillRect(ctx, cursorX, textY - 1, 1, tr.fontHeight + 2, cursorColor);
+                    ProceduralRenderer.fillRect(ctx, cursorX, textY - 1, 1, tr.lineHeight + 2, cursorColor);
                 }
             }
         }
@@ -156,15 +156,15 @@ public class TextInputComponent extends UIComponent {
             cursorVisible = true;
             lastCursorToggle = System.currentTimeMillis();
 
-            // Place cursor at click position
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer tr = client.textRenderer;
+            // Place cursor at MouseButtonEvent position
+            Minecraft client = Minecraft.getInstance();
+            Font tr = client.font;
             int pad = 4;
             int relativeX = (int) mouseX - (x + pad) + scrollOffset;
-            String str = text.toString();
+            String str = Component.toString();
             int best = 0;
             for (int i = 0; i <= str.length(); i++) {
-                if (tr.getWidth(str.substring(0, i)) <= relativeX) best = i;
+                if (tr.width(str.substring(0, i)) <= relativeX) best = i;
             }
             cursorPos = best;
             selectionStart = -1;
@@ -195,7 +195,7 @@ public class TextInputComponent extends UIComponent {
                 if (shift && selectionStart < 0) selectionStart = cursorPos;
                 if (!shift) selectionStart = -1;
                 if (ctrl) cursorPos = findWordBoundary(1);
-                else if (cursorPos < text.length()) cursorPos++;
+                else if (cursorPos < Component.length()) cursorPos++;
                 resetBlink();
                 return true;
             }
@@ -209,7 +209,7 @@ public class TextInputComponent extends UIComponent {
             case GLFW.GLFW_KEY_END -> {
                 if (shift && selectionStart < 0) selectionStart = cursorPos;
                 if (!shift) selectionStart = -1;
-                cursorPos = text.length();
+                cursorPos = Component.length();
                 resetBlink();
                 return true;
             }
@@ -218,10 +218,10 @@ public class TextInputComponent extends UIComponent {
                 if (cursorPos > 0) {
                     if (ctrl) {
                         int target = findWordBoundary(-1);
-                        text.delete(target, cursorPos);
+                        Component.delete(target, cursorPos);
                         cursorPos = target;
                     } else {
-                        text.deleteCharAt(cursorPos - 1);
+                        Component.deleteCharAt(cursorPos - 1);
                         cursorPos--;
                     }
                     fireChanged();
@@ -231,12 +231,12 @@ public class TextInputComponent extends UIComponent {
             }
             case GLFW.GLFW_KEY_DELETE -> {
                 if (deleteSelection()) { resetBlink(); return true; }
-                if (cursorPos < text.length()) {
+                if (cursorPos < Component.length()) {
                     if (ctrl) {
                         int target = findWordBoundary(1);
-                        text.delete(cursorPos, target);
+                        Component.delete(cursorPos, target);
                     } else {
-                        text.deleteCharAt(cursorPos);
+                        Component.deleteCharAt(cursorPos);
                     }
                     fireChanged();
                 }
@@ -244,13 +244,13 @@ public class TextInputComponent extends UIComponent {
                 return true;
             }
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
-                if (onSubmit != null) onSubmit.accept(text.toString());
+                if (onSubmit != null) onSubmit.accept(Component.toString());
                 return true;
             }
             case GLFW.GLFW_KEY_A -> {
                 if (ctrl) {
                     selectionStart = 0;
-                    cursorPos = text.length();
+                    cursorPos = Component.length();
                     return true;
                 }
             }
@@ -284,8 +284,8 @@ public class TextInputComponent extends UIComponent {
         if (charFilter != null && !charFilter.test(chr)) return false;
 
         deleteSelection();
-        if (text.length() < maxLength) {
-            text.insert(cursorPos, chr);
+        if (Component.length() < maxLength) {
+            Component.insert(cursorPos, chr);
             cursorPos++;
             fireChanged();
         }
@@ -301,7 +301,7 @@ public class TextInputComponent extends UIComponent {
         if (selectionStart < 0 || selectionStart == cursorPos) return false;
         int min = Math.min(selectionStart, cursorPos);
         int max = Math.max(selectionStart, cursorPos);
-        text.delete(min, max);
+        Component.delete(min, max);
         cursorPos = min;
         selectionStart = -1;
         fireChanged();
@@ -312,30 +312,30 @@ public class TextInputComponent extends UIComponent {
         if (selectionStart < 0 || selectionStart == cursorPos) return "";
         int min = Math.min(selectionStart, cursorPos);
         int max = Math.max(selectionStart, cursorPos);
-        return text.substring(min, max);
+        return Component.substring(min, max);
     }
 
     private void copySelection() {
         String sel = getSelectedText();
         if (!sel.isEmpty()) {
-            MinecraftClient.getInstance().keyboard.setClipboard(sel);
+            Minecraft.getInstance().keyboardHandler.setClipboard(sel);
         }
     }
 
     private void pasteClipboard() {
-        String clip = MinecraftClient.getInstance().keyboard.getClipboard();
+        String clip = Minecraft.getInstance().keyboardHandler.getClipboard();
         if (clip == null || clip.isEmpty()) return;
         deleteSelection();
-        // Filter pasted text
+        // Filter pasted Component
         StringBuilder filtered = new StringBuilder();
         for (char c : clip.toCharArray()) {
             if (c >= 32 && (charFilter == null || charFilter.test(c))) {
                 filtered.append(c);
             }
         }
-        int room = maxLength - text.length();
+        int room = maxLength - Component.length();
         String toInsert = filtered.substring(0, Math.min(filtered.length(), room));
-        text.insert(cursorPos, toInsert);
+        Component.insert(cursorPos, toInsert);
         cursorPos += toInsert.length();
         fireChanged();
     }
@@ -345,12 +345,12 @@ public class TextInputComponent extends UIComponent {
         if (direction < 0) {
             if (pos <= 0) return 0;
             pos--;
-            while (pos > 0 && Character.isWhitespace(text.charAt(pos))) pos--;
-            while (pos > 0 && !Character.isWhitespace(text.charAt(pos - 1))) pos--;
+            while (pos > 0 && Character.isWhitespace(Component.charAt(pos))) pos--;
+            while (pos > 0 && !Character.isWhitespace(Component.charAt(pos - 1))) pos--;
         } else {
-            if (pos >= text.length()) return text.length();
-            while (pos < text.length() && !Character.isWhitespace(text.charAt(pos))) pos++;
-            while (pos < text.length() && Character.isWhitespace(text.charAt(pos))) pos++;
+            if (pos >= Component.length()) return Component.length();
+            while (pos < Component.length() && !Character.isWhitespace(Component.charAt(pos))) pos++;
+            while (pos < Component.length() && Character.isWhitespace(Component.charAt(pos))) pos++;
         }
         return pos;
     }
@@ -361,17 +361,17 @@ public class TextInputComponent extends UIComponent {
     }
 
     private void fireChanged() {
-        if (onChanged != null) onChanged.accept(text.toString());
+        if (onChanged != null) onChanged.accept(Component.toString());
     }
 
     // =====================================================================
     //  Accessors
     // =====================================================================
 
-    public String getText()                     { return text.toString(); }
+    public String getText()                     { return Component.toString(); }
     public TextInputComponent setText(String t) {
-        text = new StringBuilder(t != null ? t : "");
-        cursorPos = text.length();
+        Component = new StringBuilder(t != null ? t : "");
+        cursorPos = Component.length();
         selectionStart = -1;
         scrollOffset = 0;
         fireChanged();
@@ -387,7 +387,7 @@ public class TextInputComponent extends UIComponent {
     public TextInputComponent    setOnChanged(Consumer<String> cb) { this.onChanged = cb; return this; }
     public TextInputComponent    setCharFilter(Predicate<Character> f) { this.charFilter = f; return this; }
     public int     getCursorPos()               { return cursorPos; }
-    public TextInputComponent    setCursorPos(int pos)        { this.cursorPos = Math.clamp(pos, 0, text.length()); return this; }
+    public TextInputComponent    setCursorPos(int pos)        { this.cursorPos = Math.clamp(pos, 0, Component.length()); return this; }
 
     // ── Appearance setters ───────────────────────────────────────────────
     public TextInputComponent setBackgroundColor(int c)       { this.backgroundColor = c; return this; }
@@ -432,14 +432,14 @@ public class TextInputComponent extends UIComponent {
     }
 
     /**
-     * Parse the text content as a numeric value, clamped to the configured range.
+     * Parse the Component content as a numeric value, clamped to the configured range.
      *
      * @return the numeric value, or 0 if parsing fails
      * @since 1.15.0
      */
     public double getNumericValue() {
         try {
-            double val = Double.parseDouble(text.toString());
+            double val = Double.parseDouble(Component.toString());
             return Math.max(numericMin, Math.min(numericMax, val));
         } catch (NumberFormatException e) {
             return 0;
@@ -447,7 +447,7 @@ public class TextInputComponent extends UIComponent {
     }
 
     /**
-     * Set the numeric value (sets the text to the string representation).
+     * Set the numeric value (sets the Component to the string representation).
      *
      * @param value the value to set
      * @return this component for chaining
@@ -471,7 +471,7 @@ public class TextInputComponent extends UIComponent {
     // ── Focus integration ────────────────────────────────────────────────
 
     /**
-     * Programmatically focus this text input.
+     * Programmatically focus this Component input.
      * Sets the internal focus flag and registers with the FocusManager.
      *
      * @return this component for chaining

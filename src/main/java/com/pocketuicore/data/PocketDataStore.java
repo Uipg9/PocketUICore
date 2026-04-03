@@ -1,14 +1,15 @@
 package com.pocketuicore.data;
 
 import com.mojang.serialization.Codec;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateType;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 /**
  * Pocket Data Store — Generic persistent server-side storage.
  * <p>
- * A reusable wrapper around Minecraft's {@link PersistentState} system
+ * A reusable wrapper around Minecraft's {@link SavedData} system
  * that makes it trivial to persist arbitrary data using Codec-based
  * serialisation.
  * <p>
@@ -32,7 +33,7 @@ import net.minecraft.world.PersistentStateType;
  *
  * @param <T> the data type to persist
  */
-public class PocketDataStore<T> extends PersistentState {
+public class PocketDataStore<T> extends SavedData {
 
     private T data;
 
@@ -46,7 +47,7 @@ public class PocketDataStore<T> extends PersistentState {
     /** Set the stored data and mark dirty for saving. */
     public void setData(T data) {
         this.data = data;
-        markDirty();
+        setDirty();
     }
 
     // =====================================================================
@@ -55,18 +56,18 @@ public class PocketDataStore<T> extends PersistentState {
 
     /**
      * Descriptor for creating a {@link PocketDataStore} type that can be
-     * registered with the overworld's PersistentStateManager.
+    * registered with the overworld's SavedDataStorage.
      *
      * @param <T> the data type
      */
     public static final class Type<T> {
-        private final PersistentStateType<PocketDataStore<T>> stateType;
+        private final SavedDataType<PocketDataStore<T>> stateType;
 
-        Type(PersistentStateType<PocketDataStore<T>> stateType) {
+        Type(SavedDataType<PocketDataStore<T>> stateType) {
             this.stateType = stateType;
         }
 
-        public PersistentStateType<PocketDataStore<T>> getStateType() {
+        public SavedDataType<PocketDataStore<T>> getStateType() {
             return stateType;
         }
     }
@@ -94,8 +95,12 @@ public class PocketDataStore<T> extends PersistentState {
                 toRaw
         );
 
-        PersistentStateType<PocketDataStore<T>> pst = new PersistentStateType<>(
-                id,
+        Identifier stateId = id.contains(":")
+            ? Identifier.parse(id)
+            : Identifier.fromNamespaceAndPath("pocketuicore", id);
+
+        SavedDataType<PocketDataStore<T>> pst = new SavedDataType<>(
+            stateId,
                 () -> new PocketDataStore<>(factory.get()),
                 storeCodec,
                 null
@@ -110,7 +115,7 @@ public class PocketDataStore<T> extends PersistentState {
 
     /**
      * Retrieve (or create) a data store from the server's overworld
-     * persistent state manager.
+    * SavedData storage.
      *
      * @param server the running MinecraftServer
      * @param type   the store type descriptor
@@ -118,8 +123,8 @@ public class PocketDataStore<T> extends PersistentState {
      * @return the singleton PocketDataStore for this type
      */
     public static <T> PocketDataStore<T> get(MinecraftServer server, Type<T> type) {
-        return server.getOverworld()
-                     .getPersistentStateManager()
-                     .getOrCreate(type.getStateType());
+        return server.overworld()
+                     .getDataStorage()
+                     .computeIfAbsent(type.getStateType());
     }
 }

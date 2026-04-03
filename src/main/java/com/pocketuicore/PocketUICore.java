@@ -48,10 +48,10 @@ public class PocketUICore implements ModInitializer {
     public void onInitialize() {
         if (economyEnabled) {
             // Register S2C payload types
-            PayloadTypeRegistry.playS2C()
-                    .register(SyncBalancePayload.ID, SyncBalancePayload.CODEC);
-            PayloadTypeRegistry.playS2C()
-                    .register(SyncEstatePayload.ID, SyncEstatePayload.CODEC);
+            PayloadTypeRegistry.clientboundPlay()
+                .register(SyncBalancePayload.TYPE, SyncBalancePayload.STREAM_CODEC);
+            PayloadTypeRegistry.clientboundPlay()
+                .register(SyncEstatePayload.TYPE, SyncEstatePayload.STREAM_CODEC);
 
             // Sync balance + estate growth to client when a player joins
             // Also restore persisted estate growth from disk

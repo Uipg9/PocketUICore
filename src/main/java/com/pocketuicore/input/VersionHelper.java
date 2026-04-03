@@ -6,7 +6,7 @@ import net.minecraft.SharedConstants;
  * Version-Aware Abstraction Layer — detects the running Minecraft version
  * and exposes version checks so downstream mods can branch on API differences.
  * <p>
- * Combined with {@link InputHelper} (which normalises Click/KeyInput across
+ * Combined with {@link InputHelper} (which normalises MouseButtonEvent/KeyEvent across
  * versions) this provides the "multi-version abstraction" layer of PocketUICore.
  * <p>
  * <b>Usage:</b>
@@ -23,7 +23,7 @@ public final class VersionHelper {
     private VersionHelper() {}
 
     /** The full Minecraft version string (e.g. "1.21.11"). */
-    public static final String MC_VERSION = SharedConstants.getGameVersion().name();
+    public static final String MC_VERSION = SharedConstants.getCurrentVersion().name();
 
     private static final int[] PARSED = parseVersion(MC_VERSION);
 

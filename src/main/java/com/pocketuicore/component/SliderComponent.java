@@ -1,15 +1,15 @@
 package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.function.Consumer;
 
 /**
  * SliderComponent — A horizontal slider for picking a value in a range.
  * <p>
- * Renders a track with a draggable thumb. Supports mouse drag, click-to-set,
+ * Renders a track with a draggable thumb. Supports mouse drag, MouseButtonEvent-to-set,
  * keyboard left/right arrows (when focused), and an optional value-changed
  * callback.
  * <p>
@@ -117,7 +117,7 @@ public class SliderComponent extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         int trackY = y + (height - trackHeight) / 2;
 
         // Track background

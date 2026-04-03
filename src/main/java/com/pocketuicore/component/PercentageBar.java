@@ -1,10 +1,10 @@
 package com.pocketuicore.component;
 
-import com.pocketuicore.render.ProceduralRenderer;
+import com.pocketuicore.render.RenderUtils;
 import com.pocketuicore.render.Theme;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 /**
  * Module 2 — PercentageBar
@@ -17,7 +17,7 @@ import net.minecraft.client.gui.DrawContext;
  * <ol>
  *   <li>Background track (rounded rect, dark)</li>
  *   <li>Fill bar (rounded rect, coloured, clipped to current %)</li>
- *   <li>Label text (optional, centred)</li>
+ *   <li>Label Component (optional, centred)</li>
  * </ol>
  */
 public class PercentageBar extends UIComponent {
@@ -108,7 +108,7 @@ public class PercentageBar extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         // ── Ease display toward target ───────────────────────────────────
         float diff = targetProgress - displayProgress;
         if (Math.abs(diff) < 0.001f) {
@@ -126,7 +126,7 @@ public class PercentageBar extends UIComponent {
         int resolvedTrack = trackColor == THEME_DEFAULT ? Theme.current().bgPrimary()   : trackColor;
         int resolvedBar   = barColor   == THEME_DEFAULT ? Theme.current().accentTeal()  : barColor;
         int resolvedText  = textColor  == THEME_DEFAULT ? Theme.current().textPrimary() : textColor;
-        ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, resolvedTrack);
+        RenderUtils.fillRoundedRect(ctx, x, y, width, height, cornerRadius, resolvedTrack);
 
         // ── Fill bar ─────────────────────────────────────────────────────
         int fillW = Math.round(width * displayProgress);
@@ -142,7 +142,7 @@ public class PercentageBar extends UIComponent {
                 renderColor = getGradientColor(displayProgress);
             }
 
-            ProceduralRenderer.fillRoundedRect(ctx, x, y, fillW, height, barRadius, renderColor);
+            RenderUtils.fillRoundedRect(ctx, x, y, fillW, height, barRadius, renderColor);
             ctx.disableScissor();
         }
 
@@ -150,28 +150,28 @@ public class PercentageBar extends UIComponent {
         if (pulseAtFull && displayProgress >= 0.999f) {
             float pulse = (float) (Math.sin(System.nanoTime() / 200_000_000.0) * 0.3 + 0.7);
             int glowAlpha = (int) (pulse * 80);
-            int glowColor = ProceduralRenderer.withAlpha(0xFFFFFFFF, glowAlpha);
-            ProceduralRenderer.fillRoundedRect(ctx, x, y, width, height, cornerRadius, glowColor);
+            int glowColor = RenderUtils.withAlpha(0xFFFFFFFF, glowAlpha);
+            RenderUtils.fillRoundedRect(ctx, x, y, width, height, cornerRadius, glowColor);
             // Bright border pulse
             int borderAlpha = (int) (pulse * 160);
-            int borderColor = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_SUCCESS, borderAlpha);
-            ProceduralRenderer.drawRoundedBorder(ctx, x, y, width, height, cornerRadius, borderColor);
+            int borderColor = RenderUtils.withAlpha(RenderUtils.COL_SUCCESS, borderAlpha);
+            RenderUtils.drawRoundedBorder(ctx, x, y, width, height, cornerRadius, borderColor);
         }
 
-        // ── Label / percentage text ──────────────────────────────────────
+        // ── Label / percentage Component ──────────────────────────────────────
         String displayText = resolveDisplayText();
 
         if (displayText != null) {
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer tr = client.textRenderer;
-            int textY = y + (height - tr.fontHeight) / 2;
-            ProceduralRenderer.drawCenteredText(ctx, tr, displayText,
+            Minecraft client = Minecraft.getInstance();
+            Font tr = client.font;
+            int textY = y + (height - tr.lineHeight) / 2;
+            RenderUtils.drawCenteredText(ctx, tr, displayText,
                     x + width / 2, textY, resolvedText);
         }
     }
 
     /**
-     * Resolve the label text based on the current format settings.
+     * Resolve the label Component based on the current format settings.
      */
     private String resolveDisplayText() {
         // Explicit label always takes priority
@@ -193,15 +193,15 @@ public class PercentageBar extends UIComponent {
     private int getGradientColor(float progress) {
         if (progress < 0.5f) {
             // Red → Yellow (0% → 50%)
-            return ProceduralRenderer.lerpColor(
-                    ProceduralRenderer.COL_ERROR,
-                    ProceduralRenderer.COL_WARNING,
+            return RenderUtils.lerpColor(
+                    RenderUtils.COL_ERROR,
+                    RenderUtils.COL_WARNING,
                     progress * 2f);
         } else {
             // Yellow → Green (50% → 100%)
-            return ProceduralRenderer.lerpColor(
-                    ProceduralRenderer.COL_WARNING,
-                    ProceduralRenderer.COL_SUCCESS,
+            return RenderUtils.lerpColor(
+                    RenderUtils.COL_WARNING,
+                    RenderUtils.COL_SUCCESS,
                     (progress - 0.5f) * 2f);
         }
     }
@@ -243,7 +243,7 @@ public class PercentageBar extends UIComponent {
     @Deprecated
     public PercentageBar setLabel(String l)        { this.label = l; return this; }
     /** Primary label setter — consistent with TextLabel. @since 1.12.0 */
-    public PercentageBar setText(String text)      { this.label = text; return this; }
+    public PercentageBar setText(String Component)      { this.label = Component; return this; }
     public String getLabel()               { return label; }
     public PercentageBar setShowPercentage(boolean b) { this.showPercentage = b; return this; }
     public boolean isShowPercentage()      { return showPercentage; }
@@ -324,9 +324,9 @@ public class PercentageBar extends UIComponent {
 
     /** Colour the bar to reflect "health"-style thresholds. */
     public void applyHealthColors() {
-        if (displayProgress > 0.5f)  barColor = ProceduralRenderer.COL_SUCCESS;
-        else if (displayProgress > 0.25f) barColor = ProceduralRenderer.COL_WARNING;
-        else barColor = ProceduralRenderer.COL_ERROR;
+        if (displayProgress > 0.5f)  barColor = RenderUtils.COL_SUCCESS;
+        else if (displayProgress > 0.25f) barColor = RenderUtils.COL_WARNING;
+        else barColor = RenderUtils.COL_ERROR;
     }
 
     private static float clamp01(float v) { return Math.max(0f, Math.min(1f, v)); }

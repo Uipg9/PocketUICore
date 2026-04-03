@@ -1,12 +1,14 @@
 package com.pocketuicore.component;
 
+import com.pocketcanvascore.render.PocketTheme;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.input.MouseButtonEvent;
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
+import com.pocketuicore.render.RenderContext;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +42,7 @@ public abstract class UIComponent {
     protected boolean enabled = true;
     /**
      * When {@code true}, this component consumes all input events within its
-     * bounds even if no child handles them — preventing click-through to
+     * bounds even if no child handles them — preventing MouseButtonEvent-through to
      * siblings rendered behind it (strict Z-index blocking).
      */
     protected boolean blockInputInBounds = false;
@@ -62,7 +64,7 @@ public abstract class UIComponent {
     /** Component opacity (0.0 = fully transparent, 1.0 = fully opaque). Default 1.0. */
     private float opacity = 1.0f;
 
-    // ── Click handler ────────────────────────────────────────────────────
+    // ── MouseButtonEvent handler ────────────────────────────────────────────────────
     private Runnable onClick;
 
     // ── Tree ─────────────────────────────────────────────────────────────
@@ -96,7 +98,7 @@ public abstract class UIComponent {
      * components like {@link Dropdown} can paint their expanded list
      * above all siblings.
      */
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void render(RenderContext ctx, int mouseX, int mouseY, float delta) {
         if (!visible) return;
         renderSelf(ctx, mouseX, mouseY, delta);
         updateTooltipHover(mouseX, mouseY);
@@ -113,7 +115,7 @@ public abstract class UIComponent {
      * Override this instead of {@link #render} to draw only <em>this</em>
      * component's visuals. Children are rendered automatically afterwards.
      */
-    protected abstract void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta);
+    protected abstract void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta);
 
     /**
      * Render overlay content that must appear above all sibling components.
@@ -124,7 +126,7 @@ public abstract class UIComponent {
      *
      * @since 1.15.0
      */
-    public void renderOverlay(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void renderOverlay(RenderContext ctx, int mouseX, int mouseY, float delta) {
         // Default: no overlay content
     }
 
@@ -133,9 +135,9 @@ public abstract class UIComponent {
     // =====================================================================
 
     /**
-     * Forward a mouse-click to this component tree.
+     * Forward a mouse-MouseButtonEvent to this component tree.
      *
-     * @return {@code true} if the click was consumed.
+     * @return {@code true} if the MouseButtonEvent was consumed.
      */
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
@@ -143,7 +145,7 @@ public abstract class UIComponent {
         for (int i = children.size() - 1; i >= 0; i--) {
             if (children.get(i).mouseClicked(mouseX, mouseY, button)) return true;
         }
-        // onClick handler — fires on left-click when hovered
+        // onClick handler — fires on left-MouseButtonEvent when hovered
         if (button == 0 && onClick != null && isHovered(mouseX, mouseY)) {
             onClick.run();
             return true;
@@ -230,69 +232,69 @@ public abstract class UIComponent {
     // ── MC 1.21.11 Input API bridges (v1.10.0) ─────────────────────────
 
     /**
-     * Bridge for MC 1.21.11's {@link Click} record.
+     * Bridge for MC 1.21.11's {@link MouseButtonEvent} record.
      * Decomposes the record and delegates to
      * {@link #mouseClicked(double, double, int)}.
      *
-     * @param click the Click record from the new input API
-     * @return {@code true} if the click was consumed
+     * @param MouseButtonEvent the MouseButtonEvent record from the new input API
+     * @return {@code true} if the MouseButtonEvent was consumed
      * @since 1.10.0
      */
-    public boolean mouseClicked(Click click) {
-        return mouseClicked(click.x(), click.y(), click.buttonInfo().button());
+    public boolean mouseClicked(MouseButtonEvent MouseButtonEvent) {
+        return mouseClicked(MouseButtonEvent.x(), MouseButtonEvent.y(), MouseButtonEvent.buttonInfo().button());
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link Click} record with keyboard flag.
+     * Bridge for MC 1.21.11's {@link MouseButtonEvent} record with keyboard flag.
      * The {@code fromKeyboard} parameter is provided for compatibility
      * but is currently unused by the component tree.
      *
-     * @param click        the Click record
-     * @param fromKeyboard {@code true} if the click originated from a keyboard
-     * @return {@code true} if the click was consumed
+     * @param MouseButtonEvent        the MouseButtonEvent record
+     * @param fromKeyboard {@code true} if the MouseButtonEvent originated from a keyboard
+     * @return {@code true} if the MouseButtonEvent was consumed
      * @since 1.10.0
      */
-    public boolean mouseClicked(Click click, boolean fromKeyboard) {
-        return mouseClicked(click.x(), click.y(), click.buttonInfo().button());
+    public boolean mouseClicked(MouseButtonEvent MouseButtonEvent, boolean fromKeyboard) {
+        return mouseClicked(MouseButtonEvent.x(), MouseButtonEvent.y(), MouseButtonEvent.buttonInfo().button());
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link Click} record on mouse release.
+     * Bridge for MC 1.21.11's {@link MouseButtonEvent} record on mouse release.
      * Decomposes the record and delegates to
      * {@link #mouseReleased(double, double, int)}.
      *
-     * @param click the Click record
+     * @param MouseButtonEvent the MouseButtonEvent record
      * @return {@code true} if the release was consumed
      * @since 1.10.0
      */
-    public boolean mouseReleased(Click click) {
-        return mouseReleased(click.x(), click.y(), click.buttonInfo().button());
+    public boolean mouseReleased(MouseButtonEvent MouseButtonEvent) {
+        return mouseReleased(MouseButtonEvent.x(), MouseButtonEvent.y(), MouseButtonEvent.buttonInfo().button());
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link KeyInput} record.
+     * Bridge for MC 1.21.11's {@link KeyEvent} record.
      * Decomposes the record and delegates to
      * {@link #keyPressed(int, int, int)}.
      *
-     * @param input the KeyInput record
+     * @param input the KeyEvent record
      * @return {@code true} if the key was consumed
      * @since 1.10.0
      */
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         return keyPressed(input.key(), input.scancode(), input.modifiers());
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link CharInput} record.
+     * Bridge for MC 1.21.11's {@link CharacterEvent} record.
      * Decomposes the record and delegates to
      * {@link #charTyped(char, int)}.
      *
-     * @param input the CharInput record
+     * @param input the CharacterEvent record
      * @return {@code true} if the character was consumed
      * @since 1.14.0
      */
-    public boolean charTyped(CharInput input) {
-        return charTyped((char) input.codepoint(), input.modifiers());
+    public boolean charTyped(CharacterEvent input) {
+        return charTyped((char) input.codepoint(), 0);
     }
 
     // =====================================================================
@@ -456,7 +458,7 @@ public abstract class UIComponent {
     /**
      * Centre this component horizontally within the given screen width.
      *
-     * @param screenWidth the total available width (e.g. from {@link net.minecraft.client.gui.screen.Screen#width})
+     * @param screenWidth the total available width (e.g. from {@link net.minecraft.client.gui.screens.Screen#width})
      * @return this component for chaining
      * @since 1.14.0
      */
@@ -577,14 +579,14 @@ public abstract class UIComponent {
     public UIComponent setBlockInputInBounds(boolean b) { this.blockInputInBounds = b; return this; }
 
     /**
-     * Set a click handler on any component.  When set, the component
+     * Set a MouseButtonEvent handler on any component.  When set, the component
      * will consume left-clicks within its bounds and invoke this callback.
      *
-     * @param handler action to run on click, or {@code null} to remove
+     * @param handler action to run on MouseButtonEvent, or {@code null} to remove
      */
     public UIComponent setOnClick(Runnable handler) { this.onClick = handler; return this; }
 
-    /** @return the current click handler, or {@code null}. */
+    /** @return the current MouseButtonEvent handler, or {@code null}. */
     public Runnable getOnClick() { return onClick; }
 
     // ── Fluent with*() builders (v1.14.0) ────────────────────────────────
@@ -657,7 +659,7 @@ public abstract class UIComponent {
      * Set tooltip lines for this component.  The tooltip is displayed
      * after the mouse hovers over the component for 0.5 seconds.
      *
-     * @param lines one or more lines of tooltip text (pass {@code null}
+     * @param lines one or more lines of tooltip Component (pass {@code null}
      *              or empty to remove)
      */
     public UIComponent setTooltip(String... lines) {
@@ -668,7 +670,7 @@ public abstract class UIComponent {
     /** @return the tooltip lines, or {@code null} if none. */
     public String[] getTooltip() { return tooltipLines; }
 
-    /** @return {@code true} if this component has tooltip text. */
+    /** @return {@code true} if this component has tooltip Component. */
     public boolean hasTooltip() {
         return (tooltipLines != null && tooltipLines.length > 0)
             || richTooltip != null
@@ -746,7 +748,7 @@ public abstract class UIComponent {
      * @param mouseX current mouse X
      * @param mouseY current mouse Y
      */
-    public static void renderTooltip(DrawContext ctx, UIComponent root,
+    public static void renderTooltip(RenderContext ctx, UIComponent root,
                                       int mouseX, int mouseY) {
         UIComponent target = findDeepestTooltipTarget(root, mouseX, mouseY);
         if (target == null) return;
@@ -782,16 +784,16 @@ public abstract class UIComponent {
         return comp.hasTooltip() ? comp : null;
     }
 
-    private static void drawTooltipBox(DrawContext ctx, String[] lines,
+    private static void drawTooltipBox(RenderContext ctx, String[] lines,
                                         int mouseX, int mouseY) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
 
         int pad   = 4;
-        int lineH = tr.fontHeight + 2;
+        int lineH = tr.lineHeight + 2;
         int maxW  = 0;
         for (String line : lines) {
-            maxW = Math.max(maxW, tr.getWidth(line));
+            maxW = Math.max(maxW, tr.width(line));
         }
         int boxW = maxW + pad * 2;
         int boxH = lines.length * lineH + pad * 2 - 2;
@@ -800,21 +802,20 @@ public abstract class UIComponent {
         int by = mouseY - 12;
 
         // Clamp to screen edges
-        int sw = client.getWindow().getScaledWidth();
-        int sh = client.getWindow().getScaledHeight();
+        int sw = client.getWindow().getGuiScaledWidth();
+        int sh = client.getWindow().getGuiScaledHeight();
         if (bx + boxW > sw) bx = mouseX - boxW - 4;
         if (by + boxH > sh) by = sh - boxH;
         if (by < 0) by = 0;
 
-        ProceduralRenderer.fillRoundedRect(ctx, bx, by, boxW, boxH,
-                3, 0xF0100020);
-        ProceduralRenderer.drawRoundedBorder(ctx, bx, by, boxW, boxH,
-                3, ProceduralRenderer.COL_ACCENT);
+        ProceduralRenderer.fillRoundedRect(ctx, bx, by, boxW, boxH, 3,
+            ProceduralRenderer.withAlpha(0xFF100020, 240)); // tooltip background
+        ProceduralRenderer.drawRoundedBorder(ctx, bx, by, boxW, boxH, 3, PocketTheme.BORDER_ACCENT);
 
         int ty = by + pad;
         for (String line : lines) {
-            ProceduralRenderer.drawText(ctx, tr, line, bx + pad, ty,
-                    ProceduralRenderer.COL_TEXT_PRIMARY);
+            ctx.drawTextWithShadow(tr, Component.literal(line), bx + pad, ty,
+                    PocketTheme.TEXT_MAIN);
             ty += lineH;
         }
     }

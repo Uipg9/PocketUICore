@@ -1,5 +1,29 @@
 # Migration Guide
 
+## Upgrading to 1.16.0
+
+PocketUICore 1.16.0 moves the library target to **Minecraft 26.1.1** and Java 25.
+
+### Breaking environment changes
+
+- Minimum Minecraft version is now `26.1`.
+- Minimum Java version is now `25`.
+- Build toolchain and runtime dependencies are aligned to Fabric 26.1.1 artifacts.
+
+### Internal migration highlights
+
+- Rendering now routes through a shared `RenderContext` boundary with a 26.1 `GuiGraphicsAdapter` implementation.
+- Payload and sync networking code was migrated to modern payload registration/type + codec APIs.
+- Saved-data persistence moved to current `SavedData`/`SavedDataType` patterns used by 26.1.
+- Screen, keyboard, mouse, and window call sites were updated to 26.1 signatures/accessors.
+
+### Upgrade steps for dependent mods
+
+1. Update your dependency to `com.pocketuicore:pocketuicore:1.16.0`.
+2. Update your dev/runtime Java to 25.
+3. Ensure your mod targets Minecraft/Fabric versions compatible with 26.1.1.
+4. Rebuild and test all custom screens/components that integrate with PocketUICore.
+
 ## Upgrading to 1.10.0
 
 PocketUICore 1.10.0 is **fully backward-compatible** with 1.9.0. All new APIs are additive — no existing method signatures were changed or removed.

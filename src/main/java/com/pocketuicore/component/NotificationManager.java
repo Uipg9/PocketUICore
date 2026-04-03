@@ -1,11 +1,11 @@
 package com.pocketuicore.component;
 
-import com.pocketuicore.render.ProceduralRenderer;
+import com.pocketuicore.render.RenderUtils;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -51,13 +51,13 @@ public final class NotificationManager {
     /** Predefined notification types with distinct colours and icons. */
     public enum NotificationType {
         /** Green — positive outcome. */
-        SUCCESS(ProceduralRenderer.COL_SUCCESS, "\u2714 "),   // ✔
+        SUCCESS(RenderUtils.COL_SUCCESS, "\u2714 "),   // ✔
         /** Red — error / failure. */
-        ERROR(ProceduralRenderer.COL_ERROR, "\u2716 "),       // ✖
+        ERROR(RenderUtils.COL_ERROR, "\u2716 "),       // ✖
         /** Yellow — warning / caution. */
-        WARNING(ProceduralRenderer.COL_WARNING, "\u26A0 "),   // ⚠
+        WARNING(RenderUtils.COL_WARNING, "\u26A0 "),   // ⚠
         /** Teal — informational. */
-        INFO(ProceduralRenderer.COL_ACCENT_TEAL, "\u2139 "),  // ℹ
+        INFO(RenderUtils.COL_ACCENT_TEAL, "\u2139 "),  // ℹ
         /** Gold — milestone / achievement. */
         MILESTONE(0xFFFFD700, "\u2605 ");                     // ★
 
@@ -178,7 +178,7 @@ public final class NotificationManager {
      * Show a typed notification with full options.
      *
      * @param type       notification type
-     * @param message    the message text
+     * @param message    the message Component
      * @param durationMs display duration in milliseconds
      * @param playSound  whether to play a type-appropriate sound
      */
@@ -209,7 +209,7 @@ public final class NotificationManager {
      * Show a persistent notification that stays on screen until dismissed.
      *
      * @param type    notification type
-     * @param message the message text
+     * @param message the message Component
      * @return the notification ID — pass to {@link #dismissPersistent} to remove
      * @since 1.13.0
      */
@@ -221,7 +221,7 @@ public final class NotificationManager {
      * Show a persistent notification with a dismiss callback.
      *
      * @param type      notification type
-     * @param message   the message text
+     * @param message   the message Component
      * @param onDismiss callback when dismissed (may be {@code null})
      * @return the notification ID
      * @since 1.13.0
@@ -265,11 +265,11 @@ public final class NotificationManager {
     /**
      * Render all active notifications. Call at the end of your render method.
      */
-    public static void renderAll(DrawContext ctx, int screenW, int screenH, float delta) {
+    public static void renderAll(RenderContext ctx, int screenW, int screenH, float delta) {
         if (active.isEmpty() && queue.isEmpty()) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer tr = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font tr = client.font;
         long now = System.currentTimeMillis();
 
         // Remove expired and promote from queue
@@ -311,9 +311,9 @@ public final class NotificationManager {
             alpha = Math.clamp(alpha, 0f, 1f);
 
             String fullText = n.type.prefix + n.message;
-            int textW = tr.getWidth(fullText);
+            int textW = tr.width(fullText);
             int boxW  = textW + pad * 2;
-            int boxH  = tr.fontHeight + pad * 2;
+            int boxH  = tr.lineHeight + pad * 2;
 
             // Position
             int bx, by;
@@ -339,19 +339,19 @@ public final class NotificationManager {
 
             // Draw
             int bgAlpha = (int) (alpha * 220);
-            int bgColor = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_BG_ELEVATED, bgAlpha);
+            int bgColor = RenderUtils.withAlpha(RenderUtils.COL_BG_ELEVATED, bgAlpha);
             int borderAlpha = (int) (alpha * 180);
-            int border  = ProceduralRenderer.withAlpha(n.type.color, borderAlpha);
-            int txtCol  = ProceduralRenderer.withAlpha(n.type.color, (int) (alpha * 255));
+            int border  = RenderUtils.withAlpha(n.type.color, borderAlpha);
+            int txtCol  = RenderUtils.withAlpha(n.type.color, (int) (alpha * 255));
 
-            ProceduralRenderer.fillRoundedRect(ctx, bx, by, boxW, boxH, 4, bgColor);
-            ProceduralRenderer.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, border);
+            RenderUtils.fillRoundedRect(ctx, bx, by, boxW, boxH, 4, bgColor);
+            RenderUtils.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, border);
 
             // Accent stripe on left
-            int stripeColor = ProceduralRenderer.withAlpha(n.type.color, (int) (alpha * 200));
+            int stripeColor = RenderUtils.withAlpha(n.type.color, (int) (alpha * 200));
             ctx.fill(bx + 1, by + 3, bx + 3, by + boxH - 3, stripeColor);
 
-            ctx.drawTextWithShadow(tr, Text.literal(fullText),
+            ctx.drawTextWithShadow(tr, Component.literal(fullText),
                     bx + pad, by + pad, txtCol);
 
             idx++;
@@ -363,9 +363,9 @@ public final class NotificationManager {
             float alpha = Math.min(1f, elapsed / 200f); // 200 ms fade-in
 
             String fullText = pn.type.prefix + pn.message;
-            int textW = tr.getWidth(fullText);
+            int textW = tr.width(fullText);
             int boxW  = textW + pad * 2 + 12; // extra for "×" dismiss hint
-            int boxH  = tr.fontHeight + pad * 2;
+            int boxH  = tr.lineHeight + pad * 2;
 
             int bx, by;
             switch (position) {
@@ -388,20 +388,20 @@ public final class NotificationManager {
             }
 
             int bgAlpha = (int) (alpha * 220);
-            int bgColor = ProceduralRenderer.withAlpha(ProceduralRenderer.COL_BG_ELEVATED, bgAlpha);
+            int bgColor = RenderUtils.withAlpha(RenderUtils.COL_BG_ELEVATED, bgAlpha);
             int borderAlpha = (int) (alpha * 220);
-            int border  = ProceduralRenderer.withAlpha(pn.type.color, borderAlpha);
-            int txtCol  = ProceduralRenderer.withAlpha(pn.type.color, (int) (alpha * 255));
+            int border  = RenderUtils.withAlpha(pn.type.color, borderAlpha);
+            int txtCol  = RenderUtils.withAlpha(pn.type.color, (int) (alpha * 255));
 
-            ProceduralRenderer.fillRoundedRect(ctx, bx, by, boxW, boxH, 4, bgColor);
-            ProceduralRenderer.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, border);
+            RenderUtils.fillRoundedRect(ctx, bx, by, boxW, boxH, 4, bgColor);
+            RenderUtils.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, border);
 
             // Accent stripe + pulsing left edge
             int stripeAlpha = (int) (alpha * (160 + 40 * Math.sin(elapsed / 400.0)));
-            int stripeColor = ProceduralRenderer.withAlpha(pn.type.color, Math.clamp(stripeAlpha, 0, 255));
+            int stripeColor = RenderUtils.withAlpha(pn.type.color, Math.clamp(stripeAlpha, 0, 255));
             ctx.fill(bx + 1, by + 3, bx + 3, by + boxH - 3, stripeColor);
 
-            ctx.drawTextWithShadow(tr, Text.literal(fullText),
+            ctx.drawTextWithShadow(tr, Component.literal(fullText),
                     bx + pad, by + pad, txtCol);
 
             idx++;
@@ -437,21 +437,21 @@ public final class NotificationManager {
      * This replaces the old {@link FloatingText#show} API; new code should
      * use this method instead.
      *
-     * @param message    the text to display
+     * @param message    the Component to display
      * @param anchor     screen anchor/position
      * @param durationMs how long the toast stays visible (ms)
      * @since 1.13.0
      */
     public static void showToast(String message, FloatingText.Anchor anchor, long durationMs) {
-        FloatingText.show(message, anchor, ProceduralRenderer.COL_TEXT_PRIMARY, durationMs);
+        FloatingText.show(message, anchor, RenderUtils.COL_TEXT_PRIMARY, durationMs);
     }
 
     /**
      * Show a coloured toast at any {@link FloatingText.Anchor} position.
      *
-     * @param message    the text to display
+     * @param message    the Component to display
      * @param anchor     screen anchor/position
-     * @param color      ARGB text colour
+     * @param color      ARGB Component colour
      * @param durationMs how long the toast stays visible (ms)
      * @since 1.13.0
      */

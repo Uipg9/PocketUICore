@@ -50,7 +50,7 @@ public final class ButtonGroup {
     // =====================================================================
 
     /**
-     * Add a button to the group. Its click handler is wrapped so that
+     * Add a button to the group. Its MouseButtonEvent handler is wrapped so that
      * clicking it selects it in the group.
      *
      * @param button the HoverButton to add

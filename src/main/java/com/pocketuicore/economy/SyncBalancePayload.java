@@ -1,9 +1,9 @@
 package com.pocketuicore.economy;
 
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /**
  * SyncBalancePayload — S2C network payload for balance synchronisation.
@@ -13,27 +13,26 @@ import net.minecraft.util.Identifier;
  * {@link com.pocketuicore.data.ObservableState} so all bound UI
  * components refresh automatically.
  * <p>
- * Uses the modern 1.21.11 {@link CustomPayload} + {@link PacketCodec}
- * pattern (no raw PacketByteBuf registration).
+ * Uses {@link CustomPacketPayload.Type} + {@link StreamCodec}.
  *
  * @param balance the player's current balance after the change
  */
-public record SyncBalancePayload(int balance) implements CustomPayload {
+public record SyncBalancePayload(int balance) implements CustomPacketPayload {
 
-    // ── Payload ID ───────────────────────────────────────────────────────
-    public static final CustomPayload.Id<SyncBalancePayload> ID =
-            new CustomPayload.Id<>(Identifier.of("pocketuicore", "sync_balance"));
+    // ── Payload type ─────────────────────────────────────────────────────
+    public static final CustomPacketPayload.Type<SyncBalancePayload> TYPE =
+            CustomPacketPayload.createType("pocketuicore:sync_balance");
 
-    // ── Packet Codec ─────────────────────────────────────────────────────
-    public static final PacketCodec<io.netty.buffer.ByteBuf, SyncBalancePayload> CODEC =
-            PacketCodec.tuple(
-                    PacketCodecs.INTEGER, SyncBalancePayload::balance,
+    // ── Stream codec ─────────────────────────────────────────────────────
+    public static final StreamCodec<ByteBuf, SyncBalancePayload> STREAM_CODEC =
+            StreamCodec.composite(
+                    ByteBufCodecs.INT, SyncBalancePayload::balance,
                     SyncBalancePayload::new
             );
 
-    // ── CustomPayload implementation ─────────────────────────────────────
+    // ── CustomPacketPayload implementation ───────────────────────────────
     @Override
-    public CustomPayload.Id<? extends CustomPayload> getId() {
-        return ID;
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

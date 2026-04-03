@@ -2,9 +2,9 @@ package com.pocketuicore.render;
 
 import com.pocketuicore.component.FocusManager;
 import com.pocketuicore.component.UIComponent;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import java.util.List;
  *     }
  *
  *     @Override
- *     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+ *     public void render(RenderContext ctx, int mouseX, int mouseY, float delta) {
  *         super.render(ctx, mouseX, mouseY, delta);
  *         DebugOverlay.render(ctx, rootComponents, mouseX, mouseY);
  *     }
@@ -74,11 +74,11 @@ public final class DebugOverlay {
      * @param mouseX     current mouse X
      * @param mouseY     current mouse Y
      */
-    public static void render(DrawContext ctx, List<? extends UIComponent> roots,
+    public static void render(RenderContext ctx, List<? extends UIComponent> roots,
                                int mouseX, int mouseY) {
         if (!enabled || roots == null) return;
 
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
+        Font tr = Minecraft.getInstance().font;
         FocusManager fm = FocusManager.getInstance();
 
         for (UIComponent root : roots) {
@@ -92,17 +92,17 @@ public final class DebugOverlay {
                 String info = hovered.getClass().getSimpleName()
                         + " [" + hovered.getX() + "," + hovered.getY()
                         + " " + hovered.getWidth() + "x" + hovered.getHeight() + "]";
-                int tw = tr.getWidth(info);
+                int tw = tr.width(info);
                 int tooltipX = mouseX + 12;
                 int tooltipY = mouseY - 12;
-                ctx.fill(tooltipX - 2, tooltipY - 2, tooltipX + tw + 2, tooltipY + tr.fontHeight + 2, 0xCC000000);
+                ctx.fill(tooltipX - 2, tooltipY - 2, tooltipX + tw + 2, tooltipY + tr.lineHeight + 2, 0xCC000000);
                 ProceduralRenderer.drawText(ctx, tr, info, tooltipX, tooltipY, 0xFFFFFF00);
                 break;
             }
         }
     }
 
-    private static void renderComponent(DrawContext ctx, TextRenderer tr,
+    private static void renderComponent(RenderContext ctx, Font tr,
                                          FocusManager fm, UIComponent comp, int depth) {
         if (!comp.isVisible()) return;
 

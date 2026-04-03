@@ -1,6 +1,6 @@
 package com.pocketuicore.render;
 
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +53,7 @@ public final class TooltipRenderer {
      * @param ctx the current DrawContext (passed for context; the queued
      *            actions should capture their own DrawContext reference)
      */
-    public static void flush(DrawContext ctx) {
+    public static void flush(RenderContext ctx) {
         if (pending.isEmpty()) return;
         for (Runnable action : pending) {
             action.run();

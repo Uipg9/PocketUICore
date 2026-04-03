@@ -2,14 +2,14 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
-import net.minecraft.client.gui.DrawContext;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.function.Consumer;
 
 /**
  * A toggle switch with an animated sliding knob.
  * <p>
- * Click or press A/Cross to toggle between on and off states.
+ * MouseButtonEvent or press A/Cross to toggle between on and off states.
  * The knob slides smoothly between positions.
  *
  * @since 1.12.0
@@ -39,7 +39,7 @@ public class ToggleSwitch extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY, float delta) {
         // Animate knob position
         float target = toggled ? 1f : 0f;
         knobPosition += (target - knobPosition) * 0.3f;

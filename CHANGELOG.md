@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.16.0] — 2026-04-03
+
+### Added
+- **Minecraft 26.1 rendering adapter** - Added shared `RenderContext` wiring with 26.1 `GuiGraphicsAdapter` so shared components render through one version-neutral API.
+- **26.1 screen overlays** - Added/updated version overlay screen implementations to use 26.1 input and rendering entry points.
+
+### Changed
+- **Target platform** - Project now targets **Minecraft 26.1.1** with Fabric API `0.145.3+26.1.1` and Java 25 toolchain.
+- **Stonecutter setup** - Active build matrix now points to `26.1` (`vcsVersion = '26.1'`).
+- **Networking payloads** - Migrated payload registration and codecs to modern payload type + stream codec APIs used by 26.1.
+- **Saved data access** - Migrated economy and persistence state to current `SavedData`/`SavedDataType` patterns.
+- **Client input/window calls** - Updated UI and controller code to current keyboard/window/input accessors and event signatures.
+
+### Fixed
+- **26.1 compilation regressions** - Resolved API breakages across rendering, networking, economy sync, and screen input paths; `:26.1:build` now completes successfully.
+
 ## [1.15.0] — 2025-07-15
 
 ### Fixed — Bug Fixes

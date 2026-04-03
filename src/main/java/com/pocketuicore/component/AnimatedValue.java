@@ -2,9 +2,9 @@ package com.pocketuicore.component;
 
 import com.pocketuicore.animation.AnimationTicker;
 import com.pocketuicore.render.ProceduralRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
 
 import java.util.function.Function;
 
@@ -136,7 +136,7 @@ public final class AnimatedValue extends UIComponent {
     // =====================================================================
 
     @Override
-    protected void renderSelf(DrawContext ctx, int mouseX, int mouseY,
+    protected void renderSelf(RenderContext ctx, int mouseX, int mouseY,
                               float delta) {
         long now = System.nanoTime();
         AnimationTicker ticker = AnimationTicker.getInstance();
@@ -148,8 +148,8 @@ public final class AnimatedValue extends UIComponent {
             displayValue = targetValue;
         }
 
-        // ── Resolve display text ─────────────────────────────────────────
-        String text = formatter.apply(displayValue);
+        // ── Resolve display Component ─────────────────────────────────────────
+        String Component = formatter.apply(displayValue);
 
         // ── Determine colour (flash overlay) ─────────────────────────────
         int color = textColor;
@@ -178,16 +178,16 @@ public final class AnimatedValue extends UIComponent {
         }
 
         // ── Draw ─────────────────────────────────────────────────────────
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
+        Font tr = Minecraft.getInstance().font;
         if (centerText) {
             ProceduralRenderer.drawScaledCenteredText(
-                    ctx, tr, text,
+                    ctx, tr, Component,
                     x + width / 2, y + height / 2 - (int)(4 * scale),
                     color, scale
             );
         } else {
             ProceduralRenderer.drawScaledText(
-                    ctx, tr, text,
+                    ctx, tr, Component,
                     x, y + height / 2 - (int)(4 * scale),
                     color, scale
             );

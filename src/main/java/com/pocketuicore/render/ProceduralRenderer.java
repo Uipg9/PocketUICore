@@ -1,9 +1,9 @@
 package com.pocketuicore.render;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import com.pocketuicore.render.RenderContext;
+import net.minecraft.network.chat.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Module 1 — Procedural Render Engine
  * <p>
- * All drawing is done through {@link DrawContext} with zero external textures.
+ * All drawing is done through {@link RenderContext} with zero external textures.
  * Every shape is constructed from filled rectangles, scanline arcs, and
  * gradient fills so the entire UI is resolution-independent dark-mode art.
  * <p>
@@ -43,9 +43,9 @@ public final class ProceduralRenderer {
     public static final int COL_WARNING       = 0xFFF39C12;
     /** Error red.                         #E74C3C */
     public static final int COL_ERROR         = 0xFFE74C3C;
-    /** Primary text colour.               #EAEAEA */
+    /** Primary Component colour.               #EAEAEA */
     public static final int COL_TEXT_PRIMARY  = 0xFFEAEAEA;
-    /** Secondary / muted text colour.     #A0A0B0 */
+    /** Secondary / muted Component colour.     #A0A0B0 */
     public static final int COL_TEXT_MUTED    = 0xFFA0A0B0;
     /** Subtle border / divider.           #2A2A4A */
     public static final int COL_BORDER        = 0xFF2A2A4A;
@@ -207,7 +207,7 @@ public final class ProceduralRenderer {
      * @param h     height (pixels)
      * @param color ARGB colour
      */
-    public static void fillRect(DrawContext ctx, int x, int y, int w, int h, int color) {
+    public static void fillRect(RenderContext ctx, int x, int y, int w, int h, int color) {
         if (w <= 0 || h <= 0) return;
         ctx.fill(x, y, x + w, y + h, color);
     }
@@ -215,7 +215,7 @@ public final class ProceduralRenderer {
     /**
      * 1-pixel border rectangle (outline only).
      */
-    public static void drawBorder(DrawContext ctx, int x, int y, int w, int h, int color) {
+    public static void drawBorder(RenderContext ctx, int x, int y, int w, int h, int color) {
         ctx.fill(x, y, x + w, y + 1, color);               // top
         ctx.fill(x, y + h - 1, x + w, y + h, color);       // bottom
         ctx.fill(x, y + 1, x + 1, y + h - 1, color);       // left
@@ -234,7 +234,7 @@ public final class ProceduralRenderer {
      *
      * @param radius corner radius in pixels (clamped to half of min dimension)
      */
-    public static void fillRoundedRect(DrawContext ctx, int x, int y, int w, int h, int radius, int color) {
+    public static void fillRoundedRect(RenderContext ctx, int x, int y, int w, int h, int radius, int color) {
         if (w <= 0 || h <= 0) return;
         radius = Math.min(radius, Math.min(w, h) / 2);
         if (radius <= 0) {
@@ -268,7 +268,7 @@ public final class ProceduralRenderer {
     /**
      * Rounded rectangle with a 1-pixel border drawn on top.
      */
-    public static void fillRoundedRectWithBorder(DrawContext ctx, int x, int y, int w, int h,
+    public static void fillRoundedRectWithBorder(RenderContext ctx, int x, int y, int w, int h,
                                                   int radius, int fillColor, int borderColor) {
         fillRoundedRect(ctx, x, y, w, h, radius, fillColor);
         drawRoundedBorder(ctx, x, y, w, h, radius, borderColor);
@@ -277,7 +277,7 @@ public final class ProceduralRenderer {
     /**
      * 1-pixel rounded border (no fill).
      */
-    public static void drawRoundedBorder(DrawContext ctx, int x, int y, int w, int h,
+    public static void drawRoundedBorder(RenderContext ctx, int x, int y, int w, int h,
                                           int radius, int color) {
         if (w <= 0 || h <= 0) return;
         radius = Math.min(radius, Math.min(w, h) / 2);
@@ -318,7 +318,7 @@ public final class ProceduralRenderer {
      * Vertical gradient rectangle (top colour → bottom colour).
      * Uses {@link DrawContext#fillGradient} internally.
      */
-    public static void fillGradientV(DrawContext ctx, int x, int y, int w, int h,
+    public static void fillGradientV(RenderContext ctx, int x, int y, int w, int h,
                                       int topColor, int bottomColor) {
         if (w <= 0 || h <= 0) return;
         ctx.fillGradient(x, y, x + w, y + h, topColor, bottomColor);
@@ -335,7 +335,7 @@ public final class ProceduralRenderer {
      * @param leftColor  ARGB colour on the left edge
      * @param rightColor ARGB colour on the right edge
      */
-    public static void fillGradientH(DrawContext ctx, int x, int y, int w, int h,
+    public static void fillGradientH(RenderContext ctx, int x, int y, int w, int h,
                                       int leftColor, int rightColor) {
         if (w <= 0 || h <= 0) return;
 
@@ -361,7 +361,7 @@ public final class ProceduralRenderer {
      * @param rightColor ARGB colour on the right edge
      * @since 1.13.0
      */
-    public static void fillGradientH(DrawContext ctx, int x, int y, int w, int h,
+    public static void fillGradientH(RenderContext ctx, int x, int y, int w, int h,
                                       int leftColor, int rightColor, int step) {
         if (w <= 0 || h <= 0) return;
         step = Math.max(1, step);
@@ -391,7 +391,7 @@ public final class ProceduralRenderer {
      * @param layers  number of shadow layers (4–8 is a good range)
      * @param maxAlpha peak alpha at the innermost layer (0–255)
      */
-    public static void drawDropShadow(DrawContext ctx, int x, int y, int w, int h,
+    public static void drawDropShadow(RenderContext ctx, int x, int y, int w, int h,
                                        int radius, int layers, int maxAlpha) {
         for (int i = layers; i >= 1; i--) {
             // Quadratic fall-off gives a softer penumbra than linear
@@ -411,112 +411,112 @@ public final class ProceduralRenderer {
      * Convenience overload — 6 layers at 40 % peak alpha. Looks good on
      * most dark surfaces.
      */
-    public static void drawDropShadow(DrawContext ctx, int x, int y, int w, int h, int radius) {
+    public static void drawDropShadow(RenderContext ctx, int x, int y, int w, int h, int radius) {
         drawDropShadow(ctx, x, y, w, h, radius, 6, 102); // 102 ≈ 40 % of 255
     }
 
     // =====================================================================
-    //  Text rendering
+    //  Component rendering
     // =====================================================================
 
     /** Left-aligned text with shadow, standard scale. */
-    public static void drawText(DrawContext ctx, TextRenderer tr, String text,
+    public static void drawText(RenderContext ctx, Font tr, String text,
                                 int x, int y, int color) {
-        ctx.drawTextWithShadow(tr, Text.literal(text), x, y, color);
+        ctx.drawTextWithShadow(tr, Component.literal(text), x, y, color);
     }
 
     /** Centred text with shadow, standard scale. */
-    public static void drawCenteredText(DrawContext ctx, TextRenderer tr, String text,
+    public static void drawCenteredText(RenderContext ctx, Font tr, String text,
                                         int centerX, int y, int color) {
-        ctx.drawCenteredTextWithShadow(tr, Text.literal(text), centerX, y, color);
+        ctx.drawCenteredTextWithShadow(tr, Component.literal(text), centerX, y, color);
     }
 
     /**
-     * Left-aligned text drawn at an arbitrary scale.
+     * Left-aligned Component drawn at an arbitrary scale.
      * Uses matrix push / scale / pop so neighbouring draws are unaffected.
      */
-    public static void drawScaledText(DrawContext ctx, TextRenderer tr, String text,
+    public static void drawScaledText(RenderContext ctx, Font tr, String text,
                                       int x, int y, int color, float scale) {
-        ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate(x, y);
-        ctx.getMatrices().scale(scale, scale);
-        ctx.drawTextWithShadow(tr, Text.literal(text), 0, 0, color);
-        ctx.getMatrices().popMatrix();
+        ctx.matPush();
+        ctx.matTranslate(x, y);
+        ctx.matScale(scale, scale);
+        ctx.drawTextWithShadow(tr, Component.literal(text), 0, 0, color);
+        ctx.matPop();
     }
 
     /**
-     * Centred text at an arbitrary scale.
-     * The text is measured at scale 1 and then the matrix is offset so
-     * the scaled text remains centred on {@code centerX}.
+     * Centred Component at an arbitrary scale.
+     * The Component is measured at scale 1 and then the matrix is offset so
+     * the scaled Component remains centred on {@code centerX}.
      */
-    public static void drawScaledCenteredText(DrawContext ctx, TextRenderer tr, String text,
+    public static void drawScaledCenteredText(RenderContext ctx, Font tr, String text,
                                               int centerX, int y, int color, float scale) {
-        int textWidth = tr.getWidth(text);
+        int textWidth = tr.width(text);
         float scaledHalf = (textWidth * scale) / 2f;
-        ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate(centerX - scaledHalf, y);
-        ctx.getMatrices().scale(scale, scale);
-        ctx.drawTextWithShadow(tr, Text.literal(text), 0, 0, color);
-        ctx.getMatrices().popMatrix();
+        ctx.matPush();
+        ctx.matTranslate(centerX - scaledHalf, y);
+        ctx.matScale(scale, scale);
+        ctx.drawTextWithShadow(tr, Component.literal(text), 0, 0, color);
+        ctx.matPop();
     }
 
     /**
-     * Draw a {@link Text} object (supports formatting, translatable keys, etc.)
+     * Draw a {@link Component} object (supports formatting, translatable keys, etc.)
      * at a custom scale and position.
      */
-    public static void drawScaledText(DrawContext ctx, TextRenderer tr, Text text,
+    public static void drawScaledText(RenderContext ctx, Font tr, Component text,
                                       int x, int y, int color, float scale) {
-        ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate(x, y);
-        ctx.getMatrices().scale(scale, scale);
+        ctx.matPush();
+        ctx.matTranslate(x, y);
+        ctx.matScale(scale, scale);
         ctx.drawTextWithShadow(tr, text, 0, 0, color);
-        ctx.getMatrices().popMatrix();
+        ctx.matPop();
     }
 
-    // ── Convenience overloads (auto-resolve TextRenderer) ────────────────
+    // ── Convenience overloads (auto-resolve Font) ────────────────
 
     /**
-     * Left-aligned text with shadow, standard scale.
-     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     * Left-aligned Component with shadow, standard scale.
+    * Uses {@link Minecraft#getInstance()}'s text renderer automatically.
      *
      * @since 1.10.0
      */
-    public static void drawText(DrawContext ctx, String text,
+    public static void drawText(RenderContext ctx, String text,
                                 int x, int y, int color) {
-        drawText(ctx, MinecraftClient.getInstance().textRenderer, text, x, y, color);
+        drawText(ctx, Minecraft.getInstance().font, text, x, y, color);
     }
 
     /**
-     * Centred text with shadow, standard scale.
-     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     * Centred Component with shadow, standard scale.
+    * Uses {@link Minecraft#getInstance()}'s text renderer automatically.
      *
      * @since 1.10.0
      */
-    public static void drawCenteredText(DrawContext ctx, String text,
+    public static void drawCenteredText(RenderContext ctx, String text,
                                         int centerX, int y, int color) {
-        drawCenteredText(ctx, MinecraftClient.getInstance().textRenderer, text, centerX, y, color);
+        drawCenteredText(ctx, Minecraft.getInstance().font, text, centerX, y, color);
     }
 
     /**
-     * Left-aligned text at an arbitrary scale.
-     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     * Left-aligned Component at an arbitrary scale.
+     * Uses {@link Minecraft#getInstance()}'s Component renderer automatically.
      *
      * @since 1.10.0
      */
-    public static void drawScaledText(DrawContext ctx, String text,
+    public static void drawScaledText(RenderContext ctx, String Component,
                                       int x, int y, int color, float scale) {
-        drawScaledText(ctx, MinecraftClient.getInstance().textRenderer, text, x, y, color, scale);
+        drawScaledText(ctx, Minecraft.getInstance().font, Component, x, y, color, scale);
     }
 
     /**
-     * Centred text at an arbitrary scale.
-     * Uses {@link MinecraftClient#getInstance()}'s text renderer automatically.
+     * Centred Component at an arbitrary scale.
+     * Uses {@link Minecraft#getInstance()}'s Component renderer automatically.
      *
      * @since 1.10.0
      */
-    public static void drawScaledCenteredText(DrawContext ctx, String text,
+    public static void drawScaledCenteredText(RenderContext ctx, String Component,
                                               int centerX, int y, int color, float scale) {
-        drawScaledCenteredText(ctx, MinecraftClient.getInstance().textRenderer, text, centerX, y, color, scale);
+        drawScaledCenteredText(ctx, Minecraft.getInstance().font, Component, centerX, y, color, scale);
     }
 
     // =====================================================================
@@ -527,14 +527,14 @@ public final class ProceduralRenderer {
      * Draw a full-screen dark overlay. Useful as a background behind modals
      * or the main Pocket menu.
      */
-    public static void drawFullScreenOverlay(DrawContext ctx, int screenW, int screenH, int color) {
+    public static void drawFullScreenOverlay(RenderContext ctx, int screenW, int screenH, int color) {
         ctx.fill(0, 0, screenW, screenH, color);
     }
 
     /**
      * Draw a horizontal divider line.
      */
-    public static void drawDivider(DrawContext ctx, int x, int y, int width, int color) {
+    public static void drawDivider(RenderContext ctx, int x, int y, int width, int color) {
         ctx.fill(x, y, x + width, y + 1, color);
     }
 
@@ -567,14 +567,14 @@ public final class ProceduralRenderer {
         }
 
         /** Render at the baked position. */
-        public void render(DrawContext ctx) {
+        public void render(RenderContext ctx) {
             for (int i = 0, len = fillCount * 5; i < len; i += 5) {
                 ctx.fill(data[i], data[i + 1], data[i + 2], data[i + 3], data[i + 4]);
             }
         }
 
         /** Render translated by an offset (useful for scrolling / animation). */
-        public void render(DrawContext ctx, int offsetX, int offsetY) {
+        public void render(RenderContext ctx, int offsetX, int offsetY) {
             for (int i = 0, len = fillCount * 5; i < len; i += 5) {
                 ctx.fill(data[i] + offsetX, data[i + 1] + offsetY,
                          data[i + 2] + offsetX, data[i + 3] + offsetY,
@@ -755,7 +755,7 @@ public final class ProceduralRenderer {
      * @param color  ARGB colour
      * @since 1.12.0
      */
-    public static void fillCircle(DrawContext ctx, int cx, int cy, int radius, int color) {
+    public static void fillCircle(RenderContext ctx, int cx, int cy, int radius, int color) {
         if (radius <= 0) return;
         int[] dx = getScanlineDx(radius);
         for (int i = 0; i < radius; i++) {
@@ -778,7 +778,7 @@ public final class ProceduralRenderer {
      * @param color  ARGB colour
      * @since 1.12.0
      */
-    public static void drawCircle(DrawContext ctx, int cx, int cy, int radius, int color) {
+    public static void drawCircle(RenderContext ctx, int cx, int cy, int radius, int color) {
         if (radius <= 0) return;
         int[] dx = getScanlineDx(radius);
         for (int i = 0; i < radius; i++) {
@@ -804,7 +804,7 @@ public final class ProceduralRenderer {
      * @param color ARGB colour
      * @since 1.12.0
      */
-    public static void drawLine(DrawContext ctx, int x1, int y1, int x2, int y2, int color) {
+    public static void drawLine(RenderContext ctx, int x1, int y1, int x2, int y2, int color) {
         int dx = Math.abs(x2 - x1);
         int dy = Math.abs(y2 - y1);
         int sx = x1 < x2 ? 1 : -1;
@@ -827,7 +827,7 @@ public final class ProceduralRenderer {
      * @param thickness line thickness in pixels (1 = standard line)
      * @since 1.12.0
      */
-    public static void drawLine(DrawContext ctx, int x1, int y1, int x2, int y2,
+    public static void drawLine(RenderContext ctx, int x1, int y1, int x2, int y2,
                                 int color, int thickness) {
         if (thickness <= 1) {
             drawLine(ctx, x1, y1, x2, y2, color);
