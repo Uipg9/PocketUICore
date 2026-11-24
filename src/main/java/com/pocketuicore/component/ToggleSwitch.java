@@ -1,5 +1,6 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.input.PocketKeys;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import com.pocketuicore.render.RenderContext;
@@ -82,7 +83,7 @@ public class ToggleSwitch extends UIComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        if (button == 0 && isHovered(mouseX, mouseY)) {
+        if (PocketKeys.isLeftClick(button) && isHovered(mouseX, mouseY)) {
             toggle();
             return true;
         }
@@ -94,7 +95,7 @@ public class ToggleSwitch extends UIComponent {
         if (!visible || !enabled) return false;
         if (FocusManager.getInstance().isFocused(this)) {
             // Space or Enter to toggle
-            if (keyCode == 32 || keyCode == 257) {
+            if (keyCode == PocketKeys.KEY_SPACE || PocketKeys.isEnter(keyCode)) {
                 toggle();
                 return true;
             }

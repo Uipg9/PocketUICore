@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
 /**
  * SyncEstatePayload — S2C network payload for estate growth sync.
@@ -21,7 +22,7 @@ public record SyncEstatePayload(float percentage) implements CustomPacketPayload
 
     // ── Payload type ─────────────────────────────────────────────────────
     public static final CustomPacketPayload.Type<SyncEstatePayload> TYPE =
-            CustomPacketPayload.createType("pocketuicore:sync_estate");
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("pocketuicore", "sync_estate"));
 
     // ── Stream codec ─────────────────────────────────────────────────────
     public static final StreamCodec<ByteBuf, SyncEstatePayload> STREAM_CODEC =

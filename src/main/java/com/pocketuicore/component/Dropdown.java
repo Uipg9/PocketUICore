@@ -1,5 +1,6 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.input.PocketKeys;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import net.minecraft.client.Minecraft;
@@ -128,7 +129,7 @@ public class Dropdown<T> extends UIComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        if (button != 0) return false;
+        if (!PocketKeys.isLeftClick(button)) return false;
 
         if (expanded) {
             // Check if clicking on an item
@@ -166,19 +167,19 @@ public class Dropdown<T> extends UIComponent {
 
         // When expanded, arrow keys work regardless of FocusManager focus
         if (expanded) {
-            if (keyCode == 264) { // Down
+            if (keyCode == PocketKeys.KEY_DOWN) { // Down
                 int next = Math.min(selectedIndex + 1, items.size() - 1);
                 selectItem(next);
                 return true;
-            } else if (keyCode == 265) { // Up
+            } else if (keyCode == PocketKeys.KEY_UP) { // Up
                 int prev = Math.max(selectedIndex - 1, 0);
                 selectItem(prev);
                 return true;
-            } else if (keyCode == 257 || keyCode == 32) { // Enter/Space — collapse
+            } else if (PocketKeys.isEnter(keyCode) || keyCode == PocketKeys.KEY_SPACE) { // Enter/Space — collapse
                 expanded = false;
                 UISoundManager.playClick();
                 return true;
-            } else if (keyCode == 256) { // Escape — collapse without selecting
+            } else if (keyCode == PocketKeys.KEY_ESCAPE) { // Escape — collapse without selecting
                 expanded = false;
                 return true;
             }
@@ -187,7 +188,7 @@ public class Dropdown<T> extends UIComponent {
         if (!FocusManager.getInstance().isFocused(this)) return false;
 
         // Enter/Space to toggle expansion
-        if (keyCode == 257 || keyCode == 32) {
+        if (PocketKeys.isEnter(keyCode) || keyCode == PocketKeys.KEY_SPACE) {
             expanded = !expanded;
             UISoundManager.playClick();
             return true;

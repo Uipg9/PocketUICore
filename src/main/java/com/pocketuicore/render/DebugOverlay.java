@@ -1,5 +1,6 @@
 package com.pocketuicore.render;
 
+import com.pocketuicore.input.PocketKeys;
 import com.pocketuicore.component.FocusManager;
 import com.pocketuicore.component.UIComponent;
 import net.minecraft.client.Minecraft;
@@ -48,15 +49,15 @@ public final class DebugOverlay {
 
     /**
      * Handle F3+P toggle. Call from your screen's keyPressed handler.
-     * F3 (keyCode 292) must be held, then P (keyCode 80) toggles the overlay.
+     * F3 must be held, then P toggles the overlay.
      *
-     * @param keyCode  GLFW key code
-     * @param scanCode GLFW scan code (ignored)
+     * @param keyCode  SDL scancode (see PocketKeys)
+     * @param scanCode secondary code (ignored)
      */
     public static void handleKeyPress(int keyCode, int scanCode) {
-        if (keyCode == 292) { // F3
+        if (keyCode == PocketKeys.KEY_F3) { // F3
             f3Held = true;
-        } else if (keyCode == 80 && f3Held) { // P while F3 held
+        } else if (keyCode == PocketKeys.KEY_P && f3Held) { // P while F3 held
             enabled = !enabled;
             f3Held = false;
         } else {

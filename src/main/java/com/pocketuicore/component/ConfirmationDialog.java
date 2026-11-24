@@ -3,7 +3,7 @@ package com.pocketuicore.component;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import com.pocketuicore.render.RenderContext;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 /**
  * Modal confirmation dialog — darkened overlay, centred panel with
@@ -212,11 +212,11 @@ public final class ConfirmationDialog extends UIComponent {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!active) return false;
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == PocketKeys.KEY_ESCAPE) {
             doCancel();
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+        if (keyCode == PocketKeys.KEY_ENTER || keyCode == PocketKeys.KEY_KP_ENTER) {
             // If Cancel is focused, cancel; if Confirm is focused, confirm
             UIComponent focused = FocusManager.getInstance().getFocused();
             if (focused == confirmButton) {

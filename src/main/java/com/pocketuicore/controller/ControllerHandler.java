@@ -5,17 +5,13 @@ import com.pocketuicore.component.FocusManager;
 import com.pocketuicore.component.UIComponent;
 import com.pocketuicore.input.InputHelper;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWGamepadState;
-
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
+import org.lwjgl.sdl.SDLMouse;
 
 /**
- * Controller Handler — GLFW Gamepad Polling
+ * Controller Handler — SDL Gamepad Polling
  * <p>
  * Provides native controller support by polling connected gamepads
- * via GLFW every client tick. Routes directional input to
+ * via SDL3 (see {@link SdlGamepadBackend}) every client tick. Routes directional input to
  * {@link FocusManager} for focus navigation, the A/Cross button to
  * component activation, and the right thumbstick to panel scrolling.
  * <p>
@@ -43,48 +39,11 @@ public final class ControllerHandler {
     public static ControllerHandler getInstance() { return INSTANCE; }
     private ControllerHandler() { }
 
-    // ── GLFW gamepad constants ───────────────────────────────────────────
-    // Buttons
-    private static final int BTN_A      = GLFW.GLFW_GAMEPAD_BUTTON_A;           // 0 — Xbox A / PS Cross
-    private static final int BTN_B      = GLFW.GLFW_GAMEPAD_BUTTON_B;           // 1 — Xbox B / PS Circle
-    private static final int BTN_LB     = GLFW.GLFW_GAMEPAD_BUTTON_LEFT_BUMPER; // 4
-    private static final int BTN_RB     = GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER;// 5
-    private static final int BTN_DPAD_U = GLFW.GLFW_GAMEPAD_BUTTON_DPAD_UP;     // 11
-    private static final int BTN_DPAD_D = GLFW.GLFW_GAMEPAD_BUTTON_DPAD_DOWN;   // 13
-    private static final int BTN_DPAD_L = GLFW.GLFW_GAMEPAD_BUTTON_DPAD_LEFT;   // 14
-    private static final int BTN_DPAD_R = GLFW.GLFW_GAMEPAD_BUTTON_DPAD_RIGHT;  // 12
-
-    // Axes
-    private static final int AXIS_LX = GLFW.GLFW_GAMEPAD_AXIS_LEFT_X;   // 0
-    private static final int AXIS_LY = GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y;   // 1
-    private static final int AXIS_RY = GLFW.GLFW_GAMEPAD_AXIS_RIGHT_Y;  // 3
-
-    // ── Tuning ───────────────────────────────────────────────────────────
-    /** Dead-zone for analog sticks (0 ─ 1). */
-    private static final float STICK_DEADZONE = 0.45f;
-    /** Ticks between repeated d-pad / stick navigation events. */
-    private static final int NAV_REPEAT_DELAY  = 8;  // ~400 ms initial
-    private static final int NAV_REPEAT_RATE   = 3;  // ~150 ms repeat
-    /** Scroll speed multiplier for right stick. */
-    private static final float SCROLL_SPEED = 12.0f;
-
     // ── State ────────────────────────────────────────────────────────────
     private boolean active = false;
-    private int connectedJoystick = -1;
-
-    // Button press tracking (previous frame)
-    private boolean prevA;
-    private boolean prevB;
-    private boolean prevLB;
-    private boolean prevRB;
-
-    // Navigation repeat timers
-    private int navTicksUp;
-    private int navTicksDown;
-    private int navTicksLeft;
-    private int navTicksRight;
-    private int stickNavTicksX;
-    private int stickNavTicksY;
+    private GamepadBackend backend;                 // created lazily on first enabled tick
+    private final GamepadNavigator navigator = new GamepadNavigator();
+    private final Actions actions = new Actions();
 
     // Scroll target — set by the active screen
     private DarkPanel scrollTarget;
@@ -120,7 +79,7 @@ public final class ControllerHandler {
     /**
      * Trigger a haptic rumble on the connected gamepad (if supported).
      * <p>
-     * Internally calls {@code glfwSetJoystickRumble} when available.
+     * Internally calls {@code SDL_RumbleGamepad} when available.
      * Falls back silently if rumble is not supported by the driver.
      *
      * @param strongMagnitude intensity of the low-frequency motor (0.0–1.0)
@@ -128,16 +87,8 @@ public final class ControllerHandler {
      * @param durationMs      rumble duration in milliseconds
      */
     public void rumble(float strongMagnitude, float weakMagnitude, int durationMs) {
-        if (!active || connectedJoystick < 0) return;
-        // GLFW 3.4+ added glfwSetJoystickRumble; older versions lack it.
-        // We use reflection so the code compiles against any LWJGL version.
-        try {
-            java.lang.reflect.Method m = org.lwjgl.glfw.GLFW.class.getMethod(
-                    "glfwSetJoystickRumble", int.class, float.class, float.class, int.class);
-            m.invoke(null, connectedJoystick, strongMagnitude, weakMagnitude, durationMs);
-        } catch (Throwable ignored) {
-            // Not supported on this GLFW/LWJGL version — silently ignore.
-        }
+        if (!active || backend == null) return;
+        backend.rumble(strongMagnitude, weakMagnitude, durationMs);
     }
 
     /**
@@ -186,207 +137,68 @@ public final class ControllerHandler {
             active = false;
             return;
         }
+        if (backend == null) backend = new SdlGamepadBackend();   // never throws
 
-        // ── Find the first connected gamepad ─────────────────────────────
-        int joy = findGamepad();
-        if (joy < 0) {
-            active = false;
-            return;
+        backend.update();
+        active = navigator.tick(backend, actions);
+        if (active) InputHelper.markController();
+    }
+
+    /** Replace the gamepad backend (tests / alternative input sources). */
+    public void setBackend(GamepadBackend replacement) {
+        if (backend != null && backend != replacement) backend.close();
+        this.backend = replacement;
+        resetState();
+    }
+
+    // =====================================================================
+    //  Action sink -> FocusManager / Minecraft
+    // =====================================================================
+
+    private final class Actions implements GamepadActions {
+        @Override public void activate() { FocusManager.getInstance().activateFocused(); }
+
+        @Override public void close() {
+            Minecraft client = Minecraft.getInstance();
+            if (client.gui.screen() != null) client.gui.screen().onClose();
         }
-        connectedJoystick = joy;
 
-        // ── Read gamepad state ───────────────────────────────────────────
-        try (GLFWGamepadState state = GLFWGamepadState.calloc()) {
-            if (!GLFW.glfwGetGamepadState(joy, state)) {
-                active = false;
-                return;
-            }
-            active = true;
-            InputHelper.markController();
-
-            ByteBuffer buttons = state.buttons();
-            FloatBuffer axes   = state.axes();
-
-            // ── Read inputs ──────────────────────────────────────────────
-            boolean btnA      = buttons.get(BTN_A)      == GLFW.GLFW_PRESS;
-            boolean btnB      = buttons.get(BTN_B)      == GLFW.GLFW_PRESS;
-            boolean btnLB     = buttons.get(BTN_LB)     == GLFW.GLFW_PRESS;
-            boolean btnRB     = buttons.get(BTN_RB)     == GLFW.GLFW_PRESS;
-            boolean dpadUp    = buttons.get(BTN_DPAD_U) == GLFW.GLFW_PRESS;
-            boolean dpadDown  = buttons.get(BTN_DPAD_D) == GLFW.GLFW_PRESS;
-            boolean dpadLeft  = buttons.get(BTN_DPAD_L) == GLFW.GLFW_PRESS;
-            boolean dpadRight = buttons.get(BTN_DPAD_R) == GLFW.GLFW_PRESS;
-
-            float leftX  = axes.get(AXIS_LX);
-            float leftY  = axes.get(AXIS_LY);
-            float rightY = axes.get(AXIS_RY);
-
+        @Override public void focusNext() {
             FocusManager fm = FocusManager.getInstance();
-
-            // ── A / Cross — activate focused ─────────────────────────────
-            if (btnA && !prevA) {
-                fm.activateFocused();
-            }
-
-            // ── B / Circle — close screen ────────────────────────────────
-            if (btnB && !prevB) {
-                Minecraft client = Minecraft.getInstance();
-                if (client.screen != null) {
-                    client.screen.onClose();
-                }
-            }
-
-            // ── LB / RB — tab-cycle focus ────────────────────────────────
-            if (btnRB && !prevRB) {
-                UIComponent before = fm.getFocused();
-                fm.navigateNext();
-                snapCursorIfChanged(before, fm.getFocused());
-            }
-            if (btnLB && !prevLB) {
-                UIComponent before = fm.getFocused();
-                fm.navigatePrevious();
-                snapCursorIfChanged(before, fm.getFocused());
-            }
-
-            // ── D-pad — directional navigation ──────────────────────────
-            handleDpad(fm, dpadUp,    FocusManager.Direction.UP);
-            handleDpad(fm, dpadDown,  FocusManager.Direction.DOWN);
-            handleDpad(fm, dpadLeft,  FocusManager.Direction.LEFT);
-            handleDpad(fm, dpadRight, FocusManager.Direction.RIGHT);
-
-            // ── Left stick — directional navigation (with deadzone) ─────
-            handleStickNavigation(fm, leftX, leftY);
-
-            // ── Right stick Y — scroll ───────────────────────────────────
-            handleScroll(rightY);
-
-            // ── Store previous frame ─────────────────────────────────────
-            prevA  = btnA;
-            prevB  = btnB;
-            prevLB = btnLB;
-            prevRB = btnRB;
-        }
-    }
-
-    // =====================================================================
-    //  D-pad navigation with repeat
-    // =====================================================================
-
-    private void handleDpad(FocusManager fm, boolean pressed, FocusManager.Direction dir) {
-        // Select the correct tick counter reference
-        int ticks;
-        switch (dir) {
-            case UP    -> ticks = navTicksUp;
-            case DOWN  -> ticks = navTicksDown;
-            case LEFT  -> ticks = navTicksLeft;
-            case RIGHT -> ticks = navTicksRight;
-            default    -> ticks = 0;
+            UIComponent before = fm.getFocused();
+            fm.navigateNext();
+            snapCursorIfChanged(before, fm.getFocused());
         }
 
-        if (pressed) {
-            boolean navigate = false;
-            if (ticks == 0) {
-                // First press
-                navigate = true;
-            } else if (ticks >= NAV_REPEAT_DELAY &&
-                       (ticks - NAV_REPEAT_DELAY) % NAV_REPEAT_RATE == 0) {
-                // Repeat after delay
-                navigate = true;
-            }
-            ticks++;
-
-            if (navigate) {
-                UIComponent before = fm.getFocused();
-                fm.navigateDirection(dir);
-                snapCursorIfChanged(before, fm.getFocused());
-            }
-        } else {
-            ticks = 0;
+        @Override public void focusPrevious() {
+            FocusManager fm = FocusManager.getInstance();
+            UIComponent before = fm.getFocused();
+            fm.navigatePrevious();
+            snapCursorIfChanged(before, fm.getFocused());
         }
 
-        // Write back tick counter
-        switch (dir) {
-            case UP    -> navTicksUp    = ticks;
-            case DOWN  -> navTicksDown  = ticks;
-            case LEFT  -> navTicksLeft  = ticks;
-            case RIGHT -> navTicksRight = ticks;
-        }
-    }
-
-    // =====================================================================
-    //  Left stick directional navigation
-    // =====================================================================
-
-    private void handleStickNavigation(FocusManager fm, float lx, float ly) {
-        // Determine dominant axis
-        boolean xActive = Math.abs(lx) > STICK_DEADZONE;
-        boolean yActive = Math.abs(ly) > STICK_DEADZONE;
-
-        // X-axis navigation
-        if (xActive && Math.abs(lx) >= Math.abs(ly)) {
-            FocusManager.Direction dir = lx > 0
-                    ? FocusManager.Direction.RIGHT
-                    : FocusManager.Direction.LEFT;
-
-            if (stickNavTicksX == 0) {
-                UIComponent before = fm.getFocused();
-                fm.navigateDirection(dir);
-                snapCursorIfChanged(before, fm.getFocused());
-            } else if (stickNavTicksX >= NAV_REPEAT_DELAY &&
-                       (stickNavTicksX - NAV_REPEAT_DELAY) % NAV_REPEAT_RATE == 0) {
-                UIComponent before = fm.getFocused();
-                fm.navigateDirection(dir);
-                snapCursorIfChanged(before, fm.getFocused());
-            }
-            stickNavTicksX++;
-        } else {
-            stickNavTicksX = 0;
+        @Override public void navigate(NavDirection direction) {
+            FocusManager fm = FocusManager.getInstance();
+            UIComponent before = fm.getFocused();
+            fm.navigateDirection(switch (direction) {
+                case UP    -> FocusManager.Direction.UP;
+                case DOWN  -> FocusManager.Direction.DOWN;
+                case LEFT  -> FocusManager.Direction.LEFT;
+                case RIGHT -> FocusManager.Direction.RIGHT;
+            });
+            snapCursorIfChanged(before, fm.getFocused());
         }
 
-        // Y-axis navigation (GLFW: positive Y = down)
-        if (yActive && Math.abs(ly) > Math.abs(lx)) {
-            FocusManager.Direction dir = ly > 0
-                    ? FocusManager.Direction.DOWN
-                    : FocusManager.Direction.UP;
-
-            if (stickNavTicksY == 0) {
-                UIComponent before = fm.getFocused();
-                fm.navigateDirection(dir);
-                snapCursorIfChanged(before, fm.getFocused());
-            } else if (stickNavTicksY >= NAV_REPEAT_DELAY &&
-                       (stickNavTicksY - NAV_REPEAT_DELAY) % NAV_REPEAT_RATE == 0) {
-                UIComponent before = fm.getFocused();
-                fm.navigateDirection(dir);
-                snapCursorIfChanged(before, fm.getFocused());
-            }
-            stickNavTicksY++;
-        } else {
-            stickNavTicksY = 0;
+        @Override public void scroll(double amount) {
+            // Auto-detect scroll target if not manually set
+            if (scrollTarget == null) scrollTarget = findScrollablePanel();
+            if (scrollTarget != null) scrollTarget.scrollBy(amount);
         }
-    }
-
-    // =====================================================================
-    //  Right stick scrolling
-    // =====================================================================
-
-    private void handleScroll(float ry) {
-        // Auto-detect scroll target if not manually set
-        if (scrollTarget == null) {
-            scrollTarget = findScrollablePanel();
-        }
-        if (scrollTarget == null) return;
-        if (Math.abs(ry) <= STICK_DEADZONE) return;
-
-        // Map stick deflection to scroll amount (positive ry = scroll down)
-        double amount = -ry * SCROLL_SPEED;
-        scrollTarget.scrollBy(amount);
     }
 
     /**
      * Walk up the parent chain from the currently focused component to
-     * find the nearest scrollable {@link DarkPanel}.  This allows the
-     * right-stick scroll to work automatically without a manual
-     * {@link #setScrollTarget(DarkPanel)} call.
+     * find the nearest scrollable {@link DarkPanel}.
      *
      * @return the nearest scrollable DarkPanel, or {@code null}
      */
@@ -416,36 +228,24 @@ public final class ControllerHandler {
     private void snapCursorIfChanged(UIComponent before, UIComponent after) {
         if (after == null || after == before) return;
 
-        Minecraft client = Minecraft.getInstance();
-        if (client.getWindow() == null) return;
+        try {
+            Minecraft client = Minecraft.getInstance();
+            if (client.getWindow() == null) return;
 
-        // Component coords are in GUI-scaled pixels; GLFW cursor is in
-        // window pixels, so we must multiply by the GUI scale factor.
-        double scale = client.getWindow().getGuiScale();
-        double cx = (after.getX() + after.getWidth()  / 2.0) * scale;
-        double cy = (after.getY() + after.getHeight() / 2.0) * scale;
+            // Component coords are in GUI-scaled pixels; the cursor is in
+            // window coordinates, so multiply by the GUI scale factor.
+            double scale = client.getWindow().getGuiScale();
+            double cx = (after.getX() + after.getWidth()  / 2.0) * scale;
+            double cy = (after.getY() + after.getHeight() / 2.0) * scale;
 
-        GLFW.glfwSetCursorPos(client.getWindow().handle(), cx, cy);
-    }
-
-    // =====================================================================
-    //  Helpers
-    // =====================================================================
-
-    /** Find the first connected GLFW joystick that reports as a gamepad. */
-    private int findGamepad() {
-        for (int j = GLFW.GLFW_JOYSTICK_1; j <= GLFW.GLFW_JOYSTICK_LAST; j++) {
-            if (GLFW.glfwJoystickPresent(j) && GLFW.glfwJoystickIsGamepad(j)) {
-                return j;
-            }
+            SDLMouse.SDL_WarpMouseInWindow(client.getWindow().handle(), (float) cx, (float) cy);
+        } catch (Throwable ignored) {
+            // cursor warp is cosmetic
         }
-        return -1;
     }
 
     /** Reset all internal tracking state (press memory + repeat timers). */
     private void resetState() {
-        prevA = prevB = prevLB = prevRB = false;
-        navTicksUp = navTicksDown = navTicksLeft = navTicksRight = 0;
-        stickNavTicksX = stickNavTicksY = 0;
+        navigator.reset();
     }
 }

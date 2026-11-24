@@ -49,7 +49,7 @@ public class PocketMenuScreenProcessor extends ScreenProcessor<PocketMenuScreen>
             this.screen.close();
         }
 
-        // D-pad / navigation is handled by ControllerHandler's GLFW polling,
+        // D-pad / navigation is handled by ControllerHandler's SDL polling,
         // so we don't duplicate it here. Controlify and our handler coexist:
         // Controlify disables vmouse via this processor, and ControllerHandler
         // handles the actual directional navigation + cursor snapping.

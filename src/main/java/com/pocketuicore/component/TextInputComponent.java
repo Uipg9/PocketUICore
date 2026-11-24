@@ -4,7 +4,7 @@ import com.pocketuicore.render.ProceduralRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import com.pocketuicore.render.RenderContext;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -179,11 +179,11 @@ public class TextInputComponent extends UIComponent {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!visible || !enabled || !focused) return false;
 
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
-        boolean ctrl  = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
+        boolean shift = (modifiers & PocketKeys.MOD_SHIFT) != 0;
+        boolean ctrl  = (modifiers & PocketKeys.MOD_CONTROL) != 0;
 
         switch (keyCode) {
-            case GLFW.GLFW_KEY_LEFT -> {
+            case PocketKeys.KEY_LEFT -> {
                 if (shift && selectionStart < 0) selectionStart = cursorPos;
                 if (!shift) selectionStart = -1;
                 if (ctrl) cursorPos = findWordBoundary(-1);
@@ -191,7 +191,7 @@ public class TextInputComponent extends UIComponent {
                 resetBlink();
                 return true;
             }
-            case GLFW.GLFW_KEY_RIGHT -> {
+            case PocketKeys.KEY_RIGHT -> {
                 if (shift && selectionStart < 0) selectionStart = cursorPos;
                 if (!shift) selectionStart = -1;
                 if (ctrl) cursorPos = findWordBoundary(1);
@@ -199,21 +199,21 @@ public class TextInputComponent extends UIComponent {
                 resetBlink();
                 return true;
             }
-            case GLFW.GLFW_KEY_HOME -> {
+            case PocketKeys.KEY_HOME -> {
                 if (shift && selectionStart < 0) selectionStart = cursorPos;
                 if (!shift) selectionStart = -1;
                 cursorPos = 0;
                 resetBlink();
                 return true;
             }
-            case GLFW.GLFW_KEY_END -> {
+            case PocketKeys.KEY_END -> {
                 if (shift && selectionStart < 0) selectionStart = cursorPos;
                 if (!shift) selectionStart = -1;
                 cursorPos = Component.length();
                 resetBlink();
                 return true;
             }
-            case GLFW.GLFW_KEY_BACKSPACE -> {
+            case PocketKeys.KEY_BACKSPACE -> {
                 if (deleteSelection()) { resetBlink(); return true; }
                 if (cursorPos > 0) {
                     if (ctrl) {
@@ -229,7 +229,7 @@ public class TextInputComponent extends UIComponent {
                 resetBlink();
                 return true;
             }
-            case GLFW.GLFW_KEY_DELETE -> {
+            case PocketKeys.KEY_DELETE -> {
                 if (deleteSelection()) { resetBlink(); return true; }
                 if (cursorPos < Component.length()) {
                     if (ctrl) {
@@ -243,27 +243,27 @@ public class TextInputComponent extends UIComponent {
                 resetBlink();
                 return true;
             }
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
+            case PocketKeys.KEY_ENTER, PocketKeys.KEY_KP_ENTER -> {
                 if (onSubmit != null) onSubmit.accept(Component.toString());
                 return true;
             }
-            case GLFW.GLFW_KEY_A -> {
+            case PocketKeys.KEY_A -> {
                 if (ctrl) {
                     selectionStart = 0;
                     cursorPos = Component.length();
                     return true;
                 }
             }
-            case GLFW.GLFW_KEY_C -> {
+            case PocketKeys.KEY_C -> {
                 if (ctrl) { copySelection(); return true; }
             }
-            case GLFW.GLFW_KEY_X -> {
+            case PocketKeys.KEY_X -> {
                 if (ctrl) { copySelection(); deleteSelection(); return true; }
             }
-            case GLFW.GLFW_KEY_V -> {
+            case PocketKeys.KEY_V -> {
                 if (ctrl) { pasteClipboard(); return true; }
             }
-            case GLFW.GLFW_KEY_ESCAPE -> {
+            case PocketKeys.KEY_ESCAPE -> {
                 focused = false;
                 return true;
             }

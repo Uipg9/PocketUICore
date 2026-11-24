@@ -4,7 +4,7 @@ import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import net.minecraft.client.Minecraft;
 import com.pocketuicore.render.RenderContext;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -234,12 +234,12 @@ public final class SelectableList<T> extends UIComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        if (button == 0 && hoveredIndex >= 0 && hoveredIndex < items.size()) {
+        if (PocketKeys.isLeftClick(button) && hoveredIndex >= 0 && hoveredIndex < items.size()) {
             if (multiSelect) {
-                boolean ctrl  = (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS)
-                             || (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS);
-                boolean shift = (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS)
-                             || (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS);
+                boolean ctrl  = com.mojang.blaze3d.platform.InputConstants.isKeyDown(PocketKeys.KEY_LEFT_CONTROL)
+                             || com.mojang.blaze3d.platform.InputConstants.isKeyDown(PocketKeys.KEY_RIGHT_CONTROL);
+                boolean shift = com.mojang.blaze3d.platform.InputConstants.isKeyDown(PocketKeys.KEY_LEFT_SHIFT)
+                             || com.mojang.blaze3d.platform.InputConstants.isKeyDown(PocketKeys.KEY_RIGHT_SHIFT);
                 if (ctrl) {
                     // Toggle individual item
                     if (selectedIndices.contains(hoveredIndex)) {
@@ -292,9 +292,9 @@ public final class SelectableList<T> extends UIComponent {
         if (!visible || !enabled) return false;
 
         // Arrow navigation
-        if (keyCode == GLFW.GLFW_KEY_UP || keyCode == GLFW.GLFW_KEY_DOWN) {
+        if (keyCode == PocketKeys.KEY_UP || keyCode == PocketKeys.KEY_DOWN) {
             if (items.isEmpty()) return false;
-            if (keyCode == GLFW.GLFW_KEY_UP) {
+            if (keyCode == PocketKeys.KEY_UP) {
                 selectedIndex = (selectedIndex <= 0) ? items.size() - 1 : selectedIndex - 1;
             } else {
                 selectedIndex = (selectedIndex >= items.size() - 1) ? 0 : selectedIndex + 1;
@@ -305,7 +305,7 @@ public final class SelectableList<T> extends UIComponent {
         }
 
         // Enter = select
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+        if (keyCode == PocketKeys.KEY_ENTER || keyCode == PocketKeys.KEY_KP_ENTER) {
             if (selectedIndex >= 0 && selectedIndex < items.size()) {
                 UISoundManager.playClick();
                 if (onSelect != null) onSelect.accept(items.get(selectedIndex));
@@ -315,7 +315,7 @@ public final class SelectableList<T> extends UIComponent {
 
         // Number shortcuts 1-9
         if (numberShortcuts) {
-            int num = keyCode - GLFW.GLFW_KEY_1;
+            int num = keyCode - PocketKeys.KEY_1;
             if (num >= 0 && num < 9 && num < items.size()) {
                 selectedIndex = num;
                 ensureVisible(selectedIndex);

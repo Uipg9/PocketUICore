@@ -13,6 +13,7 @@ base {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     // isXander's maven — Controlify + its libraries
     maven { url = "https://maven.isxander.dev/releases/" }
@@ -33,8 +34,15 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // PocketCanvasCore dependency (local composite build)
-    implementation "com.pocketcanvascore:pocketcanvascore:1.0.0"
+    // PocketCanvasCore dependency (from mavenLocal)
+    implementation "com.pocketcanvascore:pocketcanvascore:1.0.0+26.3"
+
+    // Note: lwjgl-sdl (SDL3) is already on Minecraft's compile/runtime classpath; no extra dependency needed.
+
+    // Tests (pure logic only; no Minecraft client)
+    testImplementation platform("org.junit:junit-bom:6.1.3")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
     // Controlify — optional controller integration (compile-only, not bundled)
     if (project.hasProperty('controlify_version') && project.controlify_version?.toString()?.trim()) {
@@ -74,6 +82,10 @@ if (stonecutterMergeTestTask != null) {
     }
 }
 
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
 def javaVersion = 25
 
 tasks.withType(JavaCompile).configureEach {
@@ -103,6 +115,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+            artifactId = project.archives_base_name
         }
     }
     repositories {

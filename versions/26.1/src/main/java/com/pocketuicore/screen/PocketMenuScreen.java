@@ -20,7 +20,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 /**
  * Pocket Menu Screen - Main GUI for the All-in-One mod.
@@ -190,16 +190,16 @@ public class PocketMenuScreen extends Screen {
         FocusManager fm = FocusManager.getInstance();
 
         switch (keyCode) {
-            case GLFW.GLFW_KEY_TAB -> {
-                if ((modifiers & GLFW.GLFW_MOD_SHIFT) != 0) fm.navigatePrevious();
+            case PocketKeys.KEY_TAB -> {
+                if ((modifiers & PocketKeys.MOD_SHIFT) != 0) fm.navigatePrevious();
                 else fm.navigateNext();
                 return true;
             }
-            case GLFW.GLFW_KEY_UP    -> { fm.navigateDirection(FocusManager.Direction.UP);    return true; }
-            case GLFW.GLFW_KEY_DOWN  -> { fm.navigateDirection(FocusManager.Direction.DOWN);  return true; }
-            case GLFW.GLFW_KEY_LEFT  -> { fm.navigateDirection(FocusManager.Direction.LEFT);  return true; }
-            case GLFW.GLFW_KEY_RIGHT -> { fm.navigateDirection(FocusManager.Direction.RIGHT); return true; }
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
+            case PocketKeys.KEY_UP    -> { fm.navigateDirection(FocusManager.Direction.UP);    return true; }
+            case PocketKeys.KEY_DOWN  -> { fm.navigateDirection(FocusManager.Direction.DOWN);  return true; }
+            case PocketKeys.KEY_LEFT  -> { fm.navigateDirection(FocusManager.Direction.LEFT);  return true; }
+            case PocketKeys.KEY_RIGHT -> { fm.navigateDirection(FocusManager.Direction.RIGHT); return true; }
+            case PocketKeys.KEY_ENTER, PocketKeys.KEY_KP_ENTER -> {
                 fm.activateFocused();
                 return true;
             }

@@ -3,7 +3,7 @@ package com.pocketuicore.component;
 import com.pocketuicore.render.ProceduralRenderer;
 import net.minecraft.client.Minecraft;
 import com.pocketuicore.render.RenderContext;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 import java.util.*;
 
@@ -19,9 +19,9 @@ import java.util.*;
  * <pre>{@code
  *     KeyShortcutManager keys = KeyShortcutManager.getInstance();
  *     keys.pushContext("main");
- *     keys.register("main", GLFW.GLFW_KEY_E, Modifier.NONE,
+ *     keys.register("main", PocketKeys.KEY_E, Modifier.NONE,
  *                   "Open Inventory", () -> openInventory());
- *     keys.register("main", GLFW.GLFW_KEY_H, Modifier.CTRL,
+ *     keys.register("main", PocketKeys.KEY_H, Modifier.CTRL,
  *                   "Toggle Help", () -> keys.toggleHelp());
  *
  *     // in keyPressed():
@@ -121,7 +121,7 @@ public final class KeyShortcutManager {
      * exist in the stack, a new one is pushed.
      *
      * @param context     context name
-     * @param keyCode     GLFW key code
+     * @param keyCode     SDL scancode (see PocketKeys)
      * @param modifiers   modifier flags (use {@link #CTRL}, {@link #SHIFT}, {@link #ALT}, OR them together)
      * @param description human-readable description shown in help overlay
      * @param action      callback to execute
@@ -170,12 +170,12 @@ public final class KeyShortcutManager {
      * Process a key press. Searches the context stack top-down (newest
      * first) and executes the first matching shortcut.
      *
-     * @param keyCode    GLFW key code
-     * @param glfwMods   GLFW modifier bitmask (from keyPressed)
+     * @param keyCode    SDL scancode (see PocketKeys)
+     * @param rawMods modifier bitmask (from keyPressed)
      * @return {@code true} if a shortcut was triggered
      */
-    public boolean handleKey(int keyCode, int glfwMods) {
-        int mods = translateMods(glfwMods);
+    public boolean handleKey(int keyCode, int rawMods) {
+        int mods = translateMods(rawMods);
 
         for (ShortcutContext ctx : contextStack) {
             for (Shortcut s : ctx.shortcuts) {
@@ -295,12 +295,12 @@ public final class KeyShortcutManager {
         return ctx;
     }
 
-    /** Translate GLFW modifier bitmask to our compact flags. */
-    private static int translateMods(int glfwMods) {
+    /** Translate modifier bitmask to our compact flags. */
+    private static int translateMods(int mods) {
         int m = 0;
-        if ((glfwMods & GLFW.GLFW_MOD_CONTROL) != 0) m |= CTRL;
-        if ((glfwMods & GLFW.GLFW_MOD_SHIFT)   != 0) m |= SHIFT;
-        if ((glfwMods & GLFW.GLFW_MOD_ALT)     != 0) m |= ALT;
+        if ((mods & PocketKeys.MOD_CONTROL) != 0) m |= CTRL;
+        if ((mods & PocketKeys.MOD_SHIFT)   != 0) m |= SHIFT;
+        if ((mods & PocketKeys.MOD_ALT)     != 0) m |= ALT;
         return m;
     }
 
@@ -314,43 +314,38 @@ public final class KeyShortcutManager {
         return sb.toString();
     }
 
-    /** Get a readable name for a GLFW key code. */
+    /** Get a readable name for a SDL scancode (see PocketKeys). */
     private static String getKeyName(int keyCode) {
         return switch (keyCode) {
-            case GLFW.GLFW_KEY_SPACE       -> "Space";
-            case GLFW.GLFW_KEY_ESCAPE      -> "Esc";
-            case GLFW.GLFW_KEY_ENTER       -> "Enter";
-            case GLFW.GLFW_KEY_TAB         -> "Tab";
-            case GLFW.GLFW_KEY_BACKSPACE   -> "Backspace";
-            case GLFW.GLFW_KEY_DELETE      -> "Delete";
-            case GLFW.GLFW_KEY_UP          -> "↑";
-            case GLFW.GLFW_KEY_DOWN        -> "↓";
-            case GLFW.GLFW_KEY_LEFT        -> "←";
-            case GLFW.GLFW_KEY_RIGHT       -> "→";
-            case GLFW.GLFW_KEY_HOME        -> "Home";
-            case GLFW.GLFW_KEY_END         -> "End";
-            case GLFW.GLFW_KEY_PAGE_UP     -> "PgUp";
-            case GLFW.GLFW_KEY_PAGE_DOWN   -> "PgDn";
-            case GLFW.GLFW_KEY_F1          -> "F1";
-            case GLFW.GLFW_KEY_F2          -> "F2";
-            case GLFW.GLFW_KEY_F3          -> "F3";
-            case GLFW.GLFW_KEY_F4          -> "F4";
-            case GLFW.GLFW_KEY_F5          -> "F5";
-            case GLFW.GLFW_KEY_F6          -> "F6";
-            case GLFW.GLFW_KEY_F7          -> "F7";
-            case GLFW.GLFW_KEY_F8          -> "F8";
-            case GLFW.GLFW_KEY_F9          -> "F9";
-            case GLFW.GLFW_KEY_F10         -> "F10";
-            case GLFW.GLFW_KEY_F11         -> "F11";
-            case GLFW.GLFW_KEY_F12         -> "F12";
+            case PocketKeys.KEY_SPACE       -> "Space";
+            case PocketKeys.KEY_ESCAPE      -> "Esc";
+            case PocketKeys.KEY_ENTER       -> "Enter";
+            case PocketKeys.KEY_TAB         -> "Tab";
+            case PocketKeys.KEY_BACKSPACE   -> "Backspace";
+            case PocketKeys.KEY_DELETE      -> "Delete";
+            case PocketKeys.KEY_UP          -> "↑";
+            case PocketKeys.KEY_DOWN        -> "↓";
+            case PocketKeys.KEY_LEFT        -> "←";
+            case PocketKeys.KEY_RIGHT       -> "→";
+            case PocketKeys.KEY_HOME        -> "Home";
+            case PocketKeys.KEY_END         -> "End";
+            case PocketKeys.KEY_PAGE_UP     -> "PgUp";
+            case PocketKeys.KEY_PAGE_DOWN   -> "PgDn";
+            case PocketKeys.KEY_F1          -> "F1";
+            case PocketKeys.KEY_F2          -> "F2";
+            case PocketKeys.KEY_F3          -> "F3";
+            case PocketKeys.KEY_F4          -> "F4";
+            case PocketKeys.KEY_F5          -> "F5";
+            case PocketKeys.KEY_F6          -> "F6";
+            case PocketKeys.KEY_F7          -> "F7";
+            case PocketKeys.KEY_F8          -> "F8";
+            case PocketKeys.KEY_F9          -> "F9";
+            case PocketKeys.KEY_F10         -> "F10";
+            case PocketKeys.KEY_F11         -> "F11";
+            case PocketKeys.KEY_F12         -> "F12";
             default -> {
-                if (keyCode >= GLFW.GLFW_KEY_A && keyCode <= GLFW.GLFW_KEY_Z) {
-                    yield String.valueOf((char) keyCode);
-                } else if (keyCode >= GLFW.GLFW_KEY_0 && keyCode <= GLFW.GLFW_KEY_9) {
-                    yield String.valueOf((char) keyCode);
-                } else {
-                    yield "Key" + keyCode;
-                }
+                char c = PocketKeys.alphanumericChar(keyCode);
+                yield c != 0 ? String.valueOf(c) : "Key" + keyCode;
             }
         };
     }

@@ -1,5 +1,6 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.input.PocketKeys;
 import com.pocketcanvascore.render.PocketTheme;
 import com.pocketuicore.animation.AnimationTicker;
 import net.minecraft.client.Minecraft;
@@ -143,7 +144,7 @@ public class HoverButton extends UIComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        if (button == 0 && isHovered(mouseX, mouseY)) {
+        if (PocketKeys.isLeftClick(button) && isHovered(mouseX, mouseY)) {
             pressed = true;
             return true; // consume
         }
@@ -153,7 +154,7 @@ public class HoverButton extends UIComponent {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        if (button == 0 && pressed) {
+        if (PocketKeys.isLeftClick(button) && pressed) {
             pressed = false;
             if (isHovered(mouseX, mouseY)) {
                 playClickSound();

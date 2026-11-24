@@ -3,7 +3,7 @@ package com.pocketuicore.component;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import com.pocketuicore.render.RenderContext;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -244,7 +244,7 @@ public final class PaginatedContainer extends UIComponent {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
 
-        if (button == 0 && showArrows && pages.size() > 1) {
+        if (PocketKeys.isLeftClick(button) && showArrows && pages.size() > 1) {
             if (leftArrowHovered)  { prevPage(); return true; }
             if (rightArrowHovered) { nextPage(); return true; }
         }
@@ -256,11 +256,11 @@ public final class PaginatedContainer extends UIComponent {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!visible || !enabled) return false;
 
-        if (keyCode == GLFW.GLFW_KEY_LEFT) {
+        if (keyCode == PocketKeys.KEY_LEFT) {
             prevPage();
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_RIGHT) {
+        if (keyCode == PocketKeys.KEY_RIGHT) {
             nextPage();
             return true;
         }

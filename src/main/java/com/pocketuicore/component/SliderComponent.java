@@ -1,5 +1,6 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.input.PocketKeys;
 import com.pocketuicore.render.ProceduralRenderer;
 import net.minecraft.client.Minecraft;
 import com.pocketuicore.render.RenderContext;
@@ -152,7 +153,7 @@ public class SliderComponent extends UIComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        if (button == 0 && isHovered((int) mouseX, (int) mouseY)) {
+        if (PocketKeys.isLeftClick(button) && isHovered((int) mouseX, (int) mouseY)) {
             dragging = true;
             focused = true;
             setValueFromMouse(mouseX);
@@ -164,7 +165,7 @@ public class SliderComponent extends UIComponent {
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button,
                                  double deltaX, double deltaY) {
-        if (dragging && button == 0) {
+        if (dragging && PocketKeys.isLeftClick(button)) {
             setValueFromMouse(mouseX);
             return true;
         }
@@ -173,7 +174,7 @@ public class SliderComponent extends UIComponent {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (dragging && button == 0) {
+        if (dragging && PocketKeys.isLeftClick(button)) {
             dragging = false;
             return true;
         }
@@ -187,11 +188,10 @@ public class SliderComponent extends UIComponent {
         float range = maxValue - minValue;
         float increment = step > 0 ? step : range * 0.01f;
 
-        // GLFW: LEFT=263, RIGHT=262
-        if (keyCode == 263) {
+        if (keyCode == PocketKeys.KEY_LEFT) {
             setValue(value - increment);
             return true;
-        } else if (keyCode == 262) {
+        } else if (keyCode == PocketKeys.KEY_RIGHT) {
             setValue(value + increment);
             return true;
         }

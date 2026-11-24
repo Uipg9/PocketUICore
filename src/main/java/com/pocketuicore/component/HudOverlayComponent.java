@@ -107,7 +107,7 @@ public class HudOverlayComponent extends UIComponent {
      */
     public static void renderAll(RenderContext ctx, float delta) {
         Minecraft client = Minecraft.getInstance();
-        if (client.screen != null) return;
+        if (client.gui.screen() != null) return;
 
         int screenW = client.getWindow().getGuiScaledWidth();
         int screenH = client.getWindow().getGuiScaledHeight();

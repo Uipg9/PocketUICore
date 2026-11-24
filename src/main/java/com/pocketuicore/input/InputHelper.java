@@ -1,5 +1,6 @@
 package com.pocketuicore.input;
 
+import com.pocketuicore.input.PocketKeys;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 
@@ -40,36 +41,40 @@ public final class InputHelper {
     /** @return the mouse button index from a MouseButtonEvent record. */
     public static int mouseButton(MouseButtonEvent MouseButtonEvent) { return MouseButtonEvent.buttonInfo().button(); }
 
-    /** @return {@code true} if the MouseButtonEvent represents a left-MouseButtonEvent (button 0). */
-    public static boolean isLeftClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == 0; }
+    /** @return {@code true} if the MouseButtonEvent represents a left-MouseButtonEvent (SDL button 1). */
+    public static boolean isLeftClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == PocketKeys.MOUSE_LEFT; }
 
-    /** @return {@code true} if the MouseButtonEvent represents a right-MouseButtonEvent (button 1). */
-    public static boolean isRightClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == 1; }
+    /** @return {@code true} if the MouseButtonEvent represents a right-MouseButtonEvent (SDL button 3). */
+    public static boolean isRightClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == PocketKeys.MOUSE_RIGHT; }
 
-    /** @return {@code true} if the MouseButtonEvent represents a middle-MouseButtonEvent (button 2). */
-    public static boolean isMiddleClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == 2; }
+    /** @return {@code true} if the MouseButtonEvent represents a middle-MouseButtonEvent (SDL button 2). */
+    public static boolean isMiddleClick(MouseButtonEvent MouseButtonEvent) { return mouseButton(MouseButtonEvent) == PocketKeys.MOUSE_MIDDLE; }
 
     // =====================================================================
     //  KeyEvent record decomposition
     // =====================================================================
 
-    /** @return the GLFW key code from a KeyEvent record. */
+    /** @return the SDL scancode (matches PocketKeys.KEY_*) from a KeyEvent record. */
     public static int keyCode(KeyEvent input) { return input.key(); }
 
-    /** @return the scancode from a KeyEvent record. */
-    public static int scanCode(KeyEvent input) { return input.scancode(); }
+    /**
+     * @return the secondary key code from a KeyEvent record. In Minecraft 26.3 {@code KeyEvent.key()}
+     * is already the SDL scancode (used by {@link #keyCode}); {@code keycode()} is the layout-dependent
+     * SDL keycode, which is the closest remaining equivalent to the old GLFW "scancode" slot.
+     */
+    public static int scanCode(KeyEvent input) { return input.keycode(); }
 
     /** @return the modifier bitmask from a KeyEvent record. */
     public static int modifiers(KeyEvent input) { return input.modifiers(); }
 
     /** @return {@code true} if Shift is held in the given KeyEvent. */
-    public static boolean isShiftDown(KeyEvent input) { return (input.modifiers() & 0x01) != 0; }
+    public static boolean isShiftDown(KeyEvent input) { return PocketKeys.hasShift(input.modifiers()); }
 
     /** @return {@code true} if Ctrl is held in the given KeyEvent. */
-    public static boolean isCtrlDown(KeyEvent input) { return (input.modifiers() & 0x02) != 0; }
+    public static boolean isCtrlDown(KeyEvent input) { return PocketKeys.hasControl(input.modifiers()); }
 
     /** @return {@code true} if Alt is held in the given KeyEvent. */
-    public static boolean isAltDown(KeyEvent input) { return (input.modifiers() & 0x04) != 0; }
+    public static boolean isAltDown(KeyEvent input) { return PocketKeys.hasAlt(input.modifiers()); }
 
     // =====================================================================
     //  Input mode tracking

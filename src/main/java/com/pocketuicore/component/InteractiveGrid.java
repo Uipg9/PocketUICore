@@ -3,7 +3,7 @@ package com.pocketuicore.component;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import com.pocketuicore.render.RenderContext;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -243,7 +243,7 @@ public final class InteractiveGrid<T> extends UIComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!visible || !enabled) return false;
-        if (button == 0 && hoveredRow >= 0 && hoveredCol >= 0) {
+        if (PocketKeys.isLeftClick(button) && hoveredRow >= 0 && hoveredCol >= 0) {
             select(hoveredRow, hoveredCol);
             UISoundManager.playClick();
             if (onCellClick != null) onCellClick.accept(hoveredRow, hoveredCol);
@@ -257,8 +257,8 @@ public final class InteractiveGrid<T> extends UIComponent {
         if (!visible || !enabled) return false;
 
         // Arrow key navigation — initialise to (0,0) on first press
-        boolean isArrow = keyCode == GLFW.GLFW_KEY_UP || keyCode == GLFW.GLFW_KEY_DOWN
-                || keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_RIGHT;
+        boolean isArrow = keyCode == PocketKeys.KEY_UP || keyCode == PocketKeys.KEY_DOWN
+                || keyCode == PocketKeys.KEY_LEFT || keyCode == PocketKeys.KEY_RIGHT;
         if (isArrow && (selectedRow < 0 || selectedCol < 0)) {
             selectedRow = 0;
             selectedCol = 0;
@@ -266,16 +266,16 @@ public final class InteractiveGrid<T> extends UIComponent {
             return true;
         }
         boolean moved = false;
-        if (keyCode == GLFW.GLFW_KEY_UP && selectedRow > 0) {
+        if (keyCode == PocketKeys.KEY_UP && selectedRow > 0) {
             selectedRow--;
             moved = true;
-        } else if (keyCode == GLFW.GLFW_KEY_DOWN && selectedRow < rows - 1) {
+        } else if (keyCode == PocketKeys.KEY_DOWN && selectedRow < rows - 1) {
             selectedRow++;
             moved = true;
-        } else if (keyCode == GLFW.GLFW_KEY_LEFT && selectedCol > 0) {
+        } else if (keyCode == PocketKeys.KEY_LEFT && selectedCol > 0) {
             selectedCol--;
             moved = true;
-        } else if (keyCode == GLFW.GLFW_KEY_RIGHT && selectedCol < columns - 1) {
+        } else if (keyCode == PocketKeys.KEY_RIGHT && selectedCol < columns - 1) {
             selectedCol++;
             moved = true;
         }
@@ -286,7 +286,7 @@ public final class InteractiveGrid<T> extends UIComponent {
         }
 
         // Enter to confirm selection
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+        if (keyCode == PocketKeys.KEY_ENTER || keyCode == PocketKeys.KEY_KP_ENTER) {
             if (selectedRow >= 0 && selectedCol >= 0 && onCellClick != null) {
                 onCellClick.accept(selectedRow, selectedCol);
                 return true;
@@ -294,7 +294,7 @@ public final class InteractiveGrid<T> extends UIComponent {
         }
 
         // Number shortcuts 1-9 (flat index)
-        int num = keyCode - GLFW.GLFW_KEY_1;
+        int num = keyCode - PocketKeys.KEY_1;
         if (num >= 0 && num < 9 && num < rows * columns) {
             int r = num / columns;
             int c = num % columns;

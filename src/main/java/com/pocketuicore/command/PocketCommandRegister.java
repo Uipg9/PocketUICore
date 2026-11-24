@@ -44,6 +44,6 @@ public final class PocketCommandRegister {
      */
     private static void openPocketScreen() {
         Minecraft client = Minecraft.getInstance();
-        client.execute(() -> client.setScreen(new PocketMenuScreen()));
+        client.execute(() -> client.gui.setScreen(new PocketMenuScreen()));
     }
 }

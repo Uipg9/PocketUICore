@@ -1,5 +1,7 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.input.PocketKeys;
+
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -347,8 +349,8 @@ public final class FocusManager {
         if (focused == null || !focused.isVisible() || !focused.isEnabled()) return false;
         double cx = focused.getX() + focused.getWidth() / 2.0;
         double cy = focused.getY() + focused.getHeight() / 2.0;
-        focused.mouseClicked(cx, cy, 0);
-        focused.mouseReleased(cx, cy, 0);
+        focused.mouseClicked(cx, cy, PocketKeys.MOUSE_LEFT);
+        focused.mouseReleased(cx, cy, PocketKeys.MOUSE_LEFT);
         return true;
     }
 

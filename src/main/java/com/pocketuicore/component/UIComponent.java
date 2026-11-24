@@ -1,5 +1,6 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.input.PocketKeys;
 import com.pocketcanvascore.render.PocketCanvas;
 import com.pocketcanvascore.render.PocketTheme;
 import net.minecraft.client.Minecraft;
@@ -162,7 +163,7 @@ public abstract class UIComponent {
             if (children.get(i).mouseClicked(mouseX, mouseY, button)) return true;
         }
         // onClick handler — fires on left-MouseButtonEvent when hovered
-        if (button == 0 && onClick != null && isHovered(mouseX, mouseY)) {
+        if (PocketKeys.isLeftClick(button) && onClick != null && isHovered(mouseX, mouseY)) {
             onClick.run();
             return true;
         }
@@ -248,7 +249,7 @@ public abstract class UIComponent {
     // ── MC 1.21.11 Input API bridges (v1.10.0) ─────────────────────────
 
     /**
-     * Bridge for MC 1.21.11's {@link MouseButtonEvent} record.
+     * Bridge for MC 26.3's {@link MouseButtonEvent} record.
      * Decomposes the record and delegates to
      * {@link #mouseClicked(double, double, int)}.
      *
@@ -261,7 +262,7 @@ public abstract class UIComponent {
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link MouseButtonEvent} record with keyboard flag.
+     * Bridge for MC 26.3's {@link MouseButtonEvent} record with keyboard flag.
      * The {@code fromKeyboard} parameter is provided for compatibility
      * but is currently unused by the component tree.
      *
@@ -275,7 +276,7 @@ public abstract class UIComponent {
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link MouseButtonEvent} record on mouse release.
+     * Bridge for MC 26.3's {@link MouseButtonEvent} record on mouse release.
      * Decomposes the record and delegates to
      * {@link #mouseReleased(double, double, int)}.
      *
@@ -288,7 +289,7 @@ public abstract class UIComponent {
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link KeyEvent} record.
+     * Bridge for MC 26.3's {@link KeyEvent} record.
      * Decomposes the record and delegates to
      * {@link #keyPressed(int, int, int)}.
      *
@@ -297,11 +298,11 @@ public abstract class UIComponent {
      * @since 1.10.0
      */
     public boolean keyPressed(KeyEvent input) {
-        return keyPressed(input.key(), input.scancode(), input.modifiers());
+        return keyPressed(input.key(), input.keycode(), input.modifiers());
     }
 
     /**
-     * Bridge for MC 1.21.11's {@link CharacterEvent} record.
+     * Bridge for MC 26.3's {@link CharacterEvent} record.
      * Decomposes the record and delegates to
      * {@link #charTyped(char, int)}.
      *

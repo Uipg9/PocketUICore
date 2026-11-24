@@ -5,7 +5,7 @@ import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.sound.UISoundManager;
 import net.minecraft.client.Minecraft;
 import com.pocketuicore.render.RenderContext;
-import org.lwjgl.glfw.GLFW;
+import com.pocketuicore.input.PocketKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -222,7 +222,7 @@ public final class TabbedPanel extends UIComponent {
         if (!visible || !enabled) return false;
 
         // Check if MouseButtonEvent is in tab bar
-        if (button == 0 && mouseY >= y && mouseY < y + TAB_BAR_HEIGHT) {
+        if (PocketKeys.isLeftClick(button) && mouseY >= y && mouseY < y + TAB_BAR_HEIGHT) {
             var font = Minecraft.getInstance().font;
             int tx = x;
             for (int i = 0; i < tabs.size(); i++) {
@@ -246,8 +246,8 @@ public final class TabbedPanel extends UIComponent {
         if (!visible || !enabled) return false;
 
         // Tab key cycles
-        if (keyCode == GLFW.GLFW_KEY_TAB) {
-            if ((modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
+        if (keyCode == PocketKeys.KEY_TAB) {
+            if ((modifiers & PocketKeys.MOD_SHIFT) != 0) {
                 prevTab();
             } else {
                 nextTab();
@@ -256,8 +256,8 @@ public final class TabbedPanel extends UIComponent {
         }
 
         // Ctrl+1-9 hotkeys
-        if (numberHotkeys && (modifiers & GLFW.GLFW_MOD_CONTROL) != 0) {
-            int num = keyCode - GLFW.GLFW_KEY_1;
+        if (numberHotkeys && (modifiers & PocketKeys.MOD_CONTROL) != 0) {
+            int num = keyCode - PocketKeys.KEY_1;
             if (num >= 0 && num < 9 && num < tabs.size()) {
                 setActiveTab(num);
                 UISoundManager.playClick();

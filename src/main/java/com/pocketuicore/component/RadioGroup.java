@@ -1,5 +1,6 @@
 package com.pocketuicore.component;
 
+import com.pocketuicore.input.PocketKeys;
 import com.pocketuicore.render.ProceduralRenderer;
 import com.pocketuicore.render.Theme;
 import com.pocketuicore.sound.UISoundManager;
@@ -113,7 +114,7 @@ public class RadioGroup extends UIComponent {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!visible || !enabled || button != 0) return false;
+        if (!visible || !enabled || !PocketKeys.isLeftClick(button)) return false;
         if (!isHovered(mouseX, mouseY)) return super.mouseClicked(mouseX, mouseY, button);
 
         Font tr = Minecraft.getInstance().font;
@@ -133,12 +134,12 @@ public class RadioGroup extends UIComponent {
         if (!visible || !enabled) return false;
         if (!FocusManager.getInstance().isFocused(this)) return false;
 
-        if (keyCode == 264 && selectedIndex < options.size() - 1) { // Down
+        if (keyCode == PocketKeys.KEY_DOWN && selectedIndex < options.size() - 1) { // Down
             selectedIndex++;
             UISoundManager.playClick();
             if (onSelect != null) onSelect.accept(selectedIndex);
             return true;
-        } else if (keyCode == 265 && selectedIndex > 0) { // Up
+        } else if (keyCode == PocketKeys.KEY_UP && selectedIndex > 0) { // Up
             selectedIndex--;
             UISoundManager.playClick();
             if (onSelect != null) onSelect.accept(selectedIndex);

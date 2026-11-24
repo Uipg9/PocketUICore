@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
 /**
  * SyncBalancePayload — S2C network payload for balance synchronisation.
@@ -21,7 +22,7 @@ public record SyncBalancePayload(int balance) implements CustomPacketPayload {
 
     // ── Payload type ─────────────────────────────────────────────────────
     public static final CustomPacketPayload.Type<SyncBalancePayload> TYPE =
-            CustomPacketPayload.createType("pocketuicore:sync_balance");
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("pocketuicore", "sync_balance"));
 
     // ── Stream codec ─────────────────────────────────────────────────────
     public static final StreamCodec<ByteBuf, SyncBalancePayload> STREAM_CODEC =
